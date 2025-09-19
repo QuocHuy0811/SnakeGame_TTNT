@@ -39,7 +39,7 @@ DUAL_CONTROL_PANEL_WIDTH = 250
 # Chiều rộng màn hình 1v1 = Map Trái + Panel Giữa + Map Phải
 DUAL_SCREEN_WIDTH = (DUAL_MAP_WIDTH_TILES * TILE_SIZE) * 2 + DUAL_CONTROL_PANEL_WIDTH
 # Chiều cao màn hình 1v1 = Cao Map + Khu vực thông tin
-DUAL_SCREEN_HEIGHT = (DUAL_MAP_HEIGHT_TILES * TILE_SIZE) + 100
+DUAL_SCREEN_HEIGHT = (DUAL_MAP_HEIGHT_TILES * TILE_SIZE) + 200
 
 # ======================================================================
 # --- KÍCH THƯỚC CỬA SỔ GAME CHÍNH ---

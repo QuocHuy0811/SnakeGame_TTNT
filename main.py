@@ -5,11 +5,12 @@ import pygame
 import config
 from UI.MainMenu import main_menu
 from UI.AI_screen import run_ai_game 
+from UI.AI_vs_human_screen import run_ai_vs_human_screen
 
 def main():
     """Hàm chính để chạy game."""
     pygame.init()
-    screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
+    screen = pygame.display.set_mode((config.S  CREEN_WIDTH, config.SCREEN_HEIGHT))
     pygame.display.set_caption(config.GAME_TITLE)
     clock = pygame.time.Clock()
 
@@ -23,16 +24,13 @@ def main():
             # TODO: Dựa vào lựa chọn để chuyển sang màn hình game
             # Ví dụ:
             if selected_mode == "AI":
-                game_state = "AI_GAME"
+                game_state = "MAIN_MENU"
                 run_ai_game(screen, clock, selected_map) 
             
-            # Tạm thời thoát game sau khi chọn để bạn kiểm tra
-            break 
-        
-        # Sau này bạn có thể thêm các trạng thái khác
-        # elif game_state == "GAME_OVER":
-        #     run_game_over_screen(screen)
-        #     game_state = "MAIN_MENU" # Quay về menu
+            elif selected_mode == "AI_VS_HUMAN":
+                run_ai_vs_human_screen(screen, clock, selected_map)
+                game_state = "MAIN_MENU" # Quay về menu sau khi chơi xong
+            else: break
             
         clock.tick(config.FPS)
     
