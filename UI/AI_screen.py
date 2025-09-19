@@ -16,8 +16,8 @@ def run_ai_game(screen, clock, selected_map_name):
     background_effects.init_background(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 200)
 
     # Tạo bề mặt (surface) riêng cho khu vực game
-    game_area_width = config.MAP_WIDTH_TILES * config.TILE_SIZE
-    game_area_height = config.MAP_HEIGHT_TILES * config.TILE_SIZE
+    game_area_width = config.AI_MAP_WIDTH_TILES * config.TILE_SIZE
+    game_area_height = config.AI_MAP_HEIGHT_TILES * config.TILE_SIZE
     game_surface = pygame.Surface((game_area_width, game_area_height))
 
     # Tính khoảng đệm trên/dưới để căn giữa theo chiều dọc
@@ -45,8 +45,8 @@ def run_ai_game(screen, clock, selected_map_name):
     # --- 3. TẠO CÁC THÀNH PHẦN GIAO DIỆN (UI) ---
 
     # Tính toán vị trí 3 cột
-    panel_x = config.SCREEN_WIDTH - config.PANEL_WIDTH
-    panel_center_x = panel_x + config.PANEL_WIDTH / 2
+    panel_x = config.SCREEN_WIDTH - config.AI_PANEL_WIDTH
+    panel_center_x = panel_x + config.AI_PANEL_WIDTH / 2
     
     buttons = {
         'load_snake': UI_helpers.create_button(panel_center_x - 125, 100, 250, 40, "Load Snake"),
@@ -131,7 +131,7 @@ def run_ai_game(screen, clock, selected_map_name):
         UI_helpers.draw_button(screen, skip_button)
         
         # --- Cột 3: Vẽ bảng điều khiển ---
-        panel_rect = pygame.Rect(panel_x, 0, config.PANEL_WIDTH, config.SCREEN_HEIGHT)
+        panel_rect = pygame.Rect(panel_x, 0, config.AI_PANEL_WIDTH, config.SCREEN_HEIGHT)
         pygame.draw.rect(screen, config.COLORS['white_bg'], panel_rect, border_radius=20)
 
         # Vẽ các nút và văn bản lên trên

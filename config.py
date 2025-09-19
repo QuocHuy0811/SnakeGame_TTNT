@@ -3,22 +3,52 @@
 """
 # --- Kích thước & Cài đặt màn hình ---
 TILE_SIZE = 20  # Kích thước mỗi ô vuông trong map (QUAN TRỌNG)
-MAP_WIDTH_TILES = 40
-MAP_HEIGHT_TILES = 30
-
-
-PANEL_WIDTH = 300
-
-# Tự động tính toán kích thước màn hình
-SCREEN_WIDTH = MAP_WIDTH_TILES * TILE_SIZE + PANEL_WIDTH + 200
-SCREEN_HEIGHT = MAP_HEIGHT_TILES * TILE_SIZE + 60
-
 FPS = 60
-GAME_TITLE = "23110103 _ Đoàn Quốc Huy && 23110124 _ Đoàn Ngọc Mạnh --- Rắn Săn Mồi ---"
-
+GAME_TITLE = "23110103 _ Đoàn Quốc Huy && 23110124 _ Đoàn Ngọc Mạnh --- Rắn Săn Mồi ---"    
 # --- Đường dẫn ---
 MAPS_DIR = "Maps"
 FONT_PATH = "Assets/Fonts/Tomorrow-Regular.ttf"
+
+# MAP_WIDTH_TILES = 40
+# MAP_HEIGHT_TILES = 30
+
+
+# PANEL_WIDTH = 300
+
+# # Tự động tính toán kích thước màn hình
+# SCREEN_WIDTH = MAP_WIDTH_TILES * TILE_SIZE + PANEL_WIDTH + 200
+# SCREEN_HEIGHT = MAP_HEIGHT_TILES * TILE_SIZE + 60
+
+# ======================================================================
+# --- CÀI ĐẶT CHO MÀN HÌNH AI (1 MAP) ---
+# ======================================================================
+AI_MAP_WIDTH_TILES = 40
+AI_MAP_HEIGHT_TILES = 30
+AI_PANEL_WIDTH = 300
+# Chiều rộng màn hình AI = Rộng Map + Rộng Panel + Khoảng đệm
+AI_SCREEN_WIDTH = (AI_MAP_WIDTH_TILES * TILE_SIZE) + AI_PANEL_WIDTH + 200
+# Chiều cao màn hình AI = Cao Map + Khoảng đệm
+AI_SCREEN_HEIGHT = (AI_MAP_HEIGHT_TILES * TILE_SIZE) + 60
+
+# ======================================================================
+# --- CÀI ĐẶT CHO MÀN HÌNH AI vs HUMAN (2 MAP) ---
+# ======================================================================
+DUAL_MAP_WIDTH_TILES = 30
+DUAL_MAP_HEIGHT_TILES = 30
+DUAL_CONTROL_PANEL_WIDTH = 250
+# Chiều rộng màn hình 1v1 = Map Trái + Panel Giữa + Map Phải
+DUAL_SCREEN_WIDTH = (DUAL_MAP_WIDTH_TILES * TILE_SIZE) * 2 + DUAL_CONTROL_PANEL_WIDTH
+# Chiều cao màn hình 1v1 = Cao Map + Khu vực thông tin
+DUAL_SCREEN_HEIGHT = (DUAL_MAP_HEIGHT_TILES * TILE_SIZE) + 100
+
+# ======================================================================
+# --- KÍCH THƯỚC CỬA SỔ GAME CHÍNH ---
+# ======================================================================
+# Lấy kích thước lớn nhất để cửa sổ game không cần thay đổi kích thước
+SCREEN_WIDTH = max(AI_SCREEN_WIDTH, DUAL_SCREEN_WIDTH)
+SCREEN_HEIGHT = max(AI_SCREEN_HEIGHT, DUAL_SCREEN_HEIGHT)
+
+
 
 # --- Màu sắc ---
 COLORS = {
