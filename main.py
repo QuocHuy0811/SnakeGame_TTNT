@@ -10,7 +10,7 @@ from UI.AI_vs_human_screen import run_ai_vs_human_screen
 def main():
     """Hàm chính để chạy game."""
     pygame.init()
-    screen = pygame.display.set_mode((config.S  CREEN_WIDTH, config.SCREEN_HEIGHT))
+    screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
     pygame.display.set_caption(config.GAME_TITLE)
     clock = pygame.time.Clock()
 
