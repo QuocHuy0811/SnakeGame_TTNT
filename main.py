@@ -13,7 +13,7 @@ def main():
     pygame.display.set_caption(config.GAME_TITLE)
     clock = pygame.time.Clock()
 
-    game_state = "MAIN_MENU"
+    game_state = "MAIN_MENU"    
     
     while True:
         if game_state == "MAIN_MENU":
