@@ -17,10 +17,10 @@ def run_ai_game(screen, clock, selected_map_name):
     game_area_height = config.MAP_HEIGHT_TILES * config.TILE_SIZE
     game_surface = pygame.Surface((game_area_width, game_area_height))
 
-    # TÍNH TOÁN VỊ TRÍ CĂN GIỮA CHO KHU VỰC GAME
-    game_area_container_width = config.SCREEN_WIDTH - config.PANEL_WIDTH
-    game_area_x = (game_area_container_width - game_area_width) / 2
+    # Tính khoảng đệm trên/dưới để căn giữa theo chiều dọc
     game_area_y = (config.SCREEN_HEIGHT - game_area_height) / 2
+    # Gán khoảng đệm bên trái bằng đúng khoảng đệm trên/dưới
+    game_area_x = game_area_y   
 
     # Tải dữ liệu map và tạo các đối tượng game
     map_data = map_logic.load_map_data(selected_map_name)
