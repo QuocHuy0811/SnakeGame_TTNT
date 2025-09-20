@@ -25,7 +25,7 @@ def run_main_menu(screen):
     if os.path.exists(config.MAPS_DIR):
         map_files = sorted([f for f in os.listdir(config.MAPS_DIR) if f.endswith('.txt')])
     
-    background_effects.init_background(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 1000)
+    # background_effects.init_background(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 1000)
     # --- 2. QUẢN LÝ TRẠNG THÁI ---
     # Lưu map đang được chọn, mặc định là map đầu tiên.
     selected_map_name = map_files[0] if map_files else "No Maps Found"
@@ -98,7 +98,7 @@ def run_main_menu(screen):
                     return "AI_VS_HUMAN", selected_map_name
             
         # --- 6. VẼ LÊN MÀN HÌNH ---
-        background_effects.draw_background(screen)
+        # background_effects.draw_background(screen)
         
         # Vẽ các tiêu đề và nhãn.
         title_y = config.SCREEN_HEIGHT / 8
