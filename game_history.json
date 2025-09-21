@@ -1,0 +1,106 @@
+[
+    {
+        "map": "Greedy",
+        "algorithm": "A*",
+        "steps": 121,
+        "time": 10.369
+    },
+    {
+        "map": "Greedy",
+        "algorithm": "A*",
+        "steps": 121,
+        "time": 10.399
+    },
+    {
+        "map": "Greedy",
+        "algorithm": "BFS",
+        "steps": 121,
+        "time": 10.519,
+        "total_search_time": 0.242
+    },
+    {
+        "map": "Greedy",
+        "algorithm": "BFS",
+        "steps": 121,
+        "time": 10.639,
+        "total_search_time": 0.267
+    },
+    {
+        "map": "Greedy",
+        "algorithm": "A*",
+        "steps": 121,
+        "time": 10.418,
+        "total_search_time": 0.112
+    },
+    {
+        "map": "Greedy",
+        "algorithm": "A*",
+        "steps": 121,
+        "time": 10.447,
+        "total_search_time": 0.101
+    },
+    {
+        "map": "Greedy",
+        "algorithm": "BFS",
+        "steps": 121,
+        "time": 10.53,
+        "total_search_time": 0.264,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Greedy",
+        "algorithm": "A*",
+        "steps": 121,
+        "time": 10.405,
+        "total_search_time": 0.08,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Greedy",
+        "algorithm": "BFS",
+        "steps": 121,
+        "time": 10.526,
+        "total_search_time": 0.241,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Greedy",
+        "algorithm": "BFS",
+        "steps": 121,
+        "time": 9.68,
+        "total_search_time": 0.225,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Greedy",
+        "algorithm": "BFS",
+        "steps": 121,
+        "time": 9.68,
+        "total_search_time": 0.217,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Greedy",
+        "algorithm": "BFS",
+        "steps": 121,
+        "time": 9.68,
+        "total_search_time": 0.208,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Greedy",
+        "algorithm": "BFS",
+        "steps": 121,
+        "time": 9.68,
+        "total_search_time": 0.221,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Greedy",
+        "algorithm": "BFS",
+        "steps": 121,
+        "time": 9.68,
+        "total_search_time": 0.219,
+        "outcome": "Completed"
+    }
+]
