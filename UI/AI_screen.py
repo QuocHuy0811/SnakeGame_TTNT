@@ -10,17 +10,20 @@ def run_ai_game(screen, clock, selected_map_name):
 
     # --- 1. KHỞI TẠO ---
     panel_font = pygame.font.Font(config.FONT_PATH, 24)
+    info_font_bold = pygame.font.Font(config.FONT_PATH, 32)
+    info_font = pygame.font.Font(config.FONT_PATH, 26)
+    
     background_effects.init_background(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 200)
 
     # Tạo bề mặt (surface) riêng cho khu vực game
-    game_area_width = config.MAP_WIDTH_TILES * config.TILE_SIZE
-    game_area_height = config.MAP_HEIGHT_TILES * config.TILE_SIZE
+    game_area_width = config.AI_MAP_WIDTH_TILES * config.TILE_SIZE
+    game_area_height = config.AI_MAP_HEIGHT_TILES * config.TILE_SIZE
     game_surface = pygame.Surface((game_area_width, game_area_height))
 
-    # TÍNH TOÁN VỊ TRÍ CĂN GIỮA CHO KHU VỰC GAME
-    game_area_container_width = config.SCREEN_WIDTH - config.PANEL_WIDTH
-    game_area_x = (game_area_container_width - game_area_width) / 2
+    # Tính khoảng đệm trên/dưới để căn giữa theo chiều dọc
     game_area_y = (config.SCREEN_HEIGHT - game_area_height) / 2
+    # Gán khoảng đệm bên trái bằng đúng khoảng đệm trên/dưới
+    game_area_x = game_area_y   
 
     # Tải dữ liệu map và tạo các đối tượng game
     map_data = map_logic.load_map_data(selected_map_name)
@@ -31,25 +34,37 @@ def run_ai_game(screen, clock, selected_map_name):
     game_state = "IDLE"
     selected_mode = "BFS"
     is_mode_combobox_open = False
-    ai_path = []
-    ai_stats = {}
-    animation_step = 0
+
+    # ai_path = []
+    # ai_stats = {}
+    # animation_step = 0
+
+    current_steps = 0
+    current_time = 0.0
     
     # --- 3. TẠO CÁC THÀNH PHẦN GIAO DIỆN (UI) ---
-    panel_x = config.SCREEN_WIDTH - config.PANEL_WIDTH
-    panel_center_x = panel_x + config.PANEL_WIDTH / 2
+
+    # Tính toán vị trí 3 cột
+    panel_x = config.SCREEN_WIDTH - config.AI_PANEL_WIDTH
+    panel_center_x = panel_x + config.AI_PANEL_WIDTH / 2
+    
     buttons = {
         'load_snake': UI_helpers.create_button(panel_center_x - 125, 100, 250, 40, "Load Snake"),
         'solve': UI_helpers.create_button(panel_center_x - 125, 150, 250, 40, "Solve"),
         'reset': UI_helpers.create_button(panel_center_x - 125, 200, 250, 40, "Reset"),
         'history': UI_helpers.create_button(panel_center_x - 125, 250, 250, 40, "History"),
-        'back_to_menu': UI_helpers.create_button(panel_center_x - 125, 300, 250, 40, "Back to Menu"),
-        'skip': UI_helpers.create_button(panel_center_x - 125, 350, 250, 40, "Skip Animation")
+        'back_to_menu': UI_helpers.create_button(panel_center_x - 125, 300, 250, 40, "Back to Menu")
     }
     mode_combobox = {
-        'header': UI_helpers.create_button(panel_center_x - 125, 400, 250, 40, f"Mode: {selected_mode}"),
-        'options': [UI_helpers.create_button(panel_center_x - 125, 440 + i*45, 250, 45, mode) for i, mode in enumerate(["Player", "BFS", "DFS", "A*", "UCS", "Greedy"])]
+        'header': UI_helpers.create_button(panel_center_x - 125, 350, 250, 40, f"Mode: {selected_mode}"),
+        'options': [UI_helpers.create_button(panel_center_x - 125, 350 + (i + 1) * 45, 250, 35, mode) for i, mode in enumerate(["Player", "BFS", "DFS", "A*", "UCS", "Greedy"])]
     }
+
+    # --- Vị trí cho các thành phần ở giữa ---
+    map_end_x = game_area_x + game_area_width
+    middle_area_center_x = map_end_x + (panel_x - map_end_x) / 2
+    middle_area_center_x -= 100 
+    skip_button = UI_helpers.create_button(middle_area_center_x - 100, 550, 200, 50, "Skip")
 
     # --- 4. VÒNG LẶP CHÍNH ---
     running = True
@@ -61,6 +76,7 @@ def run_ai_game(screen, clock, selected_map_name):
         UI_helpers.update_button_hover_state(mode_combobox['header'], mouse_pos)
         if is_mode_combobox_open:
             for btn in mode_combobox['options']: UI_helpers.update_button_hover_state(btn, mouse_pos)
+        UI_helpers.update_button_hover_state(skip_button, mouse_pos)
 
         # Xử lý sự kiện
         for event in pygame.event.get():
@@ -74,9 +90,9 @@ def run_ai_game(screen, clock, selected_map_name):
                 snake_data = snake_logic.create_snake_from_map(map_data)
                 food_data = food_logic.create_food_from_map(map_data)
                 game_state = "IDLE"
-                ai_path = []
-                ai_stats = {}
-                animation_step = 0
+                # ai_path = []
+                # ai_stats = {}
+                # animation_step = 0
             
             if UI_helpers.handle_button_events(event, buttons['solve']) and selected_mode != "Player":
                 game_state = "SOLVING"
@@ -93,7 +109,7 @@ def run_ai_game(screen, clock, selected_map_name):
         
         # --- 5. VẼ LÊN MÀN HÌNH ---
         background_effects.draw_background(screen)
-
+        # --- Cột 1: Vẽ khu vực game ---
         # Vẽ các thành phần của game (map, rắn, thức ăn) LÊN BỀ MẶT RIÊNG
         game_surface.fill(config.COLORS['bg']) 
         UI_helpers.draw_map(game_surface, map_data)
@@ -103,10 +119,21 @@ def run_ai_game(screen, clock, selected_map_name):
         # Đặt bề mặt game vào vị trí đã được tính toán để CĂN GIỮA
         screen.blit(game_surface, (game_area_x, game_area_y))
         
-        # Vẽ bảng điều khiển
-        panel_rect = pygame.Rect(panel_x, 0, config.PANEL_WIDTH, config.SCREEN_HEIGHT)
-        pygame.draw.rect(screen, config.COLORS['white_bg'], panel_rect, border_radius=20)
+        # --- Cột 2: Vẽ bảng thông số ---
+        # --- Vẽ các thông số và nút Skip VÀO KHOẢNG TRỐNG ---
+        UI_helpers.draw_text("TIME", info_font, config.COLORS['title'], screen, middle_area_center_x, 180)
+        UI_helpers.draw_text(f"{current_time:.4f} s", info_font_bold, config.COLORS['white'], screen, middle_area_center_x, 220)
         
+        UI_helpers.draw_text("STEPS", info_font, config.COLORS['title'], screen, middle_area_center_x, 320)
+        UI_helpers.draw_text(str(current_steps), info_font_bold, config.COLORS['white'], screen, middle_area_center_x, 360)
+        
+        # if game_state == "ANIMATING_PATH": # Bật lại khi có logic game
+        UI_helpers.draw_button(screen, skip_button)
+        
+        # --- Cột 3: Vẽ bảng điều khiển ---
+        panel_rect = pygame.Rect(panel_x, 0, config.AI_PANEL_WIDTH, config.SCREEN_HEIGHT)
+        pygame.draw.rect(screen, config.COLORS['white_bg'], panel_rect, border_radius=20)
+
         # Vẽ các nút và văn bản lên trên
         UI_helpers.draw_text("Control Panel", panel_font, config.COLORS['text_dark'], screen, panel_center_x, 50)
         UI_helpers.draw_button(screen, buttons['load_snake'])
