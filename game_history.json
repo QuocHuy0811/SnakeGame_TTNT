@@ -102,5 +102,85 @@
         "time": 9.68,
         "total_search_time": 0.219,
         "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "A*",
+        "steps": 245,
+        "time": 19.6,
+        "total_search_time": 0.234,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "A*",
+        "steps": 245,
+        "time": 19.6,
+        "total_search_time": 0.228,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 257,
+        "time": 20.56,
+        "total_search_time": 0.408,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "UCS",
+        "steps": 245,
+        "time": 19.6,
+        "total_search_time": 0.032,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "Greedy",
+        "steps": 294,
+        "time": 23.52,
+        "total_search_time": 0.115,
+        "outcome": "Completed"
+    },
+    {
+        "map": "BFS",
+        "algorithm": "BFS",
+        "steps": 119,
+        "time": 9.52,
+        "total_search_time": 0.34,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 34,
+        "time": 0.0,
+        "total_search_time": 0.112,
+        "outcome": "Stuck"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 63,
+        "time": 0.0,
+        "total_search_time": 0.119,
+        "outcome": "Stuck"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 243,
+        "time": 0.0,
+        "total_search_time": 0.337,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 257,
+        "time": 20.56,
+        "total_search_time": 0.415,
+        "outcome": "Completed"
     }
 ]

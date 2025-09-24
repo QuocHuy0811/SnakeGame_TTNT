@@ -4,6 +4,7 @@ import config
 from UI import UI_helpers
 from UI.MainMenu import background_effects
 from GameLogic.game_controller import GameController # <-- DÙNG GAMECONTROLLER
+from GameLogic import snake_logic, food_logic
 from Algorithms import BFS, Astar, UCS, DFS, Greedy # (Giả định AI cũng dùng các thuật toán này)
 
 def find_path_for_ai(controller):
@@ -23,6 +24,8 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
     info_font = pygame.font.Font(config.FONT_PATH, 22)
     end_font = pygame.font.Font(config.FONT_PATH, 60)
     
+    background_effects.init_background(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 200)
+
     # Tạo 2 controller riêng biệt cho Player và AI
     player_controller = GameController(selected_map_name)
     ai_controller = GameController(selected_map_name)
@@ -33,10 +36,16 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
     game_surface_ai = pygame.Surface((map_width_px, map_height_px))
 
     # --- 2. QUẢN LÝ TRẠNG THÁI GIAO DIỆN ---
-    game_status = "idle" # Các trạng thái: idle, playing, game_over
-    player_time, ai_time = 0.0, 0.0
-    ai_path, ai_animation_step = [], 0
-    last_move_time, move_interval = 0, 150 # Nhịp game
+    game_status = "IDLE" # Các trạng thái: IDLE, playing, game_over
+    player_time = 0.0
+    ai_time = 0.0
+    ai_path = []
+    ai_animation_step = 0
+    last_move_time = 0
+    move_interval = 150 # Nhịp game
+
+    selected_ai_mode = "BFS"
+    is_mode_combobox_open = False
 
     # --- 3. GIAO DIỆN BẢNG ĐIỀU KHIỂN ---
     total_content_width = map_width_px * 2 + config.DUAL_CONTROL_PANEL_WIDTH
@@ -45,10 +54,15 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
     control_panel_x = player_map_x + map_width_px
     ai_map_x = control_panel_x + config.DUAL_CONTROL_PANEL_WIDTH
     panel_center_x = control_panel_x + config.DUAL_CONTROL_PANEL_WIDTH / 2
+    
     buttons = {
         'start': UI_helpers.create_button(panel_center_x - 110, 150, 220, 50, "Start Race"),
         'reset': UI_helpers.create_button(panel_center_x - 110, 220, 220, 50, "Reset"),
         'back': UI_helpers.create_button(panel_center_x - 110, 290, 220, 50, "Back to Menu"),
+    }
+    mode_combobox = {
+        'header': UI_helpers.create_button(panel_center_x - 110, 400, 220, 40, f"AI Mode: {selected_ai_mode}"),
+        'options': [UI_helpers.create_button(panel_center_x - 110, 400 + (i + 1) * 45, 220, 45, mode) for i, mode in enumerate(["BFS", "DFS", "A*", "UCS", "Greedy"])]
     }
     
     def _draw_game_panel(surface, pos_x, title, title_color, controller, time):
@@ -57,8 +71,8 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
         UI_helpers.draw_text(title, title_font, title_color, screen, pos_x + map_width_px / 2, 40)
         surface.fill(config.COLORS['bg'])
         UI_helpers.draw_map(surface, controller.map_data)
-        UI_helpers.draw_snake(surface, game_data['snake'])
-        UI_helpers.draw_food(surface, game_data['food'])
+        snake_logic.draw_snake(surface, game_data['snake'])
+        food_logic.draw_food(surface, game_data['food'])
         
         if game_data['outcome'] != "Playing":
             overlay = pygame.Surface((map_width_px, map_height_px), pygame.SRCALPHA)
@@ -81,21 +95,41 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
     while running:
         mouse_pos = pygame.mouse.get_pos()
         current_ticks = pygame.time.get_ticks()
-        for btn in buttons.values(): UI_helpers.update_button_hover_state(btn, mouse_pos)
+        
+        for btn in buttons.values(): 
+            UI_helpers.update_button_hover_state(btn, mouse_pos)
+        UI_helpers.update_button_hover_state(mode_combobox['header'], mouse_pos)
+        if is_mode_combobox_open:
+            for btn in mode_combobox['options']: UI_helpers.update_button_hover_state(btn, mouse_pos)
 
         for event in pygame.event.get():
-            if event.type == pygame.QUIT: running = False
-            if UI_helpers.handle_button_events(event, buttons['back']): running = False
-            if UI_helpers.handle_button_events(event, buttons['start']) and game_status == "idle":
+            if event.type == pygame.QUIT: 
+                running = False
+                
+            if UI_helpers.handle_button_events(event, buttons['back']): 
+                running = False
+
+            if UI_helpers.handle_button_events(event, mode_combobox['header']):
+                is_mode_combobox_open = not is_mode_combobox_open
+            elif is_mode_combobox_open:
+                for btn in mode_combobox['options']:
+                    if UI_helpers.handle_button_events(event, btn):
+                        selected_ai_mode = btn['text']
+                        mode_combobox['header']['text'] = f"AI Mode: {selected_ai_mode}"
+                        is_mode_combobox_open = False
+                        break
+            
+            if UI_helpers.handle_button_events(event, buttons['start']) and game_status == "IDLE":
                 game_status = "playing"
                 start_time = current_ticks
                 last_move_time = current_ticks
                 ai_path = find_path_for_ai(ai_controller) # AI tìm đường ngay khi bắt đầu
                 ai_animation_step = 0
+
             if UI_helpers.handle_button_events(event, buttons['reset']):
                 player_controller.reset()
                 ai_controller.reset()
-                game_status = "idle"
+                game_status = "IDLE"
                 player_time, ai_time = 0.0, 0.0
 
             # Xử lý input cho người chơi
@@ -108,8 +142,10 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
         # --- CẬP NHẬT LOGIC GAME ---
         if game_status == "playing":
             # Cập nhật thời gian cho cả hai
-            if player_controller.get_state()['outcome'] == "Playing": player_time = (current_ticks - start_time) / 1000.0
-            if ai_controller.get_state()['outcome'] == "Playing": ai_time = (current_ticks - start_time) / 1000.0
+            if player_controller.get_state()['outcome'] == "Playing": 
+                player_time = (current_ticks - start_time) / 1000.0
+            if ai_controller.get_state()['outcome'] == "Playing": 
+                ai_time = (current_ticks - start_time) / 1000.0
 
             if current_ticks - last_move_time > move_interval:
                 # Cập nhật trạng thái của người chơi
@@ -121,8 +157,8 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
                     ai_controller.update_by_path_step(ai_path[ai_animation_step])
                     # Nếu AI ăn mồi, tìm đường mới
                     if len(ai_controller.get_state()['food']) < len(ai_path) - 1 - ai_animation_step + len(player_controller.get_state()['food']):
-                         ai_path = find_path_for_ai(ai_controller)
-                         ai_animation_step = 0
+                        ai_path = find_path_for_ai(ai_controller)
+                        ai_animation_step = 0
                 else: # Nếu AI không có đường đi, tìm lại
                     ai_path = find_path_for_ai(ai_controller)
                     ai_animation_step = 0
@@ -136,7 +172,13 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
         screen.fill(config.COLORS['bg'])
         _draw_game_panel(game_surface_player, player_map_x, "PLAYER", config.COLORS['highlight'], player_controller, player_time)
         _draw_game_panel(game_surface_ai, ai_map_x, "AI", config.COLORS['combo'], ai_controller, ai_time)
-        for btn_data in buttons.values(): UI_helpers.draw_button(screen, btn_data)
+        for btn_data in buttons.values(): 
+            UI_helpers.draw_button(screen, btn_data)
+
+        UI_helpers.draw_button(screen, mode_combobox['header'])
+        if is_mode_combobox_open:
+            for btn in mode_combobox['options']: 
+                UI_helpers.draw_button(screen, btn)
         
         pygame.display.flip()
         clock.tick(config.FPS)
