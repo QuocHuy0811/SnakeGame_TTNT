@@ -1,6 +1,5 @@
-# GameLogic/game_controller.py
 from . import snake_logic, food_logic, map_logic
-
+from Algorithms import algorithm_helpers
 class GameController:
     """
     Quản lý trạng thái và logic của một phiên chơi game Snake.
@@ -14,53 +13,86 @@ class GameController:
         self.snake_data = snake_logic.create_snake_from_map(self.map_data)
         self.food_data = food_logic.create_food_from_map(self.map_data)
         self.steps = 0
-        self.outcome = "Playing" # Các trạng thái: Playing, Completed, Stuck
+        self.outcome = "Playing"
 
     def get_state(self):
         """Lấy trạng thái hiện tại của game để giao diện có thể vẽ."""
         return {'snake': self.snake_data, 'food': self.food_data, 'steps': self.steps, 'outcome': self.outcome}
 
+    # --- HÀM SET_DIRECTION VỚI LOGIC ĐÃ SỬA ---
     def set_direction(self, direction):
-        """Nhận lệnh đổi hướng từ người chơi."""
+        """Nhận lệnh đổi hướng từ người chơi và kiểm tra tính hợp lệ."""
+        # KIỂM TRA QUAN TRỌNG: Nếu game đã kết thúc, không làm gì cả!
+        if self.outcome != "Playing":
+            return
+
         current_dir = self.snake_data['direction']
-        if direction == 'UP' and current_dir != 'DOWN': self.snake_data['direction'] = 'UP'
-        elif direction == 'DOWN' and current_dir != 'UP': self.snake_data['direction'] = 'DOWN'
-        elif direction == 'LEFT' and current_dir != 'RIGHT': self.snake_data['direction'] = 'LEFT'
-        elif direction == 'RIGHT' and current_dir != 'LEFT': self.snake_data['direction'] = 'RIGHT'
+        if direction == 'UP' and current_dir != 'DOWN':
+            self.snake_data['direction'] = 'UP'
+        elif direction == 'DOWN' and current_dir != 'UP':
+            self.snake_data['direction'] = 'DOWN'
+        elif direction == 'LEFT' and current_dir != 'RIGHT':
+            self.snake_data['direction'] = 'LEFT'
+        elif direction == 'RIGHT' and current_dir != 'LEFT':
+            self.snake_data['direction'] = 'RIGHT'
     
-    def _handle_movement_and_collision(self, is_grow):
-        """Hàm nội bộ xử lý logic ăn mồi và va chạm."""
-        head = self.snake_data['body'][0]
-        # 1. Kiểm tra va chạm với tường hoặc thân
-        if snake_logic.check_collision(self.snake_data, self.map_data):
+    def update(self):
+        """
+        Cập nhật 1 bước game cho người chơi.
+        Phân biệt rõ: dừng lại khi chạm tường và thua khi tự va chạm.
+        """
+        if self.outcome != "Playing":
+            return
+
+        # 1. "Nhìn trước" vị trí tiếp theo
+        next_head_pos = snake_logic.get_next_head_position(self.snake_data)
+
+        # 2. Xử lý va chạm
+        # 2a. Nếu va chạm với tường -> DỪNG LẠI, KHÔNG DI CHUYỂN
+        if next_head_pos in self.map_data['walls']:
+            return # Dừng lại, chờ người chơi đổi hướng. Game vẫn ở trạng thái "Playing".
+
+        # 2b. Nếu va chạm với thân -> THUA
+        if next_head_pos in self.snake_data['body']:
             self.outcome = "Stuck"
             return
-        # 2. Kiểm tra ăn mồi
-        eaten_food = next((food for food in self.food_data if food['pos'] == head), None)
+            
+        # 2c. Nếu bị kẹt (không còn đường đi) -> THUA
+        possible_moves = algorithm_helpers.get_valid_neighbors(self.snake_data['body'][0], self.map_data, self.snake_data['body'])
+        if not possible_moves:
+            self.outcome = "Stuck"
+            return
+
+        # 3. Nếu an toàn, thực hiện di chuyển
+        self.snake_data['body'].insert(0, next_head_pos)
+        self.steps += 1
+        
+        # 4. Kiểm tra ăn mồi
+        eaten_food = next((food for food in self.food_data if food['pos'] == next_head_pos), None)
         if eaten_food:
             self.food_data.remove(eaten_food)
-            if not self.food_data: self.outcome = "Completed"
-            return True # Trả về True nếu ăn mồi
-        # 3. Nếu không ăn, cắt đuôi
-        if not is_grow:
+            if not self.food_data:
+                self.outcome = "Completed"
+        else:
             self.snake_data['body'].pop()
-        return False
-
-    def update(self):
-        """Cập nhật 1 bước game cho người chơi."""
-        if self.outcome != "Playing": return
-        # Di chuyển rắn theo hướng hiện tại
-        snake_logic.move_snake(self.snake_data)
-        self.steps += 1
-        self._handle_movement_and_collision(is_grow=False)
-
+            
     def update_by_path_step(self, next_pos):
         """Cập nhật 1 bước game cho AI theo path."""
         if self.outcome != "Playing": return
-        # Di chuyển rắn đến vị trí tiếp theo
+            
         self.snake_data['body'].insert(0, next_pos)
         self.steps += 1
-        # AI sẽ tự xử lý việc dài ra (không cắt đuôi) nếu ăn mồi
-        ate_food = self._handle_movement_and_collision(is_grow=True)
-        if not ate_food:
-             self.snake_data['body'].pop()
+        
+        head = self.snake_data['body'][0]
+        if snake_logic.check_collision(self.snake_data, self.map_data):
+            self.outcome = "Stuck"
+            return
+            
+        eaten_food = next((food for food in self.food_data if food['pos'] == head), None)
+        if eaten_food:
+            self.food_data.remove(eaten_food)
+            if not self.food_data:
+                self.outcome = "Completed"
+        else:
+            if self.outcome == "Playing":
+                self.snake_data['body'].pop()

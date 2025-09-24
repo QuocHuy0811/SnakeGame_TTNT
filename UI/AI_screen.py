@@ -110,6 +110,9 @@ def run_ai_game(screen, clock, selected_map_name):
     game_state = "IDLE"
     selected_mode =  "Player"
 
+    if selected_mode == "Player":
+        game_state = "PLAYER_READY"
+
     ai_path = [] 
     animation_step = 0 
     last_animation_time = 0 
@@ -120,6 +123,9 @@ def run_ai_game(screen, clock, selected_map_name):
 
     visualization_timer_start = 0
     VISUALIZATION_DELAY = 500 #ms
+
+    player_move_interval = 200 # Tốc độ di chuyển của người chơi
+    last_player_move_time = 0
 
     current_time = 0.0 
     total_search_time = 0.0
@@ -143,6 +149,7 @@ def run_ai_game(screen, clock, selected_map_name):
     
     if selected_mode == "Player":
         buttons['solve']['is_enabled'] = False
+        buttons['solve']['text'] = "Start Game"
 
     running = True
     while running:
@@ -150,10 +157,11 @@ def run_ai_game(screen, clock, selected_map_name):
         mouse_pos = pygame.mouse.get_pos()
         
         # Cập nhật hover
-        for btn in buttons.values(): UI_helpers.update_button_hover_state(btn, mouse_pos)
+        for btn in buttons.values(): 
+            UI_helpers.update_button_hover_state(btn, mouse_pos)
         UI_helpers.update_button_hover_state(skip_button, mouse_pos)
 
-        if game_state in ["AI_AUTOPLAY", "ANIMATING_PATH"]:
+        if game_state in ["AI_AUTOPLAY", "VISUALIZING", "ANIMATING_PATH"]:
             UI_helpers.update_button_hover_state(skip_button, mouse_pos)
         
         for event in pygame.event.get():
@@ -171,8 +179,17 @@ def run_ai_game(screen, clock, selected_map_name):
                 current_time = 0.0
                 total_search_time = 0.0
 
+                if selected_mode == "Player":
+                    game_state = "PLAYER_READY"
+                else: # Các chế độ AI
+                    game_state = "IDLE"
+
             if UI_helpers.handle_button_events(event, buttons['solve']) and game_state == "IDLE":
-                game_state = "AI_AUTOPLAY"
+                if selected_mode == "Player":
+                    game_state = "PLAYER_PLAYING"
+                    last_player_move_time = pygame.time.get_ticks()
+                else: # Chế độ AI
+                    game_state = "AI_AUTOPLAY"
                 current_time = 0.0
                 total_search_time = 0.0
 
@@ -204,14 +221,48 @@ def run_ai_game(screen, clock, selected_map_name):
                 if new_mode is not None: # Nếu người dùng chọn một mode mới
                     selected_mode = new_mode
                     buttons['change_mode']['text'] = f"Mode: {selected_mode}"
+                    
                     # Cập nhật trạng thái nút Solve
                     if selected_mode == "Player":
                         buttons['solve']['is_enabled'] = False
+                        buttons['solve']['text'] = "Start Game"
+                        game_state = "PLAYER_READY" # Chuyển sang trạng thái sẵn sàng
                     else:
                         buttons['solve']['is_enabled'] = True
+                        buttons['solve']['text'] = "Solve"
+                        game_state = "IDLE" # Chuyển về trạng thái chờ cho AI
+
+            if event.type == pygame.KEYDOWN:
+                # Nếu game đang chờ, phím bấm đầu tiên sẽ bắt đầu game
+                if game_state == "PLAYER_READY":
+                    if event.key in [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]:
+                        game_state = "PLAYER_PLAYING"
+                        last_player_move_time = pygame.time.get_ticks()
+                        # Đặt hướng đi ngay lập tức
+                        if event.key == pygame.K_UP: controller.set_direction('UP')
+                        elif event.key == pygame.K_DOWN: controller.set_direction('DOWN')
+                        elif event.key == pygame.K_LEFT: controller.set_direction('LEFT')
+                        elif event.key == pygame.K_RIGHT: controller.set_direction('RIGHT')
+
+                # Nếu game đang chạy, phím bấm chỉ đổi hướng
+                elif game_state == "PLAYER_PLAYING":
+                    if event.key == pygame.K_UP: controller.set_direction('UP')
+                    elif event.key == pygame.K_DOWN: controller.set_direction('DOWN')
+                    elif event.key == pygame.K_LEFT: controller.set_direction('LEFT')
+                    elif event.key == pygame.K_RIGHT: controller.set_direction('RIGHT')
 
         # --- LOGIC ĐIỀU KHIỂN ---
-        if game_state == "AI_AUTOPLAY":
+        if game_state == "PLAYER_PLAYING":
+            current_ticks = pygame.time.get_ticks()
+            if current_ticks - last_player_move_time > player_move_interval:
+                controller.update() # Gọi hàm update của controller cho người chơi
+                last_player_move_time = current_ticks
+            
+            # Kiểm tra kết thúc game
+            if game_data['outcome'] != "Playing":
+                game_state = "IDLE"
+
+        elif game_state == "AI_AUTOPLAY":
             if not ai_path and game_data['food']:
                 algorithm_map = {"BFS": BFS.find_path_bfs, "A*": Astar.find_path_astar, "UCS": UCS.find_path_ucs, "DFS": DFS.find_path_dfs, "Greedy": Greedy.find_path_greedy}
                 algorithm_to_run = algorithm_map.get(selected_mode)
