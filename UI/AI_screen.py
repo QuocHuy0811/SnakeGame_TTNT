@@ -92,7 +92,7 @@ def run_ai_game(screen, clock, selected_map_name):
     info_font_bold = pygame.font.Font(config.FONT_PATH, 32); 
     info_font = pygame.font.Font(config.FONT_PATH, 26)
 
-    background_effects.init_background(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 200)
+    background_effects.init_background(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 1000)
     
     # Tạo bề mặt (surface) riêng cho khu vực game
     game_area_width = config.AI_MAP_WIDTH_TILES * config.TILE_SIZE
