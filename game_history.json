@@ -262,5 +262,93 @@
         "time": 0.0,
         "total_search_time": 0.414,
         "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "Greedy",
+        "steps": 285,
+        "time": 0.0,
+        "total_search_time": 0.117,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 249,
+        "time": 0.0,
+        "total_search_time": 0.421,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "A*",
+        "steps": 237,
+        "time": 0.0,
+        "total_search_time": 0.224,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Greedy",
+        "algorithm": "Greedy",
+        "steps": 116,
+        "time": 0.0,
+        "total_search_time": 0.023,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Greedy",
+        "algorithm": "BFS",
+        "steps": 111,
+        "time": 0.0,
+        "total_search_time": 0.295,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Greedy",
+        "algorithm": "A*",
+        "steps": 113,
+        "time": 0.0,
+        "total_search_time": 0.112,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "DFS",
+        "steps": 124,
+        "time": 0.0,
+        "total_search_time": 0.007,
+        "outcome": "Stuck"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 239,
+        "time": 0.0,
+        "total_search_time": 0.35,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 239,
+        "time": 0.0,
+        "total_search_time": 0.356,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Greedy",
+        "algorithm": "Greedy",
+        "steps": 123,
+        "time": 9.84,
+        "total_search_time": 0.022,
+        "outcome": "Completed"
+    },
+    {
+        "map": "BFS",
+        "algorithm": "BFS",
+        "steps": 119,
+        "time": 9.52,
+        "total_search_time": 0.345,
+        "outcome": "Completed"
     }
 ]

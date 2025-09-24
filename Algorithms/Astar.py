@@ -35,7 +35,7 @@ def find_path_astar(start_pos, food_pos_list, map_data, snake_body):
         _, current_g, current_pos, path = heapq.heappop(pq)
 
         if current_pos == target_pos:
-            return path
+            return {'path': path, 'visited': list(visited)}
 
         neighbors = get_valid_neighbors(current_pos, map_data, snake_body)
         for neighbor in neighbors:
@@ -46,4 +46,4 @@ def find_path_astar(start_pos, food_pos_list, map_data, snake_body):
                 new_f = new_g + new_h
                 heapq.heappush(pq, (new_f, new_g, neighbor, path + [neighbor]))
 
-    return None # Không tìm thấy đường đi
+    return {'path': None, 'visited': list(visited)} # Không tìm thấy đường đi

@@ -29,7 +29,7 @@ def find_path_ucs(start_pos, food_pos_list, map_data, snake_body):
 
         # Nếu vị trí hiện tại là một trong các mục tiêu, trả về đường đi
         if current_pos in food_pos_list:
-            return path
+            return {'path': path, 'visited': list(visited)}
 
         neighbors = get_valid_neighbors(current_pos, map_data, snake_body)
         for neighbor in neighbors:
@@ -38,4 +38,4 @@ def find_path_ucs(start_pos, food_pos_list, map_data, snake_body):
                 new_cost = current_cost + 1 # Giả sử mỗi bước đi tốn 1 chi phí
                 heapq.heappush(pq, (new_cost, neighbor, path + [neighbor]))
 
-    return None # Không tìm thấy đường đi
+    return {'path': None, 'visited': list(visited)} # Không tìm thấy đường đi

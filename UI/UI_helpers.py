@@ -98,3 +98,19 @@ def draw_map(surface, map_data):
             config.TILE_SIZE
         )
         pygame.draw.rect(surface, wall_color, rect)
+
+def draw_search_visualization(surface, visited_nodes, path_nodes):
+    """
+    Vẽ các ô đã duyệt (màu trắng) và đường đi cuối cùng (màu đỏ).
+    """
+    # Vẽ các ô đã duyệt trước
+    for pos in visited_nodes:
+        center_x = pos[0] * config.TILE_SIZE + config.TILE_SIZE // 2
+        center_y = pos[1] * config.TILE_SIZE + config.TILE_SIZE // 2
+        pygame.draw.circle(surface, (200, 200, 200, 100), (center_x, center_y), 3) # Chấm trắng mờ
+
+    # Vẽ đường đi cuối cùng đè lên trên
+    for pos in path_nodes:
+        center_x = pos[0] * config.TILE_SIZE + config.TILE_SIZE // 2
+        center_y = pos[1] * config.TILE_SIZE + config.TILE_SIZE // 2
+        pygame.draw.circle(surface, (255, 80, 80), (center_x, center_y), 4) # Chấm đỏ

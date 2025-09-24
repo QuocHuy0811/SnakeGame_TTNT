@@ -1,4 +1,3 @@
-# UI/AI_screen.py
 import pygame
 import config
 import copy
@@ -10,14 +9,25 @@ from Algorithms import BFS, Astar, UCS, DFS, Greedy
 from UI import AI_selection_screen, history_screen
 
 def find_path_with_algorithm(algorithm_func, start_pos, food_data, map_data, snake_body):
-    # ... (Hàm này không thay đổi)
-    shortest_path = None; min_len = float('inf'); food_positions = [food['pos'] for food in food_data]
+    food_positions = [food['pos'] for food in food_data]
+    
+    # Đối với các thuật toán tìm đường đến 1 food gần nhất
     if algorithm_func in [BFS.find_path_bfs, Astar.find_path_astar, Greedy.find_path_greedy]:
+        shortest_result = {'path': None, 'visited': []}
+        min_len = float('inf')
+        
+        all_visited_nodes = set()
         for food_pos in food_positions:
-            path = algorithm_func(start_pos, [food_pos], map_data, snake_body)
-            if path and len(path) < min_len: min_len, shortest_path = len(path), path
-    else: shortest_path = algorithm_func(start_pos, food_positions, map_data, snake_body)
-    return shortest_path
+            result = algorithm_func(start_pos, [food_pos], map_data, snake_body)
+            all_visited_nodes.update(result['visited']) # Gom tất cả các nút đã duyệt
+            if result['path'] and len(result['path']) < min_len:
+                min_len = len(result['path'])
+                shortest_result['path'] = result['path']
+        
+        shortest_result['visited'] = list(all_visited_nodes)
+        return shortest_result
+    else: # Đối với các thuật toán khác
+        return algorithm_func(start_pos, food_positions, map_data, snake_body)
 
 def _calculate_full_playthrough(initial_snake, initial_food, selected_mode, map_data):
     """
@@ -42,7 +52,9 @@ def _calculate_full_playthrough(initial_snake, initial_food, selected_mode, map_
 
     while temp_food:
         search_start_time = pygame.time.get_ticks()
-        path = find_path_with_algorithm(algorithm_to_run, temp_snake_body[0], temp_food, map_data, temp_snake_body)
+        search_result = find_path_with_algorithm(algorithm_to_run, temp_snake_body[0], temp_food, map_data, temp_snake_body)
+        path = search_result.get('path')
+
         total_search_time += (pygame.time.get_ticks() - search_start_time) / 1000.0
 
         if not path or len(path) <= 1:
@@ -103,6 +115,12 @@ def run_ai_game(screen, clock, selected_map_name):
     last_animation_time = 0 
     animation_interval = 80
 
+    visited_nodes = []
+    path_nodes_to_draw = []
+
+    visualization_timer_start = 0
+    VISUALIZATION_DELAY = 500 #ms
+
     current_time = 0.0 
     total_search_time = 0.0
 
@@ -120,8 +138,7 @@ def run_ai_game(screen, clock, selected_map_name):
     }
 
     map_end_x = game_area_x + game_area_width
-    middle_area_center_x = map_end_x + (panel_x - map_end_x) / 2
-    middle_area_center_x -= 100 
+    middle_area_center_x = map_end_x + (panel_x - map_end_x) / 2 - 100
     skip_button = UI_helpers.create_button(middle_area_center_x - 100, 550, 200, 50, "Skip")
     
     if selected_mode == "Player":
@@ -196,42 +213,59 @@ def run_ai_game(screen, clock, selected_map_name):
         # --- LOGIC ĐIỀU KHIỂN ---
         if game_state == "AI_AUTOPLAY":
             if not ai_path and game_data['food']:
-                algorithm_to_run = None
-                if selected_mode == "BFS": algorithm_to_run = BFS.find_path_bfs
-                elif selected_mode == "A*": algorithm_to_run = Astar.find_path_astar
-                elif selected_mode == "UCS": algorithm_to_run = UCS.find_path_ucs
-                elif selected_mode == "DFS": algorithm_to_run = DFS.find_path_dfs
-                elif selected_mode == "Greedy": algorithm_to_run = Greedy.find_path_greedy
+                algorithm_map = {"BFS": BFS.find_path_bfs, "A*": Astar.find_path_astar, "UCS": UCS.find_path_ucs, "DFS": DFS.find_path_dfs, "Greedy": Greedy.find_path_greedy}
+                algorithm_to_run = algorithm_map.get(selected_mode)
+                
                 if algorithm_to_run:
                     search_start_time = pygame.time.get_ticks()
-                    path = find_path_with_algorithm(algorithm_to_run, game_data['snake']['body'][0], game_data['food'], controller.map_data, game_data['snake']['body'])
+                    search_result = find_path_with_algorithm(algorithm_to_run, game_data['snake']['body'][0], game_data['food'], controller.map_data, game_data['snake']['body'])
                     total_search_time += (pygame.time.get_ticks() - search_start_time) / 1000.0
-                    if path: 
-                        ai_path, animation_step, game_state = path, 0, "ANIMATING_PATH"; last_animation_time = pygame.time.get_ticks()
+                    
+                    visited_nodes = search_result.get('visited', [])
+                    ai_path = search_result.get('path', None)
+                    
+                    if ai_path: 
+                        path_nodes_to_draw = ai_path
+                        game_state = "VISUALIZING"
+                        visualization_timer_start = pygame.time.get_ticks()
                     else:
                         controller.outcome = "Stuck"
                         game_helpers.save_game_result(selected_map_name, selected_mode, game_data['steps'], current_time, total_search_time, "Stuck")
                         game_state = "IDLE"
-        
-        if game_state == "ANIMATING_PATH":
+
+        elif game_state == "VISUALIZING":
+            if pygame.time.get_ticks() - visualization_timer_start > VISUALIZATION_DELAY:
+                game_state = "ANIMATING_PATH"
+                last_animation_time = pygame.time.get_ticks()
+                animation_step = 1 # Bắt đầu di chuyển từ bước đầu tiên của path
+
+        elif game_state == "ANIMATING_PATH":
             current_render_time = pygame.time.get_ticks()
             if current_render_time - last_animation_time > animation_interval:
-                animation_step += 1
+                # Kiểm tra xem có còn bước đi trong path không
                 if animation_step < len(ai_path):
                     controller.update_by_path_step(ai_path[animation_step])
+                    animation_step += 1
                     last_animation_time = current_render_time
-                    if controller.get_state()['outcome'] == "Completed":
-                        game_state = "IDLE"
-                        ai_path = []
-                        current_time = controller.get_state()['steps'] * (animation_interval / 1000.0)
-                        game_helpers.save_game_result(selected_map_name, selected_mode, controller.get_state()['steps'], current_time, total_search_time, "Completed")
-                else:
-                    ai_path, game_state = [], "AI_AUTOPLAY"
+                # Nếu đã đi hết path, animation cho đoạn này kết thúc
+                else: 
+                    visited_nodes, path_nodes_to_draw = [], [] # Xóa các chấm visualize
+                    ai_path = [] # Xóa path cũ
+                    game_state = "AI_AUTOPLAY" # Quay lại tìm đường cho miếng mồi tiếp theo
+
+            # Kiểm tra điều kiện thắng (có thể xảy ra bất cứ lúc nào trong lúc di chuyển)
+            if controller.get_state()['outcome'] == "Completed":
+                game_state = "IDLE"
+                current_time = controller.get_state()['steps'] * (animation_interval / 1000.0)
+                game_helpers.save_game_result(selected_map_name, selected_mode, controller.get_state()['steps'], current_time, total_search_time, "Completed")
+                visited_nodes, path_nodes_to_draw = [], [] # Xóa các chấm visualize khi thắng
 
         # --- VẼ LÊN MÀN HÌNH ---\
         background_effects.draw_background(screen)
-
         game_surface.fill(config.COLORS['bg'])
+
+        if visited_nodes:
+            UI_helpers.draw_search_visualization(game_surface, visited_nodes, path_nodes_to_draw)
         UI_helpers.draw_map(game_surface, controller.map_data)
         snake_logic.draw_snake(game_surface, game_data['snake'])
         food_logic.draw_food(game_surface, game_data['food'])

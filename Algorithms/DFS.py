@@ -25,7 +25,7 @@ def find_path_dfs(start_pos, food_pos_list, map_data, snake_body):
 
         # Nếu vị trí hiện tại là thức ăn, trả về đường đi
         if current_pos in food_pos_list:
-            return path
+            return {'path': path, 'visited': list(visited)}
 
         # Lấy các ô hàng xóm hợp lệ
         neighbors = get_valid_neighbors(current_pos, map_data, snake_body)
@@ -35,4 +35,4 @@ def find_path_dfs(start_pos, food_pos_list, map_data, snake_body):
                 new_path = path + [neighbor]
                 stack.append((neighbor, new_path))
 
-    return None # Không tìm thấy đường đi
+    return {'path': None, 'visited': list(visited)} # Không tìm thấy đường đi
