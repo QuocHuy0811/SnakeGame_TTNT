@@ -31,14 +31,21 @@ def create_button(x, y, width, height, text):
         'text': text,
         'color': config.COLORS['btn'],
         'hover_color': config.COLORS['btn_hover'],
-        'is_hovered': False
+        'disabled_color': config.COLORS['btn_disabled'],
+        'is_hovered': False,
+        'is_enabled': True
     }
 
 def draw_button(surface, button_data):
     """
         Vẽ một nút bấm (dạng dictionary) lên màn hình.
     """
-    current_color = button_data['hover_color'] if button_data['is_hovered'] else button_data['color']
+    current_color = button_data['color']
+    if not button_data['is_enabled']:
+        current_color = button_data['disabled_color']
+    elif button_data['is_hovered']:
+        current_color = button_data['hover_color']
+
     pygame.draw.rect(surface, current_color, button_data['rect'], border_radius=10)
     draw_text(button_data['text'], BUTTON_FONT, config.COLORS['white'], surface, button_data['rect'].centerx, button_data['rect'].centery)
 
@@ -48,7 +55,7 @@ def handle_button_events(event, button_data):
         Trả về True nếu nút được click.
         Trạng thái hover được cập nhật riêng.
     """
-    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and button_data['is_hovered']:
+    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and button_data['is_hovered'] and button_data['is_enabled']:
         return True
     return False
 
@@ -56,7 +63,10 @@ def update_button_hover_state(button_data, mouse_pos):
     """
         Cập nhật trạng thái hover cho một nút.
     """
-    button_data['is_hovered'] = button_data['rect'].collidepoint(mouse_pos)
+    if button_data['is_enabled']:
+        button_data['is_hovered'] = button_data['rect'].collidepoint(mouse_pos)
+    else:
+        button_data['is_hovered'] = False
 
 def draw_game_grid(surface):
     """
