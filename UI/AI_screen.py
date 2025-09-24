@@ -7,7 +7,7 @@ from UI.MainMenu import background_effects
 from GameLogic import game_helpers, snake_logic, food_logic
 from GameLogic.game_controller import GameController 
 from Algorithms import BFS, Astar, UCS, DFS, Greedy
-from UI import history_screen
+from UI import AI_selection_screen, history_screen
 
 def find_path_with_algorithm(algorithm_func, start_pos, food_data, map_data, snake_body):
     # ... (Hàm này không thay đổi)
@@ -97,7 +97,6 @@ def run_ai_game(screen, clock, selected_map_name):
     # --- 2. QUẢN LÝ TRẠNG THÁI GIAO DIỆN ---
     game_state = "IDLE"
     selected_mode =  "Player"
-    is_mode_combobox_open = False
 
     ai_path = [] 
     animation_step = 0 
@@ -116,11 +115,8 @@ def run_ai_game(screen, clock, selected_map_name):
         'solve': UI_helpers.create_button(panel_center_x - 125, 150, 250, 40, "Solve"),
         'reset': UI_helpers.create_button(panel_center_x - 125, 200, 250, 40, "Reset"),
         'history': UI_helpers.create_button(panel_center_x - 125, 250, 250, 40, "History"),
-        'back_to_menu': UI_helpers.create_button(panel_center_x - 125, 300, 250, 40, "Back to Menu")
-    }
-    mode_combobox = {
-        'header': UI_helpers.create_button(panel_center_x - 125, 350, 250, 40, f"Mode: {selected_mode}"),
-        'options': [UI_helpers.create_button(panel_center_x - 125, 350 + (i + 1) * 45, 250, 35, mode) for i, mode in enumerate(["Player", "BFS", "DFS", "A*", "UCS", "Greedy"])]
+        'back_to_menu': UI_helpers.create_button(panel_center_x - 125, 300, 250, 40, "Back to Menu"),
+        'change_mode': UI_helpers.create_button(panel_center_x - 125, 350, 250, 40, f"Mode: {selected_mode}")
     }
 
     map_end_x = game_area_x + game_area_width
@@ -138,9 +134,6 @@ def run_ai_game(screen, clock, selected_map_name):
         
         # Cập nhật hover
         for btn in buttons.values(): UI_helpers.update_button_hover_state(btn, mouse_pos)
-        UI_helpers.update_button_hover_state(mode_combobox['header'], mouse_pos)
-        if is_mode_combobox_open:
-            for btn in mode_combobox['options']: UI_helpers.update_button_hover_state(btn, mouse_pos)
         UI_helpers.update_button_hover_state(skip_button, mouse_pos)
 
         if game_state in ["AI_AUTOPLAY", "ANIMATING_PATH"]:
@@ -188,20 +181,17 @@ def run_ai_game(screen, clock, selected_map_name):
                     game_state = "IDLE"
                     ai_path  = []
             
-            if UI_helpers.handle_button_events(event, mode_combobox['header']):
-                is_mode_combobox_open = not is_mode_combobox_open
-            elif is_mode_combobox_open:
-                for btn in mode_combobox['options']:
-                    if UI_helpers.handle_button_events(event, btn):
-                        selected_mode = btn['text']
-                        mode_combobox['header']['text'] = f"Mode: {selected_mode}"
-                        is_mode_combobox_open = False
-                        # Mỗi khi chế độ thay đổi, kiểm tra lại
-                        if selected_mode == "Player":
-                            buttons['solve']['is_enabled'] = False
-                        else:
-                            buttons['solve']['is_enabled'] = True
-                        break
+            if UI_helpers.handle_button_events(event, buttons['change_mode']):
+                # Gọi cửa sổ pop-up và chờ kết quả trả về
+                new_mode = AI_selection_screen.run_algorithm_selection(screen)
+                if new_mode is not None: # Nếu người dùng chọn một mode mới
+                    selected_mode = new_mode
+                    buttons['change_mode']['text'] = f"Mode: {selected_mode}"
+                    # Cập nhật trạng thái nút Solve
+                    if selected_mode == "Player":
+                        buttons['solve']['is_enabled'] = False
+                    else:
+                        buttons['solve']['is_enabled'] = True
 
         # --- LOGIC ĐIỀU KHIỂN ---
         if game_state == "AI_AUTOPLAY":
@@ -271,11 +261,6 @@ def run_ai_game(screen, clock, selected_map_name):
         
         for btn_data in buttons.values(): 
             UI_helpers.draw_button(screen, btn_data)
-        
-        UI_helpers.draw_button(screen, mode_combobox['header'])
-        if is_mode_combobox_open:
-            for btn in mode_combobox['options']: 
-                UI_helpers.draw_button(screen, btn)
         
         pygame.display.flip(); 
         clock.tick(config.FPS)
