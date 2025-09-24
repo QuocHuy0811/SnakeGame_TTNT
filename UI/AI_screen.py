@@ -128,6 +128,9 @@ def run_ai_game(screen, clock, selected_map_name):
     middle_area_center_x -= 100 
     skip_button = UI_helpers.create_button(middle_area_center_x - 100, 550, 200, 50, "Skip")
     
+    if selected_mode == "Player":
+        buttons['solve']['is_enabled'] = False
+
     running = True
     while running:
         game_data = controller.get_state()
@@ -183,7 +186,7 @@ def run_ai_game(screen, clock, selected_map_name):
                     # Lưu kết quả và quay về trạng thái chờ
                     game_helpers.save_game_result(selected_map_name, selected_mode, controller.steps, current_time, total_search_time, controller.outcome)
                     game_state = "IDLE"
-                    ai_path = []
+                    ai_path  = []
             
             if UI_helpers.handle_button_events(event, mode_combobox['header']):
                 is_mode_combobox_open = not is_mode_combobox_open
@@ -193,6 +196,11 @@ def run_ai_game(screen, clock, selected_map_name):
                         selected_mode = btn['text']
                         mode_combobox['header']['text'] = f"Mode: {selected_mode}"
                         is_mode_combobox_open = False
+                        # Mỗi khi chế độ thay đổi, kiểm tra lại
+                        if selected_mode == "Player":
+                            buttons['solve']['is_enabled'] = False
+                        else:
+                            buttons['solve']['is_enabled'] = True
                         break
 
         # --- LOGIC ĐIỀU KHIỂN ---
