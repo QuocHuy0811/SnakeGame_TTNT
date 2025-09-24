@@ -31,7 +31,7 @@ def find_path_greedy(start_pos, food_pos_list, map_data, snake_body):
         _, current_pos, path = heapq.heappop(pq)
 
         if current_pos == target_pos:
-            return path
+            return {'path': path, 'visited': list(visited)}
 
         neighbors = get_valid_neighbors(current_pos, map_data, snake_body)
         for neighbor in neighbors:
@@ -40,4 +40,4 @@ def find_path_greedy(start_pos, food_pos_list, map_data, snake_body):
                 new_h = manhattan_distance(neighbor, target_pos)
                 heapq.heappush(pq, (new_h, neighbor, path + [neighbor]))
 
-    return None # Không tìm thấy đường đi
+    return {'path': None, 'visited': list(visited)} # Không tìm thấy đường đi
