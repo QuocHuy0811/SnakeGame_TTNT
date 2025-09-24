@@ -20,7 +20,7 @@ def get_valid_neighbors(position, map_data, snake_body):
         # Kiểm tra xem có nằm trong ranh giới bản đồ không
         if 0 <= nx < config.AI_MAP_WIDTH_TILES and 0 <= ny < config.AI_MAP_HEIGHT_TILES:
             neighbor_pos = (nx, ny)
-            # Kiểm tra xem có phải là tường hoặc thân rắn không
+            # --- KHÔI PHỤC KIỂM TRA VA CHẠM TƯỜNG ---
             if neighbor_pos not in map_data['walls'] and neighbor_pos not in snake_body:
                 neighbors.append(neighbor_pos)
 
