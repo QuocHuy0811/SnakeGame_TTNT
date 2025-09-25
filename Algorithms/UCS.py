@@ -1,7 +1,6 @@
 """
     Thuật toán UCS
 """
-# Algorithms/UCS.py
 import heapq
 from Algorithms.algorithm_helpers import get_valid_neighbors
 

@@ -1,4 +1,6 @@
-# UI/history_screen.py
+"""
+    Giao diện lịch sử 
+"""
 import pygame
 import config
 from UI import UI_helpers

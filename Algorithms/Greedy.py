@@ -1,7 +1,6 @@
 """
     Thuật toán Greedy
 """
-# Algorithms/Greedy.py
 import heapq
 from Algorithms.algorithm_helpers import get_valid_neighbors, manhattan_distance
 

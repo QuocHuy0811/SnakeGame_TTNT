@@ -1,3 +1,6 @@
+"""
+    Hàm vẽ map
+"""
 import os
 import config
 

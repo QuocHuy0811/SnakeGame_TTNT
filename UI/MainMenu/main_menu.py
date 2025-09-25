@@ -1,5 +1,5 @@
 """
-    VẼ GIAO DIỆN CHÍNH
+    Giao diện chính
 """
 import pygame
 import sys
