@@ -1,4 +1,6 @@
-# GameLogic/game_helpers.py
+"""
+    Hàm phụ trong GameLogic
+"""
 import json
 import os
 

@@ -1,3 +1,6 @@
+"""
+    Giao diện chế độ AI
+"""
 import pygame
 import config
 import copy
@@ -179,6 +182,9 @@ def run_ai_game(screen, clock, selected_map_name):
                 animation_step = 0
                 current_time = 0.0
                 total_search_time = 0.0
+
+                visited_nodes = []
+                path_nodes_to_draw = []
 
                 if selected_mode == "Player":
                     game_state = "PLAYER_READY"

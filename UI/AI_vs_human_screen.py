@@ -1,3 +1,6 @@
+"""
+    Giao diện chế độ Người với AI
+"""
 import pygame
 import config
 from UI import UI_helpers, AI_selection_screen

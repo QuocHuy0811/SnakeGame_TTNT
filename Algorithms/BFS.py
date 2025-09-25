@@ -1,7 +1,6 @@
 """
     Thuật toán BFS
 """
-# Algorithms/BFS.py
 from collections import deque
 from Algorithms.algorithm_helpers import get_valid_neighbors
 

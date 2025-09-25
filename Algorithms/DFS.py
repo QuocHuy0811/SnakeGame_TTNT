@@ -1,7 +1,6 @@
 """
     Thuật toán DFS
 """
-# Algorithms/DFS.py
 from Algorithms.algorithm_helpers import get_valid_neighbors
 
 def find_path_dfs(start_pos, food_pos_list, map_data, snake_body):

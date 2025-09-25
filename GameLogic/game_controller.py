@@ -1,3 +1,6 @@
+"""
+    Hàm điều khiển chính
+"""
 from . import snake_logic, food_logic, map_logic
 from Algorithms import algorithm_helpers
 class GameController:

@@ -1,7 +1,6 @@
 """
     CÁC HÀM DÙNG CHUNG TRONG FOLDER ALGORITHMS: Hàm tìm vị trí xung quanh (neighbors), Hàm tính khoảng các mahatan 
 """
-# Algorithms/algorithm_helpers.py
 import config
 
 def get_valid_neighbors(position, map_data, snake_body):

@@ -350,5 +350,21 @@
         "time": 9.52,
         "total_search_time": 0.345,
         "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 196,
+        "time": 0.0,
+        "total_search_time": 0.196,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "Greedy",
+        "steps": 272,
+        "time": 0.0,
+        "total_search_time": 0.097,
+        "outcome": "Completed"
     }
 ]
