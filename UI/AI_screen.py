@@ -229,6 +229,10 @@ def run_ai_game(screen, clock, selected_map_name):
                     game_helpers.save_game_result(selected_map_name, selected_mode, controller.steps, current_time, total_search_time, controller.outcome)
                     game_state = "IDLE"
                     ai_path  = []
+
+                    visited_nodes = []
+                    path_nodes_to_draw = []
+                    target_food_pos = None
             
             if UI_helpers.handle_button_events(event, buttons['change_mode']):
                 # Gọi cửa sổ pop-up và chờ kết quả trả về
