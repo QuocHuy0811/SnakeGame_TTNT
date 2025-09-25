@@ -17,7 +17,6 @@ def find_path_bfs(start_pos, food_pos_list, map_data, snake_body):
     visited = {start_pos} # Set chứa các vị trí đã ghé thăm
 
     while queue:
-        #Lấy vị trí hiện tại và đường đi đến vị trí đó (Đầu hàng đợi)
         current_pos, path = queue.popleft()
 
         # Nếu vị trí hiện tại là thức ăn, trả về đường đi

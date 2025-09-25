@@ -458,9 +458,49 @@
     {
         "map": "Astar",
         "algorithm": "BFS",
-        "steps": 248,
+        "steps": 245,
         "time": 0.0,
-        "total_search_time": 0.405,
+        "total_search_time": 0.191,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 257,
+        "time": 20.56,
+        "total_search_time": 0.28,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "UCS",
+        "steps": 245,
+        "time": 19.6,
+        "total_search_time": 0.029,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Greedy",
+        "algorithm": "Greedy",
+        "steps": 19,
+        "time": 0.0,
+        "total_search_time": 0.001,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Greedy",
+        "algorithm": "Greedy",
+        "steps": 123,
+        "time": 9.84,
+        "total_search_time": 0.031,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 109,
+        "time": 0.0,
+        "total_search_time": 0.035,
         "outcome": "Completed"
     }
 ]
