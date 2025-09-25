@@ -8,7 +8,7 @@ from UI import UI_helpers
 from UI.MainMenu import background_effects
 from GameLogic import game_helpers, snake_logic, food_logic
 from GameLogic.game_controller import GameController 
-from Algorithms import BFS, Astar, UCS, DFS, Greedy
+from Algorithms import BFS, Astar, UCS, DFS, Greedy, DLS
 from UI import AI_selection_screen, history_screen
 
 def find_path_with_algorithm(algorithm_func, start_pos, food_data, map_data, snake_body):
@@ -49,7 +49,7 @@ def _calculate_full_playthrough(initial_snake, initial_food, selected_mode, map_
     # Lịch sử tất cả các vị trí đầu rắn đã đi qua
     path_history = temp_snake_body[:] # Bắt đầu với vị trí ban đầu
 
-    algorithm_map = {"BFS": BFS.find_path_bfs, "A*": Astar.find_path_astar, "UCS": UCS.find_path_ucs, "DFS": DFS.find_path_dfs, "Greedy": Greedy.find_path_greedy}
+    algorithm_map = {"BFS": BFS.find_path_bfs, "A*": Astar.find_path_astar, "UCS": UCS.find_path_ucs, "DFS": DFS.find_path_dfs, "Greedy": Greedy.find_path_greedy,"DLS": DLS.find_path_dls}
     algorithm_to_run = algorithm_map.get(selected_mode)
     if not algorithm_to_run: return None
 

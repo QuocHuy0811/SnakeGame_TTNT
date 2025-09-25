@@ -502,5 +502,69 @@
         "time": 0.0,
         "total_search_time": 0.035,
         "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "DLS",
+        "steps": 135,
+        "time": 0.0,
+        "total_search_time": 0.007,
+        "outcome": "Stuck"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "DLS",
+        "steps": 0,
+        "time": 0.0,
+        "total_search_time": 0.0,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "DLS",
+        "steps": 135,
+        "time": 0.0,
+        "total_search_time": 0.006,
+        "outcome": "Stuck"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "A*",
+        "steps": 245,
+        "time": 19.6,
+        "total_search_time": 0.163,
+        "outcome": "Completed"
+    },
+    {
+        "map": "BFS",
+        "algorithm": "A*",
+        "steps": 111,
+        "time": 8.88,
+        "total_search_time": 0.069,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Greedy",
+        "algorithm": "DLS",
+        "steps": 988,
+        "time": 0.0,
+        "total_search_time": 0.02,
+        "outcome": "Completed"
+    },
+    {
+        "map": "BFS",
+        "algorithm": "DLS",
+        "steps": 1050,
+        "time": 0.0,
+        "total_search_time": 0.025,
+        "outcome": "Completed"
+    },
+    {
+        "map": "BFS",
+        "algorithm": "DLS",
+        "steps": 41,
+        "time": 0.0,
+        "total_search_time": 0.006,
+        "outcome": "Stuck"
     }
 ]
