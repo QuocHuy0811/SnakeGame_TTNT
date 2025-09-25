@@ -91,6 +91,7 @@ def run_ai_game(screen, clock, selected_map_name):
     panel_font = pygame.font.Font(config.FONT_PATH, 24); 
     info_font_bold = pygame.font.Font(config.FONT_PATH, 32); 
     info_font = pygame.font.Font(config.FONT_PATH, 26)
+    instruction_font = pygame.font.Font(config.FONT_PATH, 18)
 
     background_effects.init_background(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 1000)
     
@@ -322,6 +323,18 @@ def run_ai_game(screen, clock, selected_map_name):
         food_logic.draw_food(game_surface, game_data['food'])
         
         screen.blit(game_surface, (game_area_x, game_area_y))
+
+        if selected_mode == "Player":
+            instruction_y = game_area_y + game_area_height + 25
+            instruction_x = game_area_x +  280
+            UI_helpers.draw_text(
+                "Di chuyển bằng phím mũi tên",
+                instruction_font,
+                config.COLORS['white'],
+                screen,
+                instruction_x,
+                instruction_y
+            )
 
         current_time = game_data['steps'] * (animation_interval / 1000.0)
         
