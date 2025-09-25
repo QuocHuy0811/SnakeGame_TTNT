@@ -57,7 +57,7 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
     ai_path = []
     ai_animation_step = 0
     last_move_time = 0
-    move_interval = 150 # Tốc độ game
+    move_interval = 200 # Tốc độ game
 
     selected_ai_mode = "BFS"
 

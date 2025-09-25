@@ -134,6 +134,12 @@ def run_ai_game(screen, clock, selected_map_name):
     current_time = 0.0 
     total_search_time = 0.0
 
+    # --- THÊM BIẾN CHO HIỆU ỨNG NHẤP NHÁY ---
+    target_food_pos = None
+    is_blinking_visible = True
+    last_blink_time = 0
+    BLINK_INTERVAL = 200 # Tốc độ nháy (ms)
+
     # --- 3. TẠO CÁC THÀNH PHẦN GIAO DIỆN (UI) ---
     panel_x = config.SCREEN_WIDTH - config.AI_PANEL_WIDTH
     panel_center_x = panel_x + config.AI_PANEL_WIDTH / 2
@@ -159,6 +165,7 @@ def run_ai_game(screen, clock, selected_map_name):
     while running:
         game_data = controller.get_state()
         mouse_pos = pygame.mouse.get_pos()
+        current_ticks = pygame.time.get_ticks()
         
         # Cập nhật hover
         for btn in buttons.values(): 
@@ -185,6 +192,7 @@ def run_ai_game(screen, clock, selected_map_name):
 
                 visited_nodes = []
                 path_nodes_to_draw = []
+                target_food_pos = None
 
                 if selected_mode == "Player":
                     game_state = "PLAYER_READY"
@@ -260,7 +268,7 @@ def run_ai_game(screen, clock, selected_map_name):
 
         # --- LOGIC ĐIỀU KHIỂN ---
         if game_state == "PLAYER_PLAYING":
-            current_ticks = pygame.time.get_ticks()
+            # current_ticks = pygame.time.get_ticks()
             if current_ticks - last_player_move_time > player_move_interval:
                 controller.update() # Gọi hàm update của controller cho người chơi
                 last_player_move_time = current_ticks
@@ -269,7 +277,7 @@ def run_ai_game(screen, clock, selected_map_name):
             if game_data['outcome'] != "Playing":
                 game_state = "IDLE"
 
-        elif game_state == "AI_AUTOPLAY":
+        elif game_state == "AI_AUTOPLAY" and game_data['food']:
             if not ai_path and game_data['food']:
                 algorithm_map = {"BFS": BFS.find_path_bfs, "A*": Astar.find_path_astar, "UCS": UCS.find_path_ucs, "DFS": DFS.find_path_dfs, "Greedy": Greedy.find_path_greedy}
                 algorithm_to_run = algorithm_map.get(selected_mode)
@@ -284,6 +292,7 @@ def run_ai_game(screen, clock, selected_map_name):
                     
                     if ai_path: 
                         path_nodes_to_draw = ai_path
+                        target_food_pos = ai_path[-1]
                         game_state = "VISUALIZING"
                         visualization_timer_start = pygame.time.get_ticks()
                     else:
@@ -291,11 +300,15 @@ def run_ai_game(screen, clock, selected_map_name):
                         game_helpers.save_game_result(selected_map_name, selected_mode, game_data['steps'], current_time, total_search_time, "Stuck")
                         game_state = "IDLE"
 
-        elif game_state == "VISUALIZING":
-            if pygame.time.get_ticks() - visualization_timer_start > VISUALIZATION_DELAY:
+        if game_state == "VISUALIZING":
+            if current_ticks - last_blink_time > BLINK_INTERVAL:
+                is_blinking_visible = not is_blinking_visible
+                last_blink_time = current_ticks
+
+            if current_ticks - visualization_timer_start > VISUALIZATION_DELAY:
                 game_state = "ANIMATING_PATH"
-                last_animation_time = pygame.time.get_ticks()
-                animation_step = 1 # Bắt đầu di chuyển từ bước đầu tiên của path
+                last_animation_time = current_ticks
+                animation_step = 1
 
         elif game_state == "ANIMATING_PATH":
             current_render_time = pygame.time.get_ticks()
@@ -309,11 +322,13 @@ def run_ai_game(screen, clock, selected_map_name):
                 else: 
                     visited_nodes, path_nodes_to_draw = [], [] # Xóa các chấm visualize
                     ai_path = [] # Xóa path cũ
+                    target_food_pos = None
                     game_state = "AI_AUTOPLAY" # Quay lại tìm đường cho miếng mồi tiếp theo
 
             # Kiểm tra điều kiện thắng (có thể xảy ra bất cứ lúc nào trong lúc di chuyển)
             if controller.get_state()['outcome'] == "Completed":
                 game_state = "IDLE"
+                target_food_pos = None
                 current_time = controller.get_state()['steps'] * (animation_interval / 1000.0)
                 game_helpers.save_game_result(selected_map_name, selected_mode, controller.get_state()['steps'], current_time, total_search_time, "Completed")
                 visited_nodes, path_nodes_to_draw = [], [] # Xóa các chấm visualize khi thắng
@@ -326,8 +341,11 @@ def run_ai_game(screen, clock, selected_map_name):
             UI_helpers.draw_search_visualization(game_surface, visited_nodes, path_nodes_to_draw)
         UI_helpers.draw_map(game_surface, controller.map_data)
         snake_logic.draw_snake(game_surface, game_data['snake'])
-        food_logic.draw_food(game_surface, game_data['food'])
-        
+        blinking_info = None
+        if game_state == "VISUALIZING" and target_food_pos:
+            blinking_info = (target_food_pos, is_blinking_visible)
+        food_logic.draw_food(game_surface, game_data['food'], blinking_info)
+
         screen.blit(game_surface, (game_area_x, game_area_y))
 
         if selected_mode == "Player":
