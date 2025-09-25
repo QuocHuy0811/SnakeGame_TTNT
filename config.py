@@ -4,7 +4,7 @@
 # --- Kích thước & Cài đặt màn hình ---
 TILE_SIZE = 20  # Kích thước mỗi ô vuông trong map (QUAN TRỌNG)
 FPS = 60
-GAME_TITLE = "23110103 _ Đoàn Quốc Huy && 23110124 _ Đoàn Ngọc Mạnh --- Rắn Săn Mồi ---"    
+GAME_TITLE = "Nhóm 15: 23110103 _ Đoàn Quốc Huy && 23110124 _ Đoàn Ngọc Mạnh --- Rắn Săn Mồi ---"    
 # --- Đường dẫn ---
 MAPS_DIR = "Maps"
 FONT_PATH = "Assets/Fonts/Tomorrow-Regular.ttf"
@@ -67,6 +67,7 @@ COLORS = {
     'line': (200, 200, 200),
     'title': (0, 255, 255),         # Màu tiêu đề game
     'highlight': (0, 255, 0),
+    'food': (250, 250, 210),
 }
 
 # --- Cài đặt Font ---

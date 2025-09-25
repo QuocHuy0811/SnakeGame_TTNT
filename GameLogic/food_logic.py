@@ -16,14 +16,28 @@ def create_food_from_map(map_data):
     # Chuyển đổi danh sách tọa độ thành danh sách các đối tượng thức ăn
     return [{'pos': pos} for pos in map_data['food_start']]
 
-def draw_food(surface, food_list):
-    """Vẽ tất cả thức ăn trong danh sách lên một bề mặt."""
-    food_color = (255, 196, 0) # Có thể lấy từ config.COLORS
-    for food in food_list:
+def draw_food(surface, food_data, blinking_info=None):
+    """
+    Vẽ tất cả thức ăn lên màn hình.
+    :param blinking_info: Một tuple (vị trí, is_visible) để vẽ hiệu ứng nhấp nháy.
+    """
+    blinking_pos = None
+    is_blink_visible = False
+    if blinking_info:
+        blinking_pos, is_blink_visible = blinking_info
+
+    for food in food_data:
+        pos = food['pos']
         rect = pygame.Rect(
-            food['pos'][0] * config.TILE_SIZE,
-            food['pos'][1] * config.TILE_SIZE,
+            pos[0] * config.TILE_SIZE,
+            pos[1] * config.TILE_SIZE,
             config.TILE_SIZE,
             config.TILE_SIZE
         )
-        pygame.draw.rect(surface, food_color, rect)
+        
+        # Luôn vẽ viên thức ăn
+        pygame.draw.rect(surface, config.COLORS['food'], rect)
+        
+        # Nếu đây là thức ăn đích và đang trong chu kỳ "sáng", vẽ vòng tròn highlight
+        if pos == blinking_pos and is_blink_visible:
+            pygame.draw.circle(surface, config.COLORS['highlight'], rect.center, config.TILE_SIZE // 2 + 3, 3)

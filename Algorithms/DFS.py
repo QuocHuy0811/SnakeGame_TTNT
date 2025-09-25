@@ -20,7 +20,8 @@ def find_path_dfs(start_pos, food_pos_list, map_data, snake_body):
     visited = {start_pos} # Set chứa các vị trí đã ghé thăm
 
     while stack:
-        current_pos, path = stack.pop() # Lấy phần tử cuối cùng ra (LIFO)
+        # Lấy phần tử cuối cùng ra (LIFO)
+        current_pos, path = stack.pop() 
 
         # Nếu vị trí hiện tại là thức ăn, trả về đường đi
         if current_pos in food_pos_list:

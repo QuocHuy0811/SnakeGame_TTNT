@@ -366,5 +366,101 @@
         "time": 0.0,
         "total_search_time": 0.097,
         "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 246,
+        "time": 0.0,
+        "total_search_time": 0.414,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "Greedy",
+        "steps": 152,
+        "time": 0.0,
+        "total_search_time": 0.019,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 227,
+        "time": 0.0,
+        "total_search_time": 0.33,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "Greedy",
+        "steps": 253,
+        "time": 0.0,
+        "total_search_time": 0.075,
+        "outcome": "Completed"
+    },
+    {
+        "map": "BFS",
+        "algorithm": "DFS",
+        "steps": 820,
+        "time": 0.0,
+        "total_search_time": 0.041,
+        "outcome": "Stuck"
+    },
+    {
+        "map": "BFS",
+        "algorithm": "DFS",
+        "steps": 292,
+        "time": 0.0,
+        "total_search_time": 0.044,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 143,
+        "time": 0.0,
+        "total_search_time": 0.098,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "Greedy",
+        "steps": 230,
+        "time": 0.0,
+        "total_search_time": 0.111,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 110,
+        "time": 0.0,
+        "total_search_time": 0.117,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 200,
+        "time": 0.0,
+        "total_search_time": 0.38,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "Greedy",
+        "steps": 227,
+        "time": 0.0,
+        "total_search_time": 0.1,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 248,
+        "time": 0.0,
+        "total_search_time": 0.405,
+        "outcome": "Completed"
     }
 ]
