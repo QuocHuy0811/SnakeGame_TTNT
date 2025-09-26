@@ -22,9 +22,11 @@ def find_path_ucs(start_pos, food_pos_list, map_data, snake_body):
     cost = 0
     pq = [(cost, start_pos, [start_pos])]
     visited = {start_pos}
+    
 
     while pq:
         current_cost, current_pos, path = heapq.heappop(pq)
+        #  pq được sx từ bé đén lớn -> lấy ra thì luôn là phần tử có chi phí nhỏ nhất
 
         # Nếu vị trí hiện tại là một trong các mục tiêu, trả về đường đi
         if current_pos in food_pos_list:
