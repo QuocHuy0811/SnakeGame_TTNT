@@ -1,8 +1,53 @@
 """
     Quản lý vị trí đầu, thân, đuôi, 
 """
+from Algorithms.algorithm_helpers import manhattan_distance
+from UI import UI_helpers
 import config
 import pygame
+_snake_sprites = None
+
+def load_snake_sprites():
+    """
+    Tải các sprite gốc của rắn từ file. Việc xoay sẽ được xử lý khi vẽ.
+    """
+    global _snake_sprites
+    if _snake_sprites:
+        return _snake_sprites
+
+    sprites = {}
+    path = 'Assets/Images/Snake/'
+
+    try:
+        # Tải các loại đầu rắn (gốc hướng LÊN)
+        sprites['head_normal'] = pygame.image.load(f'{path}head_normal.png').convert_alpha()
+        sprites['head_ready'] = pygame.image.load(f'{path}head_ready.png').convert_alpha()
+        sprites['head_eat'] = pygame.image.load(f'{path}head_eat.png').convert_alpha()
+
+        # Tải thân thẳng (gốc là DỌC)
+        sprites['body_straight'] = pygame.image.load(f'{path}body_straight.png').convert_alpha()
+        
+        # Tải các thân cong (đã có đủ 4 hướng)
+        sprites['bend_UP_LEFT'] = pygame.image.load(f'{path}body_bottom_right.png').convert_alpha()
+        sprites['bend_UP_RIGHT'] = pygame.image.load(f'{path}body_bottom_left.png').convert_alpha()
+        sprites['bend_DOWN_LEFT'] = pygame.image.load(f'{path}body_top_right.png').convert_alpha()
+        sprites['bend_DOWN_RIGHT'] = pygame.image.load(f'{path}body_top_left.png').convert_alpha()
+        
+        # Tải đuôi (gốc hướng LÊN)
+        sprites['tail'] = pygame.image.load(f'{path}tail.png').convert_alpha()
+
+    except pygame.error as e:
+        print(f"Lỗi khi tải sprite của rắn: {e}")
+        return None
+
+    # Thay đổi kích thước tất cả các sprite để khớp với TILE_SIZE
+    size = (config.TILE_SIZE, config.TILE_SIZE)
+    for key, sprite in sprites.items():
+        sprites[key] = pygame.transform.scale(sprite, size)
+
+    _snake_sprites = sprites
+    return sprites
+
 
 def create_snake_from_map(map_data):
     """
@@ -26,10 +71,6 @@ def create_snake_from_map(map_data):
         'body': snake_body,
         'direction': initial_direction
     }
-
-# Hàm mới: Di chuyển con rắn
-
-# Mở file: snake_logic.py
 
 def move_snake(snake_data, grow=False):
     """
@@ -57,21 +98,6 @@ def move_snake(snake_data, grow=False):
     if not grow:
         body.pop()
 
-
-def draw_snake(surface, snake_data):
-    """Vẽ con rắn lên một bề mặt (surface) được chỉ định."""
-    for i, part in enumerate(snake_data['body']): # Dùng enumerate để biết vị trí
-        rect = pygame.Rect(
-            part[0] * config.TILE_SIZE,
-            part[1] * config.TILE_SIZE,
-            config.TILE_SIZE,
-            config.TILE_SIZE
-        )
-        # Vẽ đầu rắn (bây giờ là phần tử đầu tiên, index 0) màu khác
-        if i == 0:
-             pygame.draw.rect(surface, config.COLORS['highlight'], rect)
-        else:
-             pygame.draw.rect(surface, config.COLORS['combo'], rect)
 # hàm kiểm tra va chạm của người chơi
 def check_collision(snake_data, map_data):
     """

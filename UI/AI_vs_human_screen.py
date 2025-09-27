@@ -82,9 +82,9 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
         UI_helpers.draw_text(title, title_font, title_color, screen, pos_x + map_width_px / 2, 40)
         surface.fill(config.COLORS['bg'])
         UI_helpers.draw_map(surface, controller.map_data)
-        snake_logic.draw_snake(surface, game_data['snake'])
-        food_logic.draw_food(surface, game_data['food'])
-        
+        UI_helpers.draw_snake(surface, game_data['snake'], game_data['food'])
+        UI_helpers.draw_food(surface, game_data['food'])
+    
         if game_data['outcome'] != "Playing":
             overlay = pygame.Surface((map_width_px, map_height_px), pygame.SRCALPHA)
             text_to_show = "YOU DIED" if game_data['outcome'] == "Stuck" else "YOU WIN"

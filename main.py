@@ -24,7 +24,7 @@ def main():
             # TODO: Dựa vào lựa chọn để chuyển sang màn hình game
             # Ví dụ:
             if selected_mode == "AI":
-                game_state = "MAIN_MENU"
+                game_state = "MAIN_MENU"    
                 run_ai_game(screen, clock, selected_map) 
             
             elif selected_mode == "AI_VS_HUMAN":
