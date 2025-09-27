@@ -5,6 +5,49 @@ from Algorithms.algorithm_helpers import manhattan_distance
 from UI import UI_helpers
 import config
 import pygame
+_snake_sprites = None
+
+def load_snake_sprites():
+    """
+    Tải các sprite gốc của rắn từ file. Việc xoay sẽ được xử lý khi vẽ.
+    """
+    global _snake_sprites
+    if _snake_sprites:
+        return _snake_sprites
+
+    sprites = {}
+    path = 'Assets/Images/Snake/'
+
+    try:
+        # Tải các loại đầu rắn (gốc hướng LÊN)
+        sprites['head_normal'] = pygame.image.load(f'{path}head_normal.png').convert_alpha()
+        sprites['head_ready'] = pygame.image.load(f'{path}head_ready.png').convert_alpha()
+        sprites['head_eat'] = pygame.image.load(f'{path}head_eat.png').convert_alpha()
+
+        # Tải thân thẳng (gốc là DỌC)
+        sprites['body_straight'] = pygame.image.load(f'{path}body_straight.png').convert_alpha()
+        
+        # Tải các thân cong (đã có đủ 4 hướng)
+        sprites['bend_UP_LEFT'] = pygame.image.load(f'{path}body_bottom_right.png').convert_alpha()
+        sprites['bend_UP_RIGHT'] = pygame.image.load(f'{path}body_bottom_left.png').convert_alpha()
+        sprites['bend_DOWN_LEFT'] = pygame.image.load(f'{path}body_top_right.png').convert_alpha()
+        sprites['bend_DOWN_RIGHT'] = pygame.image.load(f'{path}body_top_left.png').convert_alpha()
+        
+        # Tải đuôi (gốc hướng LÊN)
+        sprites['tail'] = pygame.image.load(f'{path}tail.png').convert_alpha()
+
+    except pygame.error as e:
+        print(f"Lỗi khi tải sprite của rắn: {e}")
+        return None
+
+    # Thay đổi kích thước tất cả các sprite để khớp với TILE_SIZE
+    size = (config.TILE_SIZE, config.TILE_SIZE)
+    for key, sprite in sprites.items():
+        sprites[key] = pygame.transform.scale(sprite, size)
+
+    _snake_sprites = sprites
+    return sprites
+
 
 def create_snake_from_map(map_data):
     """
@@ -28,10 +71,6 @@ def create_snake_from_map(map_data):
         'body': snake_body,
         'direction': initial_direction
     }
-
-# Hàm mới: Di chuyển con rắn
-
-# Mở file: snake_logic.py
 
 def move_snake(snake_data, grow=False):
     """
@@ -59,83 +98,6 @@ def move_snake(snake_data, grow=False):
     if not grow:
         body.pop()
 
-
-def draw_snake(surface, snake_data, food_data):
-    """
-    Vẽ con rắn bằng sprite, với logic xoay hình chính xác.
-    """
-    snake_body = snake_data.get('body')
-    snake_direction = snake_data.get('direction')
-    
-    sprites = UI_helpers.load_snake_sprites()
-    if not sprites or not snake_body: return
-
-    tile_size = config.TILE_SIZE
-    head_pos = snake_body[0]
-
-    # --- CHỌN ĐÚNG LOẠI ĐẦU RẮN ---
-    min_dist = float('inf')
-    if food_data:
-        food_positions = [food['pos'] for food in food_data]
-        min_dist = min(manhattan_distance(head_pos, food_pos) for food_pos in food_positions)
-    
-    head_type = 'head_normal'
-    if min_dist == 1: head_type = 'head_eat'
-    elif 1 < min_dist <= 3: head_type = 'head_ready'
-    
-    # Lấy sprite đầu gốc (hướng LÊN)
-    original_head_sprite = sprites.get(head_type)
-    
-    # --- VẼ CÁC BỘ PHẬN ---
-    for i, segment in enumerate(snake_body):
-        rect = pygame.Rect(segment[0] * tile_size, segment[1] * tile_size, tile_size, tile_size)
-
-        if i == 0:  # Đầu rắn
-            if original_head_sprite:
-                # Xoay sprite đầu từ hướng LÊN sang hướng di chuyển
-                angle = 0
-                if snake_direction == 'DOWN': angle = 180
-                elif snake_direction == 'LEFT': angle = 90
-                elif snake_direction == 'RIGHT': angle = -90
-                head_sprite_rotated = pygame.transform.rotate(original_head_sprite, angle)
-                surface.blit(head_sprite_rotated, rect)
-        
-        elif i == len(snake_body) - 1:  # Đuôi rắn
-            prev_segment = snake_body[i-1]
-            tail_direction = 'UP'
-            if segment[1] > prev_segment[1]: tail_direction = 'UP'
-            elif segment[1] < prev_segment[1]: tail_direction = 'DOWN'
-            elif segment[0] > prev_segment[0]: tail_direction = 'LEFT'
-            elif segment[0] < prev_segment[0]: tail_direction = 'RIGHT'
-            
-            # Lấy sprite đuôi gốc (hướng LÊN) và xoay
-            original_tail_sprite = sprites['tail']
-            angle = 0
-            if tail_direction == 'DOWN': angle = 180
-            elif tail_direction == 'LEFT': angle = 90
-            elif tail_direction == 'RIGHT': angle = -90
-            tail_sprite_rotated = pygame.transform.rotate(original_tail_sprite, angle)
-            surface.blit(tail_sprite_rotated, rect)
-        
-        else:  # Thân rắn
-            prev_segment, next_segment = snake_body[i-1], snake_body[i+1]
-            if prev_segment[0] == next_segment[0]: # Thân dọc
-                surface.blit(sprites['body_straight'], rect)
-            elif prev_segment[1] == next_segment[1]: # Thân ngang
-                # Xoay sprite thân thẳng từ DỌC sang NGANG
-                body_horizontal = pygame.transform.rotate(sprites['body_straight'], 90)
-                surface.blit(body_horizontal, rect)
-            else: # Thân cong
-                prev_vec = (prev_segment[0] - segment[0], prev_segment[1] - segment[1])
-                next_vec = (next_segment[0] - segment[0], next_segment[1] - segment[1])
-                
-                key = None
-                if (prev_vec in [(0, 1), (-1, 0)]) and (next_vec in [(0, 1), (-1, 0)]): key = 'bend_DOWN_LEFT'
-                elif (prev_vec in [(0, 1), (1, 0)]) and (next_vec in [(0, 1), (1, 0)]): key = 'bend_DOWN_RIGHT'
-                elif (prev_vec in [(0, -1), (-1, 0)]) and (next_vec in [(0, -1), (-1, 0)]): key = 'bend_UP_LEFT'
-                elif (prev_vec in [(0, -1), (1, 0)]) and (next_vec in [(0, -1), (1, 0)]): key = 'bend_UP_RIGHT'
-                
-                if key: surface.blit(sprites[key], rect)
 # hàm kiểm tra va chạm của người chơi
 def check_collision(snake_data, map_data):
     """

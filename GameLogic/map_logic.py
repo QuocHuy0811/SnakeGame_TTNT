@@ -6,25 +6,32 @@ import config
 
 def load_map_data(map_filename):
     """
-    Tải dữ liệu map từ một file .txt.
-    Hàm này sẽ đọc file và trả về một dictionary chứa vị trí của các đối tượng.
+    Tải dữ liệu map từ file .txt.
+    Hàm này trả về một dictionary chứa layout và vị trí các đối tượng.
     """
     map_data = {
+        'layout': [], # <-- THÊM KEY QUAN TRỌNG NÀY
         'walls': [],
         'snake_start': [],
         'food_start': []
     }
     
-    # Tạo đường dẫn đầy đủ đến file map
-    full_path = os.path.join(config.MAPS_DIR, map_filename)
+    full_path = f"Maps/{map_filename}"
     
     if not os.path.exists(full_path):
         print(f"Lỗi: Không tìm thấy file map '{full_path}'")
-        return map_data # Trả về dữ liệu rỗng
+        return None # Trả về None nếu không tìm thấy file
 
     with open(full_path, 'r') as f:
-        for y, line in enumerate(f):
-            for x, char in enumerate(line.strip()):
+        lines = f.readlines()
+        if not lines:
+            print(f"Lỗi: File map '{full_path}' bị trống.")
+            return None # Trả về None nếu file trống
+
+        for y, line in enumerate(lines):
+            clean_line = line.strip()
+            map_data['layout'].append(clean_line) # <-- LƯU LẠI CẤU TRÚC MAP
+            for x, char in enumerate(clean_line):
                 if char == '#':
                     map_data['walls'].append((x, y))
                 elif char == 'x':
@@ -33,6 +40,7 @@ def load_map_data(map_filename):
                     map_data['food_start'].append((x, y))
     
     # Sắp xếp lại vị trí của rắn để đảm bảo đúng thứ tự đầu-thân
-    map_data['snake_start'].sort()
+    # Cách này giả định đầu rắn là ký tự 'x' ở trên cùng và/hoặc bên trái nhất
+    map_data['snake_start'].sort(key=lambda pos: (pos[1], pos[0]))
     
     return map_data

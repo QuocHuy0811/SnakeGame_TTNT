@@ -4,9 +4,14 @@
 """
 import pygame
 import config
+from GameLogic import snake_logic, food_logic
+from Algorithms.algorithm_helpers import manhattan_distance
 
 
 pygame.init()
+
+_snake_sprites = None
+_food_sprite = None
 
 # --- Khởi tạo font dùng chung ---
 BUTTON_FONT = pygame.font.Font(config.FONT_PATH, config.BUTTON_FONT_SIZE)
@@ -115,45 +120,95 @@ def draw_search_visualization(surface, visited_nodes, path_nodes):
         center_y = pos[1] * config.TILE_SIZE + config.TILE_SIZE // 2
         pygame.draw.circle(surface, (255, 80, 80), (center_x, center_y), 4) # Chấm đỏ
 
-_snake_sprites = None
-
-def load_snake_sprites():
+def draw_snake(surface, snake_data, food_data):
     """
-    Tải các sprite gốc của rắn từ file. Việc xoay sẽ được xử lý khi vẽ.
+    Vẽ con rắn bằng sprite, với logic xoay hình chính xác.
     """
-    global _snake_sprites
-    if _snake_sprites:
-        return _snake_sprites
+    snake_body = snake_data.get('body')
+    snake_direction = snake_data.get('direction')
+    
+    sprites = snake_logic.load_snake_sprites()
+    if not sprites or not snake_body: return
 
-    sprites = {}
-    path = 'Assets/Images/Snake/'
+    tile_size = config.TILE_SIZE
+    head_pos = snake_body[0]
 
-    try:
-        # Tải các loại đầu rắn (gốc hướng LÊN)
-        sprites['head_normal'] = pygame.image.load(f'{path}head_normal.png').convert_alpha()
-        sprites['head_ready'] = pygame.image.load(f'{path}head_ready.png').convert_alpha()
-        sprites['head_eat'] = pygame.image.load(f'{path}head_eat.png').convert_alpha()
+    # --- CHỌN ĐÚNG LOẠI ĐẦU RẮN ---
+    min_dist = float('inf')
+    if food_data:
+        food_positions = [food['pos'] for food in food_data]
+        min_dist = min(manhattan_distance(head_pos, food_pos) for food_pos in food_positions)
+    
+    head_type = 'head_normal'
+    if min_dist == 1: head_type = 'head_eat'
+    elif 1 < min_dist <= 3: head_type = 'head_ready'
+    
+    # Lấy sprite đầu gốc (hướng LÊN)
+    original_head_sprite = sprites.get(head_type)
+    
+    # --- VẼ CÁC BỘ PHẬN ---
+    for i, segment in enumerate(snake_body):
+        rect = pygame.Rect(segment[0] * tile_size, segment[1] * tile_size, tile_size, tile_size)
 
-        # Tải thân thẳng (gốc là DỌC)
-        sprites['body_straight'] = pygame.image.load(f'{path}body_straight.png').convert_alpha()
+        if i == 0:  # Đầu rắn
+            if original_head_sprite:
+                # Xoay sprite đầu từ hướng LÊN sang hướng di chuyển
+                angle = 0
+                if snake_direction == 'DOWN': angle = 180
+                elif snake_direction == 'LEFT': angle = 90
+                elif snake_direction == 'RIGHT': angle = -90
+                head_sprite_rotated = pygame.transform.rotate(original_head_sprite, angle)
+                surface.blit(head_sprite_rotated, rect)
         
-        # Tải các thân cong (đã có đủ 4 hướng)
-        sprites['bend_UP_LEFT'] = pygame.image.load(f'{path}body_bottom_right.png').convert_alpha()
-        sprites['bend_UP_RIGHT'] = pygame.image.load(f'{path}body_bottom_left.png').convert_alpha()
-        sprites['bend_DOWN_LEFT'] = pygame.image.load(f'{path}body_top_right.png').convert_alpha()
-        sprites['bend_DOWN_RIGHT'] = pygame.image.load(f'{path}body_top_left.png').convert_alpha()
+        elif i == len(snake_body) - 1:  # Đuôi rắn
+            prev_segment = snake_body[i-1]
+            tail_direction = 'UP'
+            if segment[1] > prev_segment[1]: tail_direction = 'UP'
+            elif segment[1] < prev_segment[1]: tail_direction = 'DOWN'
+            elif segment[0] > prev_segment[0]: tail_direction = 'LEFT'
+            elif segment[0] < prev_segment[0]: tail_direction = 'RIGHT'
+            
+            # Lấy sprite đuôi gốc (hướng LÊN) và xoay
+            original_tail_sprite = sprites['tail']
+            angle = 0
+            if tail_direction == 'DOWN': angle = 180
+            elif tail_direction == 'LEFT': angle = 90
+            elif tail_direction == 'RIGHT': angle = -90
+            tail_sprite_rotated = pygame.transform.rotate(original_tail_sprite, angle)
+            surface.blit(tail_sprite_rotated, rect)
         
-        # Tải đuôi (gốc hướng LÊN)
-        sprites['tail'] = pygame.image.load(f'{path}tail.png').convert_alpha()
+        else:  # Thân rắn
+            prev_segment, next_segment = snake_body[i-1], snake_body[i+1]
+            if prev_segment[0] == next_segment[0]: # Thân dọc
+                surface.blit(sprites['body_straight'], rect)
+            elif prev_segment[1] == next_segment[1]: # Thân ngang
+                # Xoay sprite thân thẳng từ DỌC sang NGANG
+                body_horizontal = pygame.transform.rotate(sprites['body_straight'], 90)
+                surface.blit(body_horizontal, rect)
+            else: # Thân cong
+                prev_vec = (prev_segment[0] - segment[0], prev_segment[1] - segment[1])
+                next_vec = (next_segment[0] - segment[0], next_segment[1] - segment[1])
+                
+                key = None
+                if (prev_vec in [(0, 1), (-1, 0)]) and (next_vec in [(0, 1), (-1, 0)]): key = 'bend_DOWN_LEFT'
+                elif (prev_vec in [(0, 1), (1, 0)]) and (next_vec in [(0, 1), (1, 0)]): key = 'bend_DOWN_RIGHT'
+                elif (prev_vec in [(0, -1), (-1, 0)]) and (next_vec in [(0, -1), (-1, 0)]): key = 'bend_UP_LEFT'
+                elif (prev_vec in [(0, -1), (1, 0)]) and (next_vec in [(0, -1), (1, 0)]): key = 'bend_UP_RIGHT'
+                
+                if key: surface.blit(sprites[key], rect)
 
-    except pygame.error as e:
-        print(f"Lỗi khi tải sprite của rắn: {e}")
-        return None
+def draw_food(surface, food_data, blinking_info=None):
+    food_sprite = food_logic.load_food_sprite()
+    blinking_pos, is_blink_visible = (None, False)
+    if blinking_info:
+        blinking_pos, is_blink_visible = blinking_info
 
-    # Thay đổi kích thước tất cả các sprite để khớp với TILE_SIZE
-    size = (config.TILE_SIZE, config.TILE_SIZE)
-    for key, sprite in sprites.items():
-        sprites[key] = pygame.transform.scale(sprite, size)
-
-    _snake_sprites = sprites
-    return sprites
+    for food in food_data:
+        rect = pygame.Rect(food['pos'][0] * config.TILE_SIZE, food['pos'][1] * config.TILE_SIZE, config.TILE_SIZE, config.TILE_SIZE)
+        if food_sprite != "error":
+            surface.blit(food_sprite, rect)
+        else:
+            pygame.draw.rect(surface, config.COLORS['food'], rect)
+        
+        if food['pos'] == blinking_pos and is_blink_visible:
+            pygame.draw.circle(surface, config.COLORS['highlight'], rect.center, config.TILE_SIZE // 2 + 3, 3)

@@ -162,7 +162,7 @@ def run_ai_game(screen, clock, selected_map_name):
     }
 
     map_end_x = game_area_x + game_area_width
-    middle_area_center_x = map_end_x + (panel_x - map_end_x) / 2 - 100
+    middle_area_center_x = map_end_x + (panel_x - map_end_x) / 2
     skip_button = UI_helpers.create_button(middle_area_center_x - 100, 550, 200, 50, "Skip")
     
     if selected_mode == "Player":
@@ -345,18 +345,18 @@ def run_ai_game(screen, clock, selected_map_name):
                 game_helpers.save_game_result(selected_map_name, selected_mode, controller.get_state()['steps'], current_time, total_search_time, "Completed")
                 visited_nodes, path_nodes_to_draw = [], [] # Xóa các chấm visualize khi thắng
 
-        # --- VẼ LÊN MÀN HÌNH ---\
+        # --- VẼ LÊN MÀN HÌNH ---
         background_effects.draw_background(screen)
         game_surface.fill((0,0,0,0))
 
         if visited_nodes:
             UI_helpers.draw_search_visualization(game_surface, visited_nodes, path_nodes_to_draw)
         UI_helpers.draw_map(game_surface, controller.map_data)
-        snake_logic.draw_snake(game_surface, game_data['snake'], game_data['food'])
+        UI_helpers.draw_snake(game_surface, game_data['snake'], game_data['food'])
         blinking_info = None
         if game_state == "VISUALIZING" and target_food_pos:
             blinking_info = (target_food_pos, is_blinking_visible)
-        food_logic.draw_food(game_surface, game_data['food'], blinking_info)
+        UI_helpers.draw_food(game_surface, game_data['food'], blinking_info)
 
         screen.blit(game_surface, (game_area_x, game_area_y))
 
@@ -373,8 +373,7 @@ def run_ai_game(screen, clock, selected_map_name):
             )
 
         current_time = game_data['steps'] * (animation_interval / 1000.0)
-        
-        game_surface = pygame.Surface((config.AI_MAP_WIDTH_TILES * config.TILE_SIZE, config.AI_MAP_HEIGHT_TILES * config.TILE_SIZE))
+    
         
         UI_helpers.draw_text("ANIMATION TIME", info_font, config.COLORS['title'], screen, middle_area_center_x, 180) 
         UI_helpers.draw_text(f"{current_time:.4f} s", info_font_bold, config.COLORS['white'], screen, middle_area_center_x, 220)
