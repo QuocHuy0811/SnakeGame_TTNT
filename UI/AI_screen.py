@@ -98,17 +98,25 @@ def run_ai_game(screen, clock, selected_map_name):
 
     background_effects.init_background(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 1000)
     
+    # Tải controller và dữ liệu map
+    controller = GameController(selected_map_name)
+    map_data = controller.map_data
+
+    # Lấy kích thước thực tế từ map_data (số hàng và số cột)
+    map_height_tiles = len(map_data['layout'])
+    map_width_tiles = len(map_data['layout'][0]) if map_height_tiles > 0 else 0
+    
     # Tạo bề mặt (surface) riêng cho khu vực game
-    game_area_width = config.AI_MAP_WIDTH_TILES * config.TILE_SIZE
-    game_area_height = config.AI_MAP_HEIGHT_TILES * config.TILE_SIZE
-    game_surface = pygame.Surface((game_area_width, game_area_height))
+    game_area_width = map_width_tiles * config.TILE_SIZE
+    game_area_height = map_height_tiles * config.TILE_SIZE
+    game_surface = pygame.Surface((game_area_width, game_area_height), pygame.SRCALPHA)
 
     # Tính khoảng đệm trên/dưới để căn giữa theo chiều dọc
     game_area_y = (config.SCREEN_HEIGHT - game_area_height) / 2
     # Gán khoảng đệm bên trái bằng đúng khoảng đệm trên/dưới
     game_area_x = game_area_y   
     
-    controller = GameController(selected_map_name)
+    
 
     # --- 2. QUẢN LÝ TRẠNG THÁI GIAO DIỆN ---
     game_state = "IDLE"
@@ -145,7 +153,7 @@ def run_ai_game(screen, clock, selected_map_name):
     panel_center_x = panel_x + config.AI_PANEL_WIDTH / 2
     
     buttons = {
-        'load_snake': UI_helpers.create_button(panel_center_x - 125, 100, 250, 40, "Load Snake"),
+        'create_map': UI_helpers.create_button(panel_center_x - 125, 100, 250, 40, "Create Map"),
         'solve': UI_helpers.create_button(panel_center_x - 125, 150, 250, 40, "Solve"),
         'reset': UI_helpers.create_button(panel_center_x - 125, 200, 250, 40, "Reset"),
         'history': UI_helpers.create_button(panel_center_x - 125, 250, 250, 40, "History"),
@@ -339,12 +347,12 @@ def run_ai_game(screen, clock, selected_map_name):
 
         # --- VẼ LÊN MÀN HÌNH ---\
         background_effects.draw_background(screen)
-        game_surface.fill(config.COLORS['bg'])
+        game_surface.fill((0,0,0,0))
 
         if visited_nodes:
             UI_helpers.draw_search_visualization(game_surface, visited_nodes, path_nodes_to_draw)
         UI_helpers.draw_map(game_surface, controller.map_data)
-        snake_logic.draw_snake(game_surface, game_data['snake'])
+        snake_logic.draw_snake(game_surface, game_data['snake'], game_data['food'])
         blinking_info = None
         if game_state == "VISUALIZING" and target_food_pos:
             blinking_info = (target_food_pos, is_blinking_visible)

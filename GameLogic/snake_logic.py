@@ -1,6 +1,8 @@
 """
     Quản lý vị trí đầu, thân, đuôi, 
 """
+from Algorithms.algorithm_helpers import manhattan_distance
+from UI import UI_helpers
 import config
 import pygame
 
@@ -58,20 +60,82 @@ def move_snake(snake_data, grow=False):
         body.pop()
 
 
-def draw_snake(surface, snake_data):
-    """Vẽ con rắn lên một bề mặt (surface) được chỉ định."""
-    for i, part in enumerate(snake_data['body']): # Dùng enumerate để biết vị trí
-        rect = pygame.Rect(
-            part[0] * config.TILE_SIZE,
-            part[1] * config.TILE_SIZE,
-            config.TILE_SIZE,
-            config.TILE_SIZE
-        )
-        # Vẽ đầu rắn (bây giờ là phần tử đầu tiên, index 0) màu khác
-        if i == 0:
-             pygame.draw.rect(surface, config.COLORS['highlight'], rect)
-        else:
-             pygame.draw.rect(surface, config.COLORS['combo'], rect)
+def draw_snake(surface, snake_data, food_data):
+    """
+    Vẽ con rắn bằng sprite, với logic xoay hình chính xác.
+    """
+    snake_body = snake_data.get('body')
+    snake_direction = snake_data.get('direction')
+    
+    sprites = UI_helpers.load_snake_sprites()
+    if not sprites or not snake_body: return
+
+    tile_size = config.TILE_SIZE
+    head_pos = snake_body[0]
+
+    # --- CHỌN ĐÚNG LOẠI ĐẦU RẮN ---
+    min_dist = float('inf')
+    if food_data:
+        food_positions = [food['pos'] for food in food_data]
+        min_dist = min(manhattan_distance(head_pos, food_pos) for food_pos in food_positions)
+    
+    head_type = 'head_normal'
+    if min_dist == 1: head_type = 'head_eat'
+    elif 1 < min_dist <= 3: head_type = 'head_ready'
+    
+    # Lấy sprite đầu gốc (hướng LÊN)
+    original_head_sprite = sprites.get(head_type)
+    
+    # --- VẼ CÁC BỘ PHẬN ---
+    for i, segment in enumerate(snake_body):
+        rect = pygame.Rect(segment[0] * tile_size, segment[1] * tile_size, tile_size, tile_size)
+
+        if i == 0:  # Đầu rắn
+            if original_head_sprite:
+                # Xoay sprite đầu từ hướng LÊN sang hướng di chuyển
+                angle = 0
+                if snake_direction == 'DOWN': angle = 180
+                elif snake_direction == 'LEFT': angle = 90
+                elif snake_direction == 'RIGHT': angle = -90
+                head_sprite_rotated = pygame.transform.rotate(original_head_sprite, angle)
+                surface.blit(head_sprite_rotated, rect)
+        
+        elif i == len(snake_body) - 1:  # Đuôi rắn
+            prev_segment = snake_body[i-1]
+            tail_direction = 'UP'
+            if segment[1] > prev_segment[1]: tail_direction = 'UP'
+            elif segment[1] < prev_segment[1]: tail_direction = 'DOWN'
+            elif segment[0] > prev_segment[0]: tail_direction = 'LEFT'
+            elif segment[0] < prev_segment[0]: tail_direction = 'RIGHT'
+            
+            # Lấy sprite đuôi gốc (hướng LÊN) và xoay
+            original_tail_sprite = sprites['tail']
+            angle = 0
+            if tail_direction == 'DOWN': angle = 180
+            elif tail_direction == 'LEFT': angle = 90
+            elif tail_direction == 'RIGHT': angle = -90
+            tail_sprite_rotated = pygame.transform.rotate(original_tail_sprite, angle)
+            surface.blit(tail_sprite_rotated, rect)
+        
+        else:  # Thân rắn
+            prev_segment, next_segment = snake_body[i-1], snake_body[i+1]
+            if prev_segment[0] == next_segment[0]: # Thân dọc
+                surface.blit(sprites['body_straight'], rect)
+            elif prev_segment[1] == next_segment[1]: # Thân ngang
+                # Xoay sprite thân thẳng từ DỌC sang NGANG
+                body_horizontal = pygame.transform.rotate(sprites['body_straight'], 90)
+                surface.blit(body_horizontal, rect)
+            else: # Thân cong
+                prev_vec = (prev_segment[0] - segment[0], prev_segment[1] - segment[1])
+                next_vec = (next_segment[0] - segment[0], next_segment[1] - segment[1])
+                
+                key = None
+                if (prev_vec in [(0, 1), (-1, 0)]) and (next_vec in [(0, 1), (-1, 0)]): key = 'bend_DOWN_LEFT'
+                elif (prev_vec in [(0, 1), (1, 0)]) and (next_vec in [(0, 1), (1, 0)]): key = 'bend_DOWN_RIGHT'
+                elif (prev_vec in [(0, -1), (-1, 0)]) and (next_vec in [(0, -1), (-1, 0)]): key = 'bend_UP_LEFT'
+                elif (prev_vec in [(0, -1), (1, 0)]) and (next_vec in [(0, -1), (1, 0)]): key = 'bend_UP_RIGHT'
+                
+                if key: surface.blit(sprites[key], rect)
 # hàm kiểm tra va chạm của người chơi
 def check_collision(snake_data, map_data):
     """

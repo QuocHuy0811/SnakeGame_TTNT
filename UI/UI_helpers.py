@@ -114,3 +114,46 @@ def draw_search_visualization(surface, visited_nodes, path_nodes):
         center_x = pos[0] * config.TILE_SIZE + config.TILE_SIZE // 2
         center_y = pos[1] * config.TILE_SIZE + config.TILE_SIZE // 2
         pygame.draw.circle(surface, (255, 80, 80), (center_x, center_y), 4) # Chấm đỏ
+
+_snake_sprites = None
+
+def load_snake_sprites():
+    """
+    Tải các sprite gốc của rắn từ file. Việc xoay sẽ được xử lý khi vẽ.
+    """
+    global _snake_sprites
+    if _snake_sprites:
+        return _snake_sprites
+
+    sprites = {}
+    path = 'Assets/Images/Snake/'
+
+    try:
+        # Tải các loại đầu rắn (gốc hướng LÊN)
+        sprites['head_normal'] = pygame.image.load(f'{path}head_normal.png').convert_alpha()
+        sprites['head_ready'] = pygame.image.load(f'{path}head_ready.png').convert_alpha()
+        sprites['head_eat'] = pygame.image.load(f'{path}head_eat.png').convert_alpha()
+
+        # Tải thân thẳng (gốc là DỌC)
+        sprites['body_straight'] = pygame.image.load(f'{path}body_straight.png').convert_alpha()
+        
+        # Tải các thân cong (đã có đủ 4 hướng)
+        sprites['bend_UP_LEFT'] = pygame.image.load(f'{path}body_bottom_right.png').convert_alpha()
+        sprites['bend_UP_RIGHT'] = pygame.image.load(f'{path}body_bottom_left.png').convert_alpha()
+        sprites['bend_DOWN_LEFT'] = pygame.image.load(f'{path}body_top_right.png').convert_alpha()
+        sprites['bend_DOWN_RIGHT'] = pygame.image.load(f'{path}body_top_left.png').convert_alpha()
+        
+        # Tải đuôi (gốc hướng LÊN)
+        sprites['tail'] = pygame.image.load(f'{path}tail.png').convert_alpha()
+
+    except pygame.error as e:
+        print(f"Lỗi khi tải sprite của rắn: {e}")
+        return None
+
+    # Thay đổi kích thước tất cả các sprite để khớp với TILE_SIZE
+    size = (config.TILE_SIZE, config.TILE_SIZE)
+    for key, sprite in sprites.items():
+        sprites[key] = pygame.transform.scale(sprite, size)
+
+    _snake_sprites = sprites
+    return sprites
