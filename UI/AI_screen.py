@@ -2,6 +2,7 @@
     Giao diện chế độ AI
 """
 import pygame
+from Algorithms.algorithm_helpers import manhattan_distance
 import config
 import copy
 from UI import UI_helpers
@@ -11,25 +12,48 @@ from GameLogic.game_controller import GameController
 from Algorithms import BFS, Astar, UCS, DFS, Greedy
 from UI import AI_selection_screen, history_screen
 
-def find_path_with_algorithm(algorithm_func, start_pos, food_data, map_data, snake_body):
-    food_positions = [food['pos'] for food in food_data]
+# def find_path_with_algorithm(algorithm_func, start_pos, food_data, map_data, snake_body):
+    # food_positions = [food['pos'] for food in food_data]
     
-    # Đối với các thuật toán tìm đường đến 1 food gần nhất
-    if algorithm_func in [BFS.find_path_bfs, Astar.find_path_astar, Greedy.find_path_greedy]:
-        shortest_result = {'path': None, 'visited': []}
-        min_len = float('inf')
+    # # Đối với các thuật toán tìm đường đến 1 food gần nhất
+    # if algorithm_func in [BFS.find_path_bfs, Astar.find_path_astar, Greedy.find_path_greedy]:
+    #     shortest_result = {'path': None, 'visited': []}
+    #     min_len = float('inf')
         
-        all_visited_nodes = set()
-        for food_pos in food_positions:
-            result = algorithm_func(start_pos, [food_pos], map_data, snake_body)
-            all_visited_nodes.update(result['visited']) # Gom tất cả các nút đã duyệt
-            if result['path'] and len(result['path']) < min_len:
-                min_len = len(result['path'])
-                shortest_result['path'] = result['path']
+    #     all_visited_nodes = set()
+    #     for food_pos in food_positions:
+    #         result = algorithm_func(start_pos, [food_pos], map_data, snake_body)
+    #         all_visited_nodes.update(result['visited']) # Gom tất cả các nút đã duyệt
+    #         if result['path'] and len(result['path']) < min_len:
+    #             min_len = len(result['path'])
+    #             shortest_result['path'] = result['path']
         
-        shortest_result['visited'] = list(all_visited_nodes)
-        return shortest_result
-    else: # Đối với các thuật toán khác
+    #     shortest_result['visited'] = list(all_visited_nodes)
+    #     return shortest_result
+    # else: # Đối với các thuật toán khác
+    #     return algorithm_func(start_pos, food_positions, map_data, snake_body)
+    
+def find_path_with_algorithm(algorithm_func, start_pos, food_data, map_data, snake_body):
+    """
+    Chạy thuật toán tìm đường MỘT LẦN DUY NHẤT để có kết quả chính xác.
+    """
+    food_positions = [food['pos'] for food in food_data]
+    if not food_positions:
+        return {'path': None, 'visited': []}
+
+    # Đối với A* và Greedy, chúng cần một mục tiêu duy nhất.
+    # Ta sẽ chọn mục tiêu gần nhất dựa trên khoảng cách Manhattan.
+    if algorithm_func in [Astar.find_path_astar, Greedy.find_path_greedy]:
+        
+        # Tìm mục tiêu gần nhất
+        target_pos = min(food_positions, key=lambda food: manhattan_distance(start_pos, food))
+        
+        # Chạy thuật toán một lần duy nhất với mục tiêu đó
+        return algorithm_func(start_pos, [target_pos], map_data, snake_body)
+    
+    # Đối với các thuật toán khác (BFS, UCS, DFS), chúng có thể xử lý nhiều mục tiêu.
+    # Chúng sẽ tự động dừng lại khi tìm thấy mục tiêu gần nhất đầu tiên.
+    else:
         return algorithm_func(start_pos, food_positions, map_data, snake_body)
 
 def _calculate_full_playthrough(initial_snake, initial_food, selected_mode, map_data):
