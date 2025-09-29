@@ -4,40 +4,29 @@
 import config
 import pygame
 
+# Biến toàn cục để lưu trữ sprite thức ăn đã được tải và thay đổi kích thước
+# Giúp chúng ta không phải tải lại ảnh từ ổ cứng ở mỗi frame.
+_food_sprite = None
+def load_food_sprite():
+    """
+    Hàm helper để tải, thay đổi kích thước và lưu trữ sprite thức ăn.
+    Nó chỉ thực hiện tải ảnh một lần duy nhất.
+    """
+    global _food_sprite
+    if _food_sprite is None: # Chỉ tải nếu chưa được tải
+        try:
+            # Tải ảnh gốc
+            original_image = pygame.image.load('Assets/Images/Food/apple.png').convert_alpha()
+            # Thay đổi kích thước ảnh cho vừa với TILE_SIZE và lưu lại
+            _food_sprite = pygame.transform.scale(original_image, (config.TILE_SIZE, config.TILE_SIZE))
+            print("Tải sprite thức ăn thành công.")
+        except pygame.error as e:
+            print(f"LỖI: Không thể tải sprite thức ăn. Sẽ vẽ hình vuông thay thế. Lỗi: {e}")
+            _food_sprite = "error" # Đánh dấu là đã cố tải nhưng bị lỗi
+    return _food_sprite
+
 def create_food_from_map(map_data):
     """
     Tạo ra một danh sách các dictionary thức ăn dựa trên thông tin từ map_data.
-    Hàm này sẽ tải TẤT CẢ các vị trí có dấu '*' trong file map.
     """
-    if not map_data['food_start']:
-        # Nếu map không có thức ăn, tạo một viên mặc định để tránh lỗi
-        return [{'pos': (15, 15)}]
-        
-    # Chuyển đổi danh sách tọa độ thành danh sách các đối tượng thức ăn
-    return [{'pos': pos} for pos in map_data['food_start']]
-
-def draw_food(surface, food_data, blinking_info=None):
-    """
-    Vẽ tất cả thức ăn lên màn hình.
-    :param blinking_info: Một tuple (vị trí, is_visible) để vẽ hiệu ứng nhấp nháy.
-    """
-    blinking_pos = None
-    is_blink_visible = False
-    if blinking_info:
-        blinking_pos, is_blink_visible = blinking_info
-
-    for food in food_data:
-        pos = food['pos']
-        rect = pygame.Rect(
-            pos[0] * config.TILE_SIZE,
-            pos[1] * config.TILE_SIZE,
-            config.TILE_SIZE,
-            config.TILE_SIZE
-        )
-        
-        # Luôn vẽ viên thức ăn
-        pygame.draw.rect(surface, config.COLORS['food'], rect)
-        
-        # Nếu đây là thức ăn đích và đang trong chu kỳ "sáng", vẽ vòng tròn highlight
-        if pos == blinking_pos and is_blink_visible:
-            pygame.draw.circle(surface, config.COLORS['highlight'], rect.center, config.TILE_SIZE // 2 + 3, 3)
+    return [{'pos': pos} for pos in map_data.get('food_start', [])]

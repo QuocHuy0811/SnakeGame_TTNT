@@ -23,8 +23,8 @@ def find_path_astar(start_pos, food_pos_list, map_data, snake_body):
 
     # Hàng đợi ưu tiên chứa (f_score, g_score, vị trí, đường đi)
     # f_score = g_score + h_score
-    g_score = 0
-    h_score = manhattan_distance(start_pos, target_pos)
+    g_score = 0                                         # Chi phí đã đi
+    h_score = manhattan_distance(start_pos, target_pos) # Chi phí ước tính để đến đích
     f_score = g_score + h_score
     
     pq = [(f_score, g_score, start_pos, [start_pos])]

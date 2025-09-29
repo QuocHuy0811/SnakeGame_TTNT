@@ -2,6 +2,7 @@
     Giao diện chế độ AI
 """
 import pygame
+from Algorithms.algorithm_helpers import manhattan_distance
 import config
 import copy
 from UI import UI_helpers
@@ -10,26 +11,28 @@ from GameLogic import game_helpers, snake_logic, food_logic
 from GameLogic.game_controller import GameController 
 from Algorithms import BFS, Astar, UCS, DFS, Greedy, DLS
 from UI import AI_selection_screen, history_screen
-
-def find_path_with_algorithm(algorithm_func, start_pos, food_data, map_data, snake_body):
-    food_positions = [food['pos'] for food in food_data]
     
-    # Đối với các thuật toán tìm đường đến 1 food gần nhất
-    if algorithm_func in [BFS.find_path_bfs, Astar.find_path_astar, Greedy.find_path_greedy]:
-        shortest_result = {'path': None, 'visited': []}
-        min_len = float('inf')
+def find_path_with_algorithm(algorithm_func, start_pos, food_data, map_data, snake_body):
+    """
+    Chạy thuật toán tìm đường MỘT LẦN DUY NHẤT để có kết quả chính xác.
+    """
+    food_positions = [food['pos'] for food in food_data]
+    if not food_positions:
+        return {'path': None, 'visited': []}
+
+    # Đối với A* và Greedy, chúng cần một mục tiêu duy nhất.
+    # Ta sẽ chọn mục tiêu gần nhất dựa trên khoảng cách Manhattan.
+    if algorithm_func in [Astar.find_path_astar, Greedy.find_path_greedy]:
         
-        all_visited_nodes = set()
-        for food_pos in food_positions:
-            result = algorithm_func(start_pos, [food_pos], map_data, snake_body)
-            all_visited_nodes.update(result['visited']) # Gom tất cả các nút đã duyệt
-            if result['path'] and len(result['path']) < min_len:
-                min_len = len(result['path'])
-                shortest_result['path'] = result['path']
+        # Tìm mục tiêu gần nhất
+        target_pos = min(food_positions, key=lambda food: manhattan_distance(start_pos, food))
         
-        shortest_result['visited'] = list(all_visited_nodes)
-        return shortest_result
-    else: # Đối với các thuật toán khác
+        # Chạy thuật toán một lần duy nhất với mục tiêu đó
+        return algorithm_func(start_pos, [target_pos], map_data, snake_body)
+    
+    # Đối với các thuật toán khác (BFS, UCS, DFS), chúng có thể xử lý nhiều mục tiêu.
+    # Chúng sẽ tự động dừng lại khi tìm thấy mục tiêu gần nhất đầu tiên.
+    else:
         return algorithm_func(start_pos, food_positions, map_data, snake_body)
 
 def _calculate_full_playthrough(initial_snake, initial_food, selected_mode, map_data):
@@ -95,20 +98,29 @@ def run_ai_game(screen, clock, selected_map_name):
     info_font_bold = pygame.font.Font(config.FONT_PATH, 32); 
     info_font = pygame.font.Font(config.FONT_PATH, 26)
     instruction_font = pygame.font.Font(config.FONT_PATH, 18)
+    end_game_font = pygame.font.Font(config.FONT_PATH, 50)
 
     background_effects.init_background(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 1000)
     
+    # Tải controller và dữ liệu map
+    controller = GameController(selected_map_name)
+    map_data = controller.map_data
+
+    # Lấy kích thước thực tế từ map_data (số hàng và số cột)
+    map_height_tiles = len(map_data['layout'])
+    map_width_tiles = len(map_data['layout'][0]) if map_height_tiles > 0 else 0
+    
     # Tạo bề mặt (surface) riêng cho khu vực game
-    game_area_width = config.AI_MAP_WIDTH_TILES * config.TILE_SIZE
-    game_area_height = config.AI_MAP_HEIGHT_TILES * config.TILE_SIZE
-    game_surface = pygame.Surface((game_area_width, game_area_height))
+    game_area_width = map_width_tiles * config.TILE_SIZE
+    game_area_height = map_height_tiles * config.TILE_SIZE
+    game_surface = pygame.Surface((game_area_width, game_area_height), pygame.SRCALPHA)
 
     # Tính khoảng đệm trên/dưới để căn giữa theo chiều dọc
     game_area_y = (config.SCREEN_HEIGHT - game_area_height) / 2
     # Gán khoảng đệm bên trái bằng đúng khoảng đệm trên/dưới
     game_area_x = game_area_y   
     
-    controller = GameController(selected_map_name)
+    
 
     # --- 2. QUẢN LÝ TRẠNG THÁI GIAO DIỆN ---
     game_state = "IDLE"
@@ -145,7 +157,7 @@ def run_ai_game(screen, clock, selected_map_name):
     panel_center_x = panel_x + config.AI_PANEL_WIDTH / 2
     
     buttons = {
-        'load_snake': UI_helpers.create_button(panel_center_x - 125, 100, 250, 40, "Load Snake"),
+        'create_map': UI_helpers.create_button(panel_center_x - 125, 100, 250, 40, "Create Map"),
         'solve': UI_helpers.create_button(panel_center_x - 125, 150, 250, 40, "Solve"),
         'reset': UI_helpers.create_button(panel_center_x - 125, 200, 250, 40, "Reset"),
         'history': UI_helpers.create_button(panel_center_x - 125, 250, 250, 40, "History"),
@@ -154,7 +166,7 @@ def run_ai_game(screen, clock, selected_map_name):
     }
 
     map_end_x = game_area_x + game_area_width
-    middle_area_center_x = map_end_x + (panel_x - map_end_x) / 2 - 100
+    middle_area_center_x = map_end_x + (panel_x - map_end_x) / 2
     skip_button = UI_helpers.create_button(middle_area_center_x - 100, 550, 200, 50, "Skip")
     
     if selected_mode == "Player":
@@ -251,24 +263,25 @@ def run_ai_game(screen, clock, selected_map_name):
                         buttons['solve']['text'] = "Solve"
                         game_state = "IDLE" # Chuyển về trạng thái chờ cho AI
 
-            if event.type == pygame.KEYDOWN:
-                # Nếu game đang chờ, phím bấm đầu tiên sẽ bắt đầu game
-                if game_state == "PLAYER_READY":
-                    if event.key in [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]:
-                        game_state = "PLAYER_PLAYING"
-                        last_player_move_time = pygame.time.get_ticks()
-                        # Đặt hướng đi ngay lập tức
+            if selected_mode == "Player":
+                if event.type == pygame.KEYDOWN:
+                    # Nếu game đang chờ, phím bấm đầu tiên sẽ bắt đầu game
+                    if game_state == "PLAYER_READY":
+                        if event.key in [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]:
+                            game_state = "PLAYER_PLAYING"
+                            last_player_move_time = pygame.time.get_ticks()
+                            # Đặt hướng đi ngay lập tức
+                            if event.key == pygame.K_UP: controller.set_direction('UP')
+                            elif event.key == pygame.K_DOWN: controller.set_direction('DOWN')
+                            elif event.key == pygame.K_LEFT: controller.set_direction('LEFT')
+                            elif event.key == pygame.K_RIGHT: controller.set_direction('RIGHT')
+
+                    # Nếu game đang chạy, phím bấm chỉ đổi hướng
+                    elif game_state == "PLAYER_PLAYING":
                         if event.key == pygame.K_UP: controller.set_direction('UP')
                         elif event.key == pygame.K_DOWN: controller.set_direction('DOWN')
                         elif event.key == pygame.K_LEFT: controller.set_direction('LEFT')
                         elif event.key == pygame.K_RIGHT: controller.set_direction('RIGHT')
-
-                # Nếu game đang chạy, phím bấm chỉ đổi hướng
-                elif game_state == "PLAYER_PLAYING":
-                    if event.key == pygame.K_UP: controller.set_direction('UP')
-                    elif event.key == pygame.K_DOWN: controller.set_direction('DOWN')
-                    elif event.key == pygame.K_LEFT: controller.set_direction('LEFT')
-                    elif event.key == pygame.K_RIGHT: controller.set_direction('RIGHT')
 
         # --- LOGIC ĐIỀU KHIỂN ---
         if game_state == "PLAYER_PLAYING":
@@ -283,7 +296,7 @@ def run_ai_game(screen, clock, selected_map_name):
 
         elif game_state == "AI_AUTOPLAY" and game_data['food']:
             if not ai_path and game_data['food']:
-                algorithm_map = {"BFS": BFS.find_path_bfs, "A*": Astar.find_path_astar, "UCS": UCS.find_path_ucs, "DFS": DFS.find_path_dfs, "Greedy": Greedy.find_path_greedy}
+                algorithm_map = {"BFS": BFS.find_path_bfs, "A*": Astar.find_path_astar, "UCS": UCS.find_path_ucs, "DFS": DFS.find_path_dfs, "Greedy": Greedy.find_path_greedy, "DLS": DLS.find_path_dls}
                 algorithm_to_run = algorithm_map.get(selected_mode)
                 
                 if algorithm_to_run:
@@ -337,18 +350,26 @@ def run_ai_game(screen, clock, selected_map_name):
                 game_helpers.save_game_result(selected_map_name, selected_mode, controller.get_state()['steps'], current_time, total_search_time, "Completed")
                 visited_nodes, path_nodes_to_draw = [], [] # Xóa các chấm visualize khi thắng
 
-        # --- VẼ LÊN MÀN HÌNH ---\
+        # --- VẼ LÊN MÀN HÌNH ---
         background_effects.draw_background(screen)
-        game_surface.fill(config.COLORS['bg'])
+        game_surface.fill((0,0,0,0))
 
         if visited_nodes:
             UI_helpers.draw_search_visualization(game_surface, visited_nodes, path_nodes_to_draw)
         UI_helpers.draw_map(game_surface, controller.map_data)
-        snake_logic.draw_snake(game_surface, game_data['snake'])
+        UI_helpers.draw_snake(game_surface, game_data['snake'], game_data['food'])
         blinking_info = None
         if game_state == "VISUALIZING" and target_food_pos:
             blinking_info = (target_food_pos, is_blinking_visible)
-        food_logic.draw_food(game_surface, game_data['food'], blinking_info)
+        UI_helpers.draw_food(game_surface, game_data['food'], blinking_info)
+
+        # Vẽ màn hình Game Over nếu cần
+        if game_data['outcome'] != "Playing":
+            overlay = pygame.Surface((game_area_width, game_area_height), pygame.SRCALPHA)
+            text_to_show = "YOU DIED" if game_data['outcome'] == "Stuck" else "YOU WIN"
+            overlay.fill((50, 50, 50, 180) if text_to_show == "YOU DIED" else (0, 80, 150, 180))
+            game_surface.blit(overlay, (0, 0))
+            UI_helpers.draw_text(text_to_show, end_game_font, config.COLORS['white'], game_surface, game_area_width/2, game_area_height/2)
 
         screen.blit(game_surface, (game_area_x, game_area_y))
 
@@ -365,8 +386,7 @@ def run_ai_game(screen, clock, selected_map_name):
             )
 
         current_time = game_data['steps'] * (animation_interval / 1000.0)
-        
-        game_surface = pygame.Surface((config.AI_MAP_WIDTH_TILES * config.TILE_SIZE, config.AI_MAP_HEIGHT_TILES * config.TILE_SIZE))
+    
         
         UI_helpers.draw_text("ANIMATION TIME", info_font, config.COLORS['title'], screen, middle_area_center_x, 180) 
         UI_helpers.draw_text(f"{current_time:.4f} s", info_font_bold, config.COLORS['white'], screen, middle_area_center_x, 220)

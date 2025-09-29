@@ -7,7 +7,7 @@ from UI import UI_helpers, AI_selection_screen
 from UI.MainMenu import background_effects
 from GameLogic.game_controller import GameController # <-- DÙNG GAMECONTROLLER
 from GameLogic import snake_logic, food_logic
-from Algorithms import BFS, Astar, UCS, DFS, Greedy # (Giả định AI cũng dùng các thuật toán này)
+from Algorithms import BFS, Astar, UCS, DFS, Greedy, DLS # (Giả định AI cũng dùng các thuật toán này)
 
 def find_path_for_ai(controller, selected_mode):
     """Hàm tìm đường đi cho AI dựa vào thuật toán được chọn."""
@@ -21,7 +21,7 @@ def find_path_for_ai(controller, selected_mode):
     algorithm_map = {
         "BFS": BFS.find_path_bfs, "A*": Astar.find_path_astar,
         "UCS": UCS.find_path_ucs, "DFS": DFS.find_path_dfs,
-        "Greedy": Greedy.find_path_greedy
+        "Greedy": Greedy.find_path_greedy, "DLS": DLS.find_path_dls
     }
     algorithm_to_run = algorithm_map.get(selected_mode)
     if not algorithm_to_run:
@@ -82,9 +82,9 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
         UI_helpers.draw_text(title, title_font, title_color, screen, pos_x + map_width_px / 2, 40)
         surface.fill(config.COLORS['bg'])
         UI_helpers.draw_map(surface, controller.map_data)
-        snake_logic.draw_snake(surface, game_data['snake'])
-        food_logic.draw_food(surface, game_data['food'])
-        
+        UI_helpers.draw_snake(surface, game_data['snake'], game_data['food'])
+        UI_helpers.draw_food(surface, game_data['food'])
+    
         if game_data['outcome'] != "Playing":
             overlay = pygame.Surface((map_width_px, map_height_px), pygame.SRCALPHA)
             text_to_show = "YOU DIED" if game_data['outcome'] == "Stuck" else "YOU WIN"

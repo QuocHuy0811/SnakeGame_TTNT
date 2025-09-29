@@ -42,35 +42,36 @@ class GameController:
     def update(self):
         """
         Cập nhật 1 bước game cho người chơi.
-        Phân biệt rõ: dừng lại khi chạm tường và thua khi tự va chạm.
+        Thứ tự kiểm tra được tối ưu hóa.
         """
         if self.outcome != "Playing":
             return
 
-        # 1. "Nhìn trước" vị trí tiếp theo
-        next_head_pos = snake_logic.get_next_head_position(self.snake_data)
-
-        # 2. Xử lý va chạm
-        # 2a. Nếu va chạm với tường -> DỪNG LẠI, KHÔNG DI CHUYỂN
-        if next_head_pos in self.map_data['walls']:
-            return # Dừng lại, chờ người chơi đổi hướng. Game vẫn ở trạng thái "Playing".
-
-        # 2b. Nếu va chạm với thân -> THUA
-        if next_head_pos in self.snake_data['body']:
-            self.outcome = "Stuck"
-            return
-            
-        # 2c. Nếu bị kẹt (không còn đường đi) -> THUA
-        possible_moves = algorithm_helpers.get_valid_neighbors(self.snake_data['body'][0], self.map_data, self.snake_data['body'])
+        # --- BƯỚC 1: KIỂM TRA TÌNH HUỐNG BỊ KẸT (NÊN KIỂM TRA ĐẦU TIÊN) ---
+        head = self.snake_data['body'][0]
+        possible_moves = algorithm_helpers.get_valid_neighbors(head, self.map_data, self.snake_data['body'])
         if not possible_moves:
             self.outcome = "Stuck"
             return
 
-        # 3. Nếu an toàn, thực hiện di chuyển
+        # --- BƯỚC 2: "NHÌN TRƯỚC" HƯỚNG ĐI TIẾP THEO ---
+        next_head_pos = snake_logic.get_next_head_position(self.snake_data)
+
+        # --- BƯỚC 3: XỬ LÝ VA CHẠM CHO HƯỚNG ĐI ĐÓ ---
+        # 3a. Nếu va chạm với tường -> DỪNG LẠI, KHÔNG DI CHUYỂN
+        if next_head_pos in self.map_data['walls']:
+            return
+
+        # 3b. Nếu va chạm với thân -> THUA
+        if next_head_pos in self.snake_data['body']:
+            self.outcome = "Stuck"
+            return
+        
+        # --- BƯỚC 4: NẾU AN TOÀN, THỰC HIỆN DI CHUYỂN ---
         self.snake_data['body'].insert(0, next_head_pos)
         self.steps += 1
         
-        # 4. Kiểm tra ăn mồi
+        # 5. Kiểm tra ăn mồi
         eaten_food = next((food for food in self.food_data if food['pos'] == next_head_pos), None)
         if eaten_food:
             self.food_data.remove(eaten_food)
@@ -99,3 +100,4 @@ class GameController:
         else:
             if self.outcome == "Playing":
                 self.snake_data['body'].pop()
+
