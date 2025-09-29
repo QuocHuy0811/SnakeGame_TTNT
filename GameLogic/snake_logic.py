@@ -48,25 +48,32 @@ def load_snake_sprites():
     _snake_sprites = sprites
     return sprites
 
-
 def create_snake_from_map(map_data):
     """
-    Tạo ra một dictionary chứa dữ liệu của con rắn dựa trên thông tin từ map_data.
+    Tạo dữ liệu rắn từ map_data.
+    Đầu rắn là phần tử đầu tiên trong list snake_start đã được sắp xếp.
     """
-    if not map_data['snake_start']:
-        # Nếu map không có rắn, tạo một con mặc định
-        # Đảo ngược thứ tự để phần tử đầu tiên (index 0) là ĐẦU RẮN
+    snake_body_coords = map_data.get('snake_start')
+
+    # Nếu map không có rắn ('x'), tạo một con mặc định
+    if not snake_body_coords:
         return {'body': [(5, 5), (4, 5), (3, 5)], 'direction': 'RIGHT'}
 
-    snake_body = map_data['snake_start'][:]
-    # Sắp xếp để đảm bảo tọa độ x nhỏ nhất là đuôi
-    snake_body.sort() 
-    # Đảo ngược lại để phần tử đầu tiên là ĐẦU RẮN
-    snake_body.reverse() 
+    # Dữ liệu snake_start từ map_logic đã được sắp xếp,
+    # nên phần tử đầu tiên (index 0) là đầu rắn.
+    # Ta chỉ cần đảo ngược lại để có thứ tự [đầu, thân, đuôi]
+    snake_body = list(reversed(snake_body_coords))
     
-    # Giả định hướng di chuyển ban đầu là 'RIGHT'
-    initial_direction = 'RIGHT'
-    
+    # Xác định hướng ban đầu dựa trên 2 đốt đầu tiên
+    initial_direction = 'RIGHT' # Mặc định
+    if len(snake_body) > 1:
+        head = snake_body[0]
+        neck = snake_body[1]
+        if head[0] > neck[0]: initial_direction = 'RIGHT'
+        elif head[0] < neck[0]: initial_direction = 'LEFT'
+        elif head[1] > neck[1]: initial_direction = 'DOWN'
+        elif head[1] < neck[1]: initial_direction = 'UP'
+
     return {
         'body': snake_body,
         'direction': initial_direction
