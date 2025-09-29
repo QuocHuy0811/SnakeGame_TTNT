@@ -63,12 +63,28 @@ def run_algorithm_selection(screen):
                 pygame.quit()
                 exit()
             
+            # Xử lý cuộn chuột
             if event.type == pygame.MOUSEWHEEL and mouse_in_scroll_area:
                 scroll_y -= event.y * scroll_speed
                 # Giới hạn cuộn để không cuộn ra ngoài nội dung
                 max_scroll = content_height - scroll_area_height
                 if max_scroll < 0: max_scroll = 0 # Nếu nội dung ngắn hơn view
                 scroll_y = max(0, min(scroll_y, max_scroll))
+            
+            # Xử lý click chuột
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if close_button['rect'].collidepoint(mouse_pos):
+                    return None # Đóng cửa sổ
+                
+                # Chỉ xử lý click các nút thuật toán nếu click trong vùng cuộn
+                if mouse_in_scroll_area:
+                    for btn in buttons:
+                        # Điều chỉnh tọa độ nút tạm thời để kiểm tra va chạm
+                        btn['rect'].top -= scroll_y
+                        if btn['rect'].collidepoint(adjusted_mouse_pos):
+                             btn['rect'].top += scroll_y # Trả lại vị trí
+                             return btn['text'] # Trả về tên thuật toán
+                        btn['rect'].top += scroll_y # Trả lại vị trí
             
             # Nếu nhấn nút X, đóng pop-up và không trả về gì
             if UI_helpers.handle_button_events(event, close_button):
