@@ -54,14 +54,15 @@ def run_main_menu(screen):
     ]
     
     # Tạo nút header cho combobox ở cột phải.
-    combobox_header_button = UI_helpers.create_button(right_column_x - button_width / 2, buttons_start_y, button_width, button_height, f"Map: {selected_map_name}")
+    display_map_name = selected_map_name.replace('.txt', '')
+    combobox_header_button = UI_helpers.create_button(right_column_x - button_width / 2, buttons_start_y, button_width, button_height, f"Map: {display_map_name}")
     
     # Tạo các nút lựa chọn map (chỉ hiện khi combobox mở).
     map_option_buttons = []
     if map_files:
         for i, map_name in enumerate(map_files):
             option_y = combobox_header_button['rect'].bottom + i * 50
-            map_option_buttons.append(UI_helpers.create_button(right_column_x - button_width / 2, option_y, 250, 50, map_name))
+            map_option_buttons.append(UI_helpers.create_button(right_column_x - button_width / 2, option_y, 250, 50, map_name.replace('.txt', '')))
 
     # --- 5. VÒNG LẶP CHÍNH ---
     while True:
@@ -82,29 +83,30 @@ def run_main_menu(screen):
                 sys.exit()
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                # Ưu tiên xử lý combobox nếu nó đang mở
+                # Ưu tiên xử lý combobox nếu đang mở
                 if is_combobox_open:
-                    # Kiểm tra xem có click vào header để đóng không
-                    if combobox_header_button['rect'].collidepoint(mouse_pos):
+                    clicked_on_option = False
+                    for btn in map_option_buttons:
+                        if btn['rect'].collidepoint(mouse_pos):
+                            # Lấy tên map không có đuôi và thêm lại .txt cho logic game
+                            selected_map_name = btn['text'] + '.txt'
+                            combobox_header_button['text'] = f"Map: {btn['text']}"
+                            is_combobox_open = False
+                            clicked_on_option = True
+                            break
+                    # Nếu click ra ngoài các option (có thể là header hoặc vùng trống), đóng combobox
+                    if not clicked_on_option:
                         is_combobox_open = False
-                    else: # Nếu không, kiểm tra các option
-                        for btn in map_option_buttons:
-                            if btn['rect'].collidepoint(mouse_pos):
-                                selected_map_name = btn['text'] + '.txt' # Thêm lại .txt
-                                combobox_header_button['text'] = f"Map: {btn['text']}"
-                                is_combobox_open = False
-                                break
-                else: # Nếu combobox đang đóng
+                
+                # Nếu combobox đang đóng
+                else:
                     if combobox_header_button['rect'].collidepoint(mouse_pos):
                         is_combobox_open = True
-                    
-                    # Kiểm tra các nút chọn chế độ
-                    for btn in mode_buttons:
-                        if btn['rect'].collidepoint(mouse_pos):
-                            if btn['text'] == "AI":
-                                return "AI", selected_map_name
-                            elif btn['text'] == "AI vs Human":
-                                return "AI_VS_HUMAN", selected_map_name
+                    else: # Chỉ kiểm tra các nút mode nếu không click vào combobox
+                        for btn in mode_buttons:
+                            if btn['rect'].collidepoint(mouse_pos):
+                                if btn['text'] == "AI": return "AI", selected_map_name
+                                elif btn['text'] == "AI vs Human": return "AI_VS_HUMAN", selected_map_name
             
         # --- 6. VẼ LÊN MÀN HÌNH ---
         background_effects.draw_background(screen)
