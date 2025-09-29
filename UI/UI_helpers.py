@@ -4,7 +4,7 @@
 """
 import pygame
 import config
-from GameLogic import snake_logic, food_logic
+from GameLogic import snake_logic, food_logic, map_logic
 from Algorithms.algorithm_helpers import manhattan_distance
 
 
@@ -91,18 +91,32 @@ def draw_game_grid(surface):
         
 def draw_map(surface, map_data):
     """
-    Vẽ các bức tường của map lên một bề mặt (surface).
+    Vẽ TOÀN BỘ map: bao gồm cả nền lót (tile) và các block tường.
     """
-    wall_color = config.COLORS['border']
+    # --- PHẦN 1: VẼ NỀN LÓT (TILE) ---
+    map_bg_sprite = map_logic.load_map_background_sprite()
     
-    for wall_pos in map_data['walls']:
-        rect = pygame.Rect(
-            wall_pos[0] * config.TILE_SIZE,
-            wall_pos[1] * config.TILE_SIZE,
-            config.TILE_SIZE,
-            config.TILE_SIZE
-        )
-        pygame.draw.rect(surface, wall_color, rect)
+    if map_bg_sprite == "error":
+        surface.fill(config.COLORS['bg']) # Tô màu nền mặc định nếu lỗi
+    else:
+        surface_width, surface_height = surface.get_size()
+        tile_size = config.TILE_SIZE
+        for x in range(0, surface_width, tile_size):
+            for y in range(0, surface_height, tile_size):
+                surface.blit(map_bg_sprite, (x, y))
+
+    # --- PHẦN 2: VẼ TƯỜNG LÊN TRÊN NỀN ---
+    wall_sprite_image = map_logic.load_wall_sprite()
+    
+    if wall_sprite_image != "error":
+        for x, y in map_data['walls']:
+            rect = pygame.Rect(x * config.TILE_SIZE, y * config.TILE_SIZE, config.TILE_SIZE, config.TILE_SIZE)
+            surface.blit(wall_sprite_image, rect)
+    else: # Fallback nếu sprite tường lỗi
+        wall_color = config.COLORS['border'] 
+        for x, y in map_data['walls']:
+            rect = pygame.Rect(x * config.TILE_SIZE, y * config.TILE_SIZE, config.TILE_SIZE, config.TILE_SIZE)
+            pygame.draw.rect(surface, wall_color, rect)
 
 def draw_search_visualization(surface, visited_nodes, path_nodes):
     """
@@ -112,7 +126,7 @@ def draw_search_visualization(surface, visited_nodes, path_nodes):
     for pos in visited_nodes:
         center_x = pos[0] * config.TILE_SIZE + config.TILE_SIZE // 2
         center_y = pos[1] * config.TILE_SIZE + config.TILE_SIZE // 2
-        pygame.draw.circle(surface, (200, 200, 200, 100), (center_x, center_y), 3) # Chấm trắng mờ
+        pygame.draw.circle(surface, (255, 255, 255, 100), (center_x, center_y), 3) # Chấm trắng mờ
 
     # Vẽ đường đi cuối cùng đè lên trên
     for pos in path_nodes:
