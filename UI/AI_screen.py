@@ -100,7 +100,7 @@ def run_ai_game(screen, clock, selected_map_name):
     instruction_font = pygame.font.Font(config.FONT_PATH, 18)
     end_game_font = pygame.font.Font(config.FONT_PATH, 50)
 
-    background_effects.init_background(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 1000)
+    background_effects.init_background(config.SCREEN_WIDTH, config.SCREEN_HEIGHT)
     
     # Tải controller và dữ liệu map
     controller = GameController(selected_map_name)

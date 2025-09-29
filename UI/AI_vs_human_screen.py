@@ -39,7 +39,7 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
     end_font = pygame.font.Font(config.FONT_PATH, 60)
     instruction_font = pygame.font.Font(config.FONT_PATH, 18)
     
-    background_effects.init_background(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 1000)
+    background_effects.init_background(config.SCREEN_WIDTH, config.SCREEN_HEIGHT)
 
     # Tạo 2 controller riêng biệt cho Player và AI
     player_controller = GameController(selected_map_name)

@@ -26,7 +26,7 @@ def run_main_menu(screen):
         map_files = sorted([f for f in os.listdir(config.MAPS_DIR) if f.endswith('.txt')])
     
     # Khởi tạo hiệu ứng nền
-    background_effects.init_background(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 1000)
+    background_effects.init_background(config.SCREEN_WIDTH, config.SCREEN_HEIGHT)
     
     # --- 2. QUẢN LÝ TRẠNG THÁI ---
     # Lưu map đang được chọn, mặc định là map đầu tiên.

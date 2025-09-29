@@ -3,50 +3,80 @@ import random
 import math
 import config
 
-# Biến toàn cục trong module này để lưu trữ trạng thái của tất cả các ngôi sao.
-STARS = []
-WIDTH, HEIGHT = 0, 0
-CENTER_X, CENTER_Y = 0, 0
+# --- Class cho mỗi hạt (Particle) ---
+class Particle:
+    def __init__(self, screen_width, screen_height):
+        self.x = random.randint(0, screen_width)
+        self.y = random.randint(0, screen_height)
+        # Vận tốc ngẫu nhiên cho mỗi hạt
+        self.vx = random.uniform(-config.PARTICLE_MAX_VELOCITY, config.PARTICLE_MAX_VELOCITY)
+        self.vy = random.uniform(-config.PARTICLE_MAX_VELOCITY, config.PARTICLE_MAX_VELOCITY)
+        self.radius = config.PARTICLE_RADIUS
+        self.color = config.COLORS['particle_color']
+        self.screen_width = screen_width
+        self.screen_height = screen_height
 
-def init_background(width, height, num_stars):
+    def update(self):
+        # Cập nhật vị trí
+        self.x += self.vx
+        self.y += self.vy
+
+        # Xử lý khi hạt chạm biên màn hình: bật lại
+        if self.x <= 0 or self.x >= self.screen_width:
+            self.vx *= -1
+            self.x = max(0, min(self.x, self.screen_width)) # Đảm bảo hạt không ra ngoài biên
+        if self.y <= 0 or self.y >= self.screen_height:
+            self.vy *= -1
+            self.y = max(0, min(self.y, self.screen_height))
+
+    def draw(self, screen):
+        pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)), self.radius)
+
+# --- Khởi tạo danh sách các hạt ---
+particles = []
+# Biến để đảm bảo chỉ khởi tạo một lần
+_initialized = False
+
+def init_background(screen_width, screen_height):
     """
-    Khởi tạo bầu trời sao. Hàm này chỉ cần gọi MỘT LẦN khi game bắt đầu.
+    Khởi tạo các hạt. Chỉ gọi một lần.
     """
-    global STARS, WIDTH, HEIGHT, CENTER_X, CENTER_Y
-    
-    WIDTH, HEIGHT = width, height
-    CENTER_X, CENTER_Y = width // 2, height // 2
-    
-    STARS.clear()
-    
-    for _ in range(num_stars):
-        star = {
-            'angle': random.uniform(0, 2 * math.pi),
-            'radius': random.uniform(1, WIDTH // 2),
-            'speed': random.uniform(0.0005, 0.002),
-            'drift': random.uniform(0.05, 0.15),
-            'size': random.randint(1, 3),
-            'color': (random.randint(150, 255), random.randint(150, 255), random.randint(150, 255))
-        }
-        STARS.append(star)
+    global particles, _initialized
+    if not _initialized:
+        particles.clear()
+        for _ in range(config.PARTICLE_COUNT):
+            particles.append(Particle(screen_width, screen_height))
+        _initialized = True
 
 def draw_background(screen):
     """
-    Cập nhật vị trí VÀ vẽ bầu trời sao. Hàm này được gọi MỖI FRAME.
+    Vẽ nền, cập nhật và vẽ các hạt, sau đó vẽ đường nối.
     """
-    # 1. Vẽ một lớp nền màu tối trước, lấy từ file config.
-    screen.fill(config.COLORS['bg'])
-    
-    # 2. Cập nhật và vẽ từng ngôi sao.
-    for star in STARS:
-        star['angle'] += star['speed']
-        star['radius'] += star['drift']
-        
-        if star['radius'] > WIDTH // 2:
-            star['radius'] = random.uniform(1, 10)
-            star['angle'] = random.uniform(0, 2 * math.pi)
+    # 1. Vẽ nền
+    screen.fill(config.COLORS['bg_dark_blue'])
 
-        x = CENTER_X + star['radius'] * math.cos(star['angle'])
-        y = CENTER_Y + star['radius'] * math.sin(star['angle'])
-        
-        pygame.draw.circle(screen, star['color'], (int(x), int(y)), star['size'])
+    # 2. Cập nhật và vẽ các hạt
+    for p in particles:
+        p.update()
+        p.draw(screen)
+
+    # 3. Vẽ đường nối giữa các hạt đủ gần
+    for i in range(len(particles)):
+        for j in range(i + 1, len(particles)):
+            p1 = particles[i]
+            p2 = particles[j]
+
+            # Tính khoảng cách giữa hai hạt
+            distance = math.hypot(p1.x - p2.x, p1.y - p2.y)
+
+            if distance < config.CONNECT_DISTANCE:
+                # Tính độ trong suốt của đường dựa trên khoảng cách
+                # Càng gần thì càng rõ, càng xa thì càng mờ
+                alpha = int(255 * (1 - (distance / config.CONNECT_DISTANCE)))
+                
+                # Vẽ đường nối với độ trong suốt
+                # Chú ý: pygame.draw.aaline hỗ trợ alpha tốt hơn trên một số hệ thống
+                # và cho đường kẻ mượt hơn.
+                # Cần truyền màu có 4 thành phần (R, G, B, Alpha).
+                line_color_with_alpha = config.COLORS['line_color'] + (alpha,)
+                pygame.draw.line(screen, line_color_with_alpha, (int(p1.x), int(p1.y)), (int(p2.x), int(p2.y)), 1)
