@@ -263,24 +263,25 @@ def run_ai_game(screen, clock, selected_map_name):
                         buttons['solve']['text'] = "Solve"
                         game_state = "IDLE" # Chuyển về trạng thái chờ cho AI
 
-            if event.type == pygame.KEYDOWN:
-                # Nếu game đang chờ, phím bấm đầu tiên sẽ bắt đầu game
-                if game_state == "PLAYER_READY":
-                    if event.key in [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]:
-                        game_state = "PLAYER_PLAYING"
-                        last_player_move_time = pygame.time.get_ticks()
-                        # Đặt hướng đi ngay lập tức
+            if selected_mode == "Player":
+                if event.type == pygame.KEYDOWN:
+                    # Nếu game đang chờ, phím bấm đầu tiên sẽ bắt đầu game
+                    if game_state == "PLAYER_READY":
+                        if event.key in [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]:
+                            game_state = "PLAYER_PLAYING"
+                            last_player_move_time = pygame.time.get_ticks()
+                            # Đặt hướng đi ngay lập tức
+                            if event.key == pygame.K_UP: controller.set_direction('UP')
+                            elif event.key == pygame.K_DOWN: controller.set_direction('DOWN')
+                            elif event.key == pygame.K_LEFT: controller.set_direction('LEFT')
+                            elif event.key == pygame.K_RIGHT: controller.set_direction('RIGHT')
+
+                    # Nếu game đang chạy, phím bấm chỉ đổi hướng
+                    elif game_state == "PLAYER_PLAYING":
                         if event.key == pygame.K_UP: controller.set_direction('UP')
                         elif event.key == pygame.K_DOWN: controller.set_direction('DOWN')
                         elif event.key == pygame.K_LEFT: controller.set_direction('LEFT')
                         elif event.key == pygame.K_RIGHT: controller.set_direction('RIGHT')
-
-                # Nếu game đang chạy, phím bấm chỉ đổi hướng
-                elif game_state == "PLAYER_PLAYING":
-                    if event.key == pygame.K_UP: controller.set_direction('UP')
-                    elif event.key == pygame.K_DOWN: controller.set_direction('DOWN')
-                    elif event.key == pygame.K_LEFT: controller.set_direction('LEFT')
-                    elif event.key == pygame.K_RIGHT: controller.set_direction('RIGHT')
 
         # --- LOGIC ĐIỀU KHIỂN ---
         if game_state == "PLAYER_PLAYING":
