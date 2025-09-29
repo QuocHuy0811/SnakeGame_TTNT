@@ -2,6 +2,8 @@
     Hàm vẽ map
 """
 import os
+
+import pygame
 import config
 
 def load_map_data(map_filename):
@@ -44,3 +46,42 @@ def load_map_data(map_filename):
     map_data['snake_start'].sort(key=lambda pos: (pos[1], pos[0]))
     
     return map_data
+
+_wall_sprite = None
+
+def load_wall_sprite():
+    """Tải sprite tường 'wall.png' một lần duy nhất."""
+    global _wall_sprite
+    if _wall_sprite is not None:
+        return _wall_sprite
+
+    path = 'Assets/Images/Wall/wall.png'
+    try:
+        original_image = pygame.image.load(path).convert_alpha()
+        _wall_sprite = pygame.transform.scale(original_image, (config.TILE_SIZE, config.TILE_SIZE))
+        print(f"Tải sprite tường '{path}' thành công.")
+    except pygame.error as e:
+        print(f"LỖI: Không thể tải sprite tường '{path}'. Sẽ vẽ hình vuông thay thế. Lỗi: {e}")
+        _wall_sprite = "error" # Đánh dấu lỗi
+        
+    return _wall_sprite
+
+_map_bg_sprite = None
+
+def load_map_background_sprite():
+    """Tải sprite nền 'bg.png' một lần duy nhất."""
+    global _map_bg_sprite
+    if _map_bg_sprite is not None:
+        return _map_bg_sprite
+
+    path = 'Assets/Images/Wall/bg.png'
+    try:
+        original_image = pygame.image.load(path).convert() # Dùng .convert() cho ảnh không trong suốt
+        _map_bg_sprite = pygame.transform.scale(original_image, (config.TILE_SIZE, config.TILE_SIZE))
+        print(f"Tải sprite nền map '{path}' thành công.")
+    except pygame.error as e:
+        print(f"LỖI: Không thể tải sprite nền map '{path}'. Lỗi: {e}")
+        _map_bg_sprite = "error"
+        
+    return _map_bg_sprite
+

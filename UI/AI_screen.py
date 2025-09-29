@@ -354,10 +354,11 @@ def run_ai_game(screen, clock, selected_map_name):
         background_effects.draw_background(screen)
         game_surface.fill((0,0,0,0))
 
+        UI_helpers.draw_map(game_surface, controller.map_data)
         if visited_nodes:
             UI_helpers.draw_search_visualization(game_surface, visited_nodes, path_nodes_to_draw)
-        UI_helpers.draw_map(game_surface, controller.map_data)
         UI_helpers.draw_snake(game_surface, game_data['snake'], game_data['food'])
+        
         blinking_info = None
         if game_state == "VISUALIZING" and target_food_pos:
             blinking_info = (target_food_pos, is_blinking_visible)
