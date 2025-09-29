@@ -25,7 +25,9 @@ def run_main_menu(screen):
     if os.path.exists(config.MAPS_DIR):
         map_files = sorted([f for f in os.listdir(config.MAPS_DIR) if f.endswith('.txt')])
     
+    # Khởi tạo hiệu ứng nền
     background_effects.init_background(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 1000)
+    
     # --- 2. QUẢN LÝ TRẠNG THÁI ---
     # Lưu map đang được chọn, mặc định là map đầu tiên.
     selected_map_name = map_files[0] if map_files else "No Maps Found"
@@ -46,9 +48,10 @@ def run_main_menu(screen):
     
     # --- 4. TẠO CÁC NÚT BẤM ---
     # Tạo các nút chọn chế độ ở cột trái.
-    mode_buttons = []
-    mode_buttons.append(UI_helpers.create_button(left_column_x - button_width / 2, buttons_start_y, button_width, button_height, "AI"))
-    mode_buttons.append(UI_helpers.create_button(left_column_x - button_width / 2, buttons_start_y + 80, button_width, button_height, "AI vs Human"))
+    mode_buttons = [
+        UI_helpers.create_button(left_column_x - button_width / 2, buttons_start_y, button_width, button_height, "AI"),
+        UI_helpers.create_button(left_column_x - button_width / 2, buttons_start_y + 80, button_width, button_height, "AI vs Human")
+    ]
     
     # Tạo nút header cho combobox ở cột phải.
     combobox_header_button = UI_helpers.create_button(right_column_x - button_width / 2, buttons_start_y, button_width, button_height, f"Map: {selected_map_name}")
