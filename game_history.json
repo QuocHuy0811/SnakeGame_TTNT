@@ -30,5 +30,61 @@
         "time": 0.0,
         "total_search_time": 0.023,
         "outcome": "Completed"
+    },
+    {
+        "map": "TrapGreedy",
+        "algorithm": "Greedy",
+        "steps": 273,
+        "time": 21.84,
+        "total_search_time": 0.01,
+        "outcome": "Completed"
+    },
+    {
+        "map": "DFSlor",
+        "algorithm": "A*",
+        "steps": 191,
+        "time": 0.0,
+        "total_search_time": 0.007,
+        "outcome": "Completed"
+    },
+    {
+        "map": "DFSlor",
+        "algorithm": "BFS",
+        "steps": 169,
+        "time": 13.52,
+        "total_search_time": 0.011,
+        "outcome": "Stuck"
+    },
+    {
+        "map": "DFSlor",
+        "algorithm": "A*",
+        "steps": 410,
+        "time": 0.0,
+        "total_search_time": 0.02,
+        "outcome": "Completed"
+    },
+    {
+        "map": "DFSlor",
+        "algorithm": "A*",
+        "steps": 282,
+        "time": 22.56,
+        "total_search_time": 0.011,
+        "outcome": "Completed"
+    },
+    {
+        "map": "BFSlor",
+        "algorithm": "BFS",
+        "steps": 124,
+        "time": 9.92,
+        "total_search_time": 0.011,
+        "outcome": "Completed"
+    },
+    {
+        "map": "BFSlor",
+        "algorithm": "A*",
+        "steps": 122,
+        "time": 9.76,
+        "total_search_time": 0.001,
+        "outcome": "Completed"
     }
 ]
