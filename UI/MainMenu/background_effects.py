@@ -1,52 +1,89 @@
-import pygame
-import random
 import math
-import config
+import random
+import pygame
 
-# Biến toàn cục trong module này để lưu trữ trạng thái của tất cả các ngôi sao.
-STARS = []
-WIDTH, HEIGHT = 0, 0
-CENTER_X, CENTER_Y = 0, 0
 
-def init_background(width, height, num_stars):
-    """
-    Khởi tạo bầu trời sao. Hàm này chỉ cần gọi MỘT LẦN khi game bắt đầu.
-    """
-    global STARS, WIDTH, HEIGHT, CENTER_X, CENTER_Y
-    
-    WIDTH, HEIGHT = width, height
-    CENTER_X, CENTER_Y = width // 2, height // 2
-    
-    STARS.clear()
-    
+_stars = []
+_shooting_stars = []
+_width, _height = 0, 0
+_last_shooting_star_spawn = 0
+
+def init_background(screen_width, screen_height, num_stars):
+    """Khởi tạo nền sao tĩnh."""
+    global _stars, _width, _height, _shooting_stars
+    _width, _height = screen_width, screen_height
+    _stars = []
+    _shooting_stars = [] # Reset sao băng khi khởi tạo
+
     for _ in range(num_stars):
-        star = {
-            'angle': random.uniform(0, 2 * math.pi),
-            'radius': random.uniform(1, WIDTH // 2),
-            'speed': random.uniform(0.0005, 0.002),
-            'drift': random.uniform(0.05, 0.15),
-            'size': random.randint(1, 3),
-            'color': (random.randint(150, 255), random.randint(150, 255), random.randint(150, 255))
-        }
-        STARS.append(star)
+        _stars.append({
+            'pos': (random.randint(0, _width), random.randint(0, _height)),
+            'size': random.randint(1, 2),
+            'color': (random.randint(150, 200), random.randint(150, 200), random.randint(150, 200))
+        })
 
-def draw_background(screen):
-    """
-    Cập nhật vị trí VÀ vẽ bầu trời sao. Hàm này được gọi MỖI FRAME.
-    """
-    # 1. Vẽ một lớp nền màu tối trước, lấy từ file config.
-    screen.fill(config.COLORS['bg'])
+def _spawn_shooting_star():
+    """Tạo một sao băng mới với các thuộc tính ngẫu nhiên."""
+    length = random.randint(150, 300) # Chiều dài vệt sáng
+    speed = random.uniform(8, 15)     # Tốc độ bay
     
-    # 2. Cập nhật và vẽ từng ngôi sao.
-    for star in STARS:
-        star['angle'] += star['speed']
-        star['radius'] += star['drift']
-        
-        if star['radius'] > WIDTH // 2:
-            star['radius'] = random.uniform(1, 10)
-            star['angle'] = random.uniform(0, 2 * math.pi)
+    # Sao băng bay từ góc trên bên trái hoặc trên bên phải
+    if random.random() < 0.5: # Bay từ trái sang phải
+        x = -length
+        y = random.randint(0, _height // 2)
+        angle = math.radians(random.uniform(10, 30)) # Góc bay chéo xuống
+    else: # Bay từ phải sang trái
+        x = _width + length
+        y = random.randint(0, _height // 2)
+        angle = math.radians(random.uniform(150, 170)) # Góc bay chéo xuống
 
-        x = CENTER_X + star['radius'] * math.cos(star['angle'])
-        y = CENTER_Y + star['radius'] * math.sin(star['angle'])
-        
-        pygame.draw.circle(screen, star['color'], (int(x), int(y)), star['size'])
+    _shooting_stars.append({
+        'x': x,
+        'y': y,
+        'vx': math.cos(angle) * speed,
+        'vy': math.sin(angle) * speed,
+        'length': length,
+        'color': (220, 220, 255) # Màu trắng xanh cho vệt sáng
+    })
+
+def draw_background(surface):
+    """Vẽ nền đen, sao tĩnh và các sao băng chuyển động."""
+    global _last_shooting_star_spawn
+    current_time = pygame.time.get_ticks()
+
+    # 1. Tô nền đen
+    surface.fill((10, 10, 25)) # Màu đen hơi xanh thẫm
+
+    # 2. Vẽ các ngôi sao tĩnh
+    for star in _stars:
+        pygame.draw.circle(surface, star['color'], star['pos'], star['size'])
+
+    # 3. Tạo sao băng mới theo chu kỳ
+    # Mỗi 2-5 giây sẽ có một sao băng mới, giới hạn 100 sao băng cùng lúc
+    if current_time - _last_shooting_star_spawn > random.randint(200, 500):
+        if len(_shooting_stars) < 100:
+            _spawn_shooting_star()
+        _last_shooting_star_spawn = current_time
+
+    # 4. Cập nhật và vẽ sao băng
+    shooting_stars_to_remove = []
+    for i, s_star in enumerate(_shooting_stars):
+        # Cập nhật vị trí đầu của sao băng
+        s_star['x'] += s_star['vx']
+        s_star['y'] += s_star['vy']
+
+        # Tính toán vị trí đuôi của sao băng
+        end_x = s_star['x'] - s_star['vx'] * (s_star['length'] / 15) # Điều chỉnh độ dài vệt
+        end_y = s_star['y'] - s_star['vy'] * (s_star['length'] / 15)
+
+        # Vẽ vệt sáng bằng một đường thẳng (dùng aaline để có hiệu ứng mượt hơn)
+        pygame.draw.aaline(surface, s_star['color'], (s_star['x'], s_star['y']), (end_x, end_y))
+        pygame.draw.circle(surface, s_star['color'], (int(s_star['x']), int(s_star['y'])), 3)
+
+        # Đánh dấu để xóa sao băng nếu nó đã bay ra khỏi màn hình
+        if s_star['x'] < -s_star['length'] or s_star['x'] > _width + s_star['length']:
+            shooting_stars_to_remove.append(i)
+    
+    # Xóa các sao băng đã bay hết
+    for i in reversed(shooting_stars_to_remove):
+        _shooting_stars.pop(i)
