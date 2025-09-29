@@ -81,24 +81,30 @@ def run_main_menu(screen):
                 pygame.quit()
                 sys.exit()
 
-            # Logic xử lý cho Combobox.
-            if UI_helpers.handle_button_events(event, combobox_header_button):
-                is_combobox_open = not is_combobox_open
-            
-            elif is_combobox_open:
-                for btn_data in map_option_buttons:
-                    if UI_helpers.handle_button_events(event, btn_data):
-                        selected_map_name = btn_data['text']
-                        combobox_header_button['text'] = f"Map: {selected_map_name}"
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                # Ưu tiên xử lý combobox nếu nó đang mở
+                if is_combobox_open:
+                    # Kiểm tra xem có click vào header để đóng không
+                    if combobox_header_button['rect'].collidepoint(mouse_pos):
                         is_combobox_open = False
-                        break 
-            
-            # Logic xử lý cho các nút chọn chế độ.
-            else:
-                if UI_helpers.handle_button_events(event, mode_buttons[0]):
-                    return "AI", selected_map_name
-                if UI_helpers.handle_button_events(event, mode_buttons[1]):
-                    return "AI_VS_HUMAN", selected_map_name
+                    else: # Nếu không, kiểm tra các option
+                        for btn in map_option_buttons:
+                            if btn['rect'].collidepoint(mouse_pos):
+                                selected_map_name = btn['text'] + '.txt' # Thêm lại .txt
+                                combobox_header_button['text'] = f"Map: {btn['text']}"
+                                is_combobox_open = False
+                                break
+                else: # Nếu combobox đang đóng
+                    if combobox_header_button['rect'].collidepoint(mouse_pos):
+                        is_combobox_open = True
+                    
+                    # Kiểm tra các nút chọn chế độ
+                    for btn in mode_buttons:
+                        if btn['rect'].collidepoint(mouse_pos):
+                            if btn['text'] == "AI":
+                                return "AI", selected_map_name
+                            elif btn['text'] == "AI vs Human":
+                                return "AI_VS_HUMAN", selected_map_name
             
         # --- 6. VẼ LÊN MÀN HÌNH ---
         background_effects.draw_background(screen)

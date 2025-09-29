@@ -518,5 +518,13 @@
         "time": 0.0,
         "total_search_time": 0.026,
         "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 245,
+        "time": 0.0,
+        "total_search_time": 0.03,
+        "outcome": "Completed"
     }
 ]
