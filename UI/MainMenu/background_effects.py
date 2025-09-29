@@ -1,82 +1,90 @@
-import pygame
-import random
 import math
-import config
+import random
+import pygame
 
-# --- Class cho mỗi hạt (Particle) ---
-class Particle:
-    def __init__(self, screen_width, screen_height):
-        self.x = random.randint(0, screen_width)
-        self.y = random.randint(0, screen_height)
-        # Vận tốc ngẫu nhiên cho mỗi hạt
-        self.vx = random.uniform(-config.PARTICLE_MAX_VELOCITY, config.PARTICLE_MAX_VELOCITY)
-        self.vy = random.uniform(-config.PARTICLE_MAX_VELOCITY, config.PARTICLE_MAX_VELOCITY)
-        self.radius = config.PARTICLE_RADIUS
-        self.color = config.COLORS['particle_color']
-        self.screen_width = screen_width
-        self.screen_height = screen_height
 
-    def update(self):
-        # Cập nhật vị trí
-        self.x += self.vx
-        self.y += self.vy
+_stars = []
+_shooting_stars = []
+_width, _height = 0, 0
+_last_shooting_star_spawn = 0
 
-        # Xử lý khi hạt chạm biên màn hình: bật lại
-        if self.x <= 0 or self.x >= self.screen_width:
-            self.vx *= -1
-            self.x = max(0, min(self.x, self.screen_width)) # Đảm bảo hạt không ra ngoài biên
-        if self.y <= 0 or self.y >= self.screen_height:
-            self.vy *= -1
-            self.y = max(0, min(self.y, self.screen_height))
+def init_background(screen_width, screen_height, num_stars):
+    """Khởi tạo nền sao tĩnh."""
+    global _stars, _width, _height, _shooting_stars
+    _width, _height = screen_width, screen_height
+    _stars = []
+    _shooting_stars = [] # Reset sao băng khi khởi tạo
 
-    def draw(self, screen):
-        pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)), self.radius)
+    for _ in range(num_stars):
+        _stars.append({
+            'pos': (random.randint(0, _width), random.randint(0, _height)),
+            'size': random.randint(1, 2),
+            'color': (random.randint(150, 200), random.randint(150, 200), random.randint(150, 200))
+        })
 
-# --- Khởi tạo danh sách các hạt ---
-particles = []
-# Biến để đảm bảo chỉ khởi tạo một lần
-_initialized = False
+def _spawn_shooting_star():
+    """Tạo một sao băng mới với các thuộc tính ngẫu nhiên."""
+    length = random.randint(150, 300) # Chiều dài vệt sáng
+    speed = random.uniform(8, 15)     # Tốc độ bay
+    
+    # Sao băng bay từ góc trên bên trái hoặc trên bên phải
+    if random.random() < 0.5: # Bay từ trái sang phải
+        x = -length
+        y = random.randint(0, _height // 2)
+        angle = math.radians(random.uniform(10, 30)) # Góc bay chéo xuống
+    else: # Bay từ phải sang trái
+        x = _width + length
+        y = random.randint(0, _height // 2)
+        angle = math.radians(random.uniform(150, 170)) # Góc bay chéo xuống
 
-def init_background(screen_width, screen_height):
-    """
-    Khởi tạo các hạt. Chỉ gọi một lần.
-    """
-    global particles, _initialized
-    if not _initialized:
-        particles.clear()
-        for _ in range(config.PARTICLE_COUNT):
-            particles.append(Particle(screen_width, screen_height))
-        _initialized = True
+    _shooting_stars.append({
+        'x': x,
+        'y': y,
+        'vx': math.cos(angle) * speed,
+        'vy': math.sin(angle) * speed,
+        'length': length,
+        'color': (220, 220, 255) # Màu trắng xanh cho vệt sáng
+    })
 
-def draw_background(screen):
-    """
-    Vẽ nền, cập nhật và vẽ các hạt, sau đó vẽ đường nối.
-    """
-    # 1. Vẽ nền
-    screen.fill(config.COLORS['bg_dark_blue'])
+def draw_background(surface):
+    """Vẽ nền đen, sao tĩnh và các sao băng chuyển động."""
+    global _last_shooting_star_spawn
+    current_time = pygame.time.get_ticks()
 
-    # 2. Cập nhật và vẽ các hạt
-    for p in particles:
-        p.update()
-        p.draw(screen)
+    # 1. Tô nền đen
+    surface.fill((10, 10, 25)) # Màu đen hơi xanh thẫm
 
-    # 3. Vẽ đường nối giữa các hạt đủ gần
-    for i in range(len(particles)):
-        for j in range(i + 1, len(particles)):
-            p1 = particles[i]
-            p2 = particles[j]
+    # 2. Vẽ các ngôi sao tĩnh
+    for star in _stars:
+        pygame.draw.circle(surface, star['color'], star['pos'], star['size'])
 
-            # Tính khoảng cách giữa hai hạt
-            distance = math.hypot(p1.x - p2.x, p1.y - p2.y)
+    # 3. Tạo sao băng mới theo chu kỳ
+    # Mỗi 2-5 giây sẽ có một sao băng mới, giới hạn 100 sao băng cùng lúc
+    if current_time - _last_shooting_star_spawn > random.randint(200, 500):
+        if len(_shooting_stars) < 100:
+            _spawn_shooting_star()
+        _last_shooting_star_spawn = current_time
 
-            if distance < config.CONNECT_DISTANCE:
-                # Tính độ trong suốt của đường dựa trên khoảng cách
-                # Càng gần thì càng rõ, càng xa thì càng mờ
-                alpha = int(255 * (1 - (distance / config.CONNECT_DISTANCE)))
-                
-                # Vẽ đường nối với độ trong suốt
-                # Chú ý: pygame.draw.aaline hỗ trợ alpha tốt hơn trên một số hệ thống
-                # và cho đường kẻ mượt hơn.
-                # Cần truyền màu có 4 thành phần (R, G, B, Alpha).
-                line_color_with_alpha = config.COLORS['line_color'] + (alpha,)
-                pygame.draw.line(screen, line_color_with_alpha, (int(p1.x), int(p1.y)), (int(p2.x), int(p2.y)), 1)
+    # 4. Cập nhật và vẽ sao băng
+    shooting_stars_to_remove = []
+    for i, s_star in enumerate(_shooting_stars):
+        # Cập nhật vị trí đầu của sao băng
+        s_star['x'] += s_star['vx']
+        s_star['y'] += s_star['vy']
+
+        # Tính toán vị trí đuôi của sao băng
+        end_x = s_star['x'] - s_star['vx'] * (s_star['length'] / 15) # Điều chỉnh độ dài vệt
+        end_y = s_star['y'] - s_star['vy'] * (s_star['length'] / 15)
+
+        # Vẽ vệt sáng bằng một đường thẳng (dùng aaline để có hiệu ứng mượt hơn)
+        pygame.draw.aaline(surface, s_star['color'], (s_star['x'], s_star['y']), (end_x, end_y))
+        pygame.draw.circle(surface, s_star['color'], (int(s_star['x']), int(s_star['y'])), 3)
+
+        # Đánh dấu để xóa sao băng nếu nó đã bay ra khỏi màn hình
+        if s_star['x'] < -s_star['length'] or s_star['x'] > _width + s_star['length']:
+            shooting_stars_to_remove.append(i)
+    
+    # Xóa các sao băng đã bay hết
+    for i in reversed(shooting_stars_to_remove):
+        _shooting_stars.pop(i)
+
