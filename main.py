@@ -13,7 +13,7 @@ def main():
     screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
     pygame.display.set_caption(config.GAME_TITLE)
     clock = pygame.time.Clock()
-
+    
     game_state = "MAIN_MENU"    
     
     while True:

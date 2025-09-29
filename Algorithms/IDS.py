@@ -50,8 +50,8 @@ def find_path_ids(start_pos, food_pos_list, map_data, snake_body):
     if not food_pos_list:
         return None
 
-    # Giới hạn độ sâu tối đa có thể bằng tổng số ô trên bản đồ
-    max_depth = len(map_data) * len(map_data[0]) 
+    layout = map_data.get('layout', [])
+    max_depth = len(layout) * len(layout[0]) if layout and layout[0] else 500 # Giới hạn an toàn
     
     all_visited_nodes = set()
 
