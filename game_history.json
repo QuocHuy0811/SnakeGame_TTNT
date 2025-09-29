@@ -518,5 +518,37 @@
         "time": 0.0,
         "total_search_time": 0.026,
         "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 245,
+        "time": 0.0,
+        "total_search_time": 0.03,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 257,
+        "time": 20.56,
+        "total_search_time": 0.038,
+        "outcome": "Completed"
+    },
+    {
+        "map": "BFS",
+        "algorithm": "BFS",
+        "steps": 97,
+        "time": 0.0,
+        "total_search_time": 0.018,
+        "outcome": "Completed"
+    },
+    {
+        "map": "BFS",
+        "algorithm": "DFS",
+        "steps": 742,
+        "time": 0.0,
+        "total_search_time": 0.036,
+        "outcome": "Stuck"
     }
 ]

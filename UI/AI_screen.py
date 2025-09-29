@@ -11,27 +11,6 @@ from GameLogic import game_helpers, snake_logic, food_logic
 from GameLogic.game_controller import GameController 
 from Algorithms import BFS, Astar, UCS, DFS, Greedy
 from UI import AI_selection_screen, history_screen
-
-# def find_path_with_algorithm(algorithm_func, start_pos, food_data, map_data, snake_body):
-    # food_positions = [food['pos'] for food in food_data]
-    
-    # # Đối với các thuật toán tìm đường đến 1 food gần nhất
-    # if algorithm_func in [BFS.find_path_bfs, Astar.find_path_astar, Greedy.find_path_greedy]:
-    #     shortest_result = {'path': None, 'visited': []}
-    #     min_len = float('inf')
-        
-    #     all_visited_nodes = set()
-    #     for food_pos in food_positions:
-    #         result = algorithm_func(start_pos, [food_pos], map_data, snake_body)
-    #         all_visited_nodes.update(result['visited']) # Gom tất cả các nút đã duyệt
-    #         if result['path'] and len(result['path']) < min_len:
-    #             min_len = len(result['path'])
-    #             shortest_result['path'] = result['path']
-        
-    #     shortest_result['visited'] = list(all_visited_nodes)
-    #     return shortest_result
-    # else: # Đối với các thuật toán khác
-    #     return algorithm_func(start_pos, food_positions, map_data, snake_body)
     
 def find_path_with_algorithm(algorithm_func, start_pos, food_data, map_data, snake_body):
     """
@@ -119,6 +98,7 @@ def run_ai_game(screen, clock, selected_map_name):
     info_font_bold = pygame.font.Font(config.FONT_PATH, 32); 
     info_font = pygame.font.Font(config.FONT_PATH, 26)
     instruction_font = pygame.font.Font(config.FONT_PATH, 18)
+    end_game_font = pygame.font.Font(config.FONT_PATH, 50)
 
     background_effects.init_background(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 1000)
     
@@ -283,24 +263,25 @@ def run_ai_game(screen, clock, selected_map_name):
                         buttons['solve']['text'] = "Solve"
                         game_state = "IDLE" # Chuyển về trạng thái chờ cho AI
 
-            if event.type == pygame.KEYDOWN:
-                # Nếu game đang chờ, phím bấm đầu tiên sẽ bắt đầu game
-                if game_state == "PLAYER_READY":
-                    if event.key in [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]:
-                        game_state = "PLAYER_PLAYING"
-                        last_player_move_time = pygame.time.get_ticks()
-                        # Đặt hướng đi ngay lập tức
+            if selected_mode == "Player":
+                if event.type == pygame.KEYDOWN:
+                    # Nếu game đang chờ, phím bấm đầu tiên sẽ bắt đầu game
+                    if game_state == "PLAYER_READY":
+                        if event.key in [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]:
+                            game_state = "PLAYER_PLAYING"
+                            last_player_move_time = pygame.time.get_ticks()
+                            # Đặt hướng đi ngay lập tức
+                            if event.key == pygame.K_UP: controller.set_direction('UP')
+                            elif event.key == pygame.K_DOWN: controller.set_direction('DOWN')
+                            elif event.key == pygame.K_LEFT: controller.set_direction('LEFT')
+                            elif event.key == pygame.K_RIGHT: controller.set_direction('RIGHT')
+
+                    # Nếu game đang chạy, phím bấm chỉ đổi hướng
+                    elif game_state == "PLAYER_PLAYING":
                         if event.key == pygame.K_UP: controller.set_direction('UP')
                         elif event.key == pygame.K_DOWN: controller.set_direction('DOWN')
                         elif event.key == pygame.K_LEFT: controller.set_direction('LEFT')
                         elif event.key == pygame.K_RIGHT: controller.set_direction('RIGHT')
-
-                # Nếu game đang chạy, phím bấm chỉ đổi hướng
-                elif game_state == "PLAYER_PLAYING":
-                    if event.key == pygame.K_UP: controller.set_direction('UP')
-                    elif event.key == pygame.K_DOWN: controller.set_direction('DOWN')
-                    elif event.key == pygame.K_LEFT: controller.set_direction('LEFT')
-                    elif event.key == pygame.K_RIGHT: controller.set_direction('RIGHT')
 
         # --- LOGIC ĐIỀU KHIỂN ---
         if game_state == "PLAYER_PLAYING":
@@ -381,6 +362,14 @@ def run_ai_game(screen, clock, selected_map_name):
         if game_state == "VISUALIZING" and target_food_pos:
             blinking_info = (target_food_pos, is_blinking_visible)
         UI_helpers.draw_food(game_surface, game_data['food'], blinking_info)
+
+        # Vẽ màn hình Game Over nếu cần
+        if game_data['outcome'] != "Playing":
+            overlay = pygame.Surface((game_area_width, game_area_height), pygame.SRCALPHA)
+            text_to_show = "YOU DIED" if game_data['outcome'] == "Stuck" else "YOU WIN"
+            overlay.fill((50, 50, 50, 180) if text_to_show == "YOU DIED" else (0, 80, 150, 180))
+            game_surface.blit(overlay, (0, 0))
+            UI_helpers.draw_text(text_to_show, end_game_font, config.COLORS['white'], game_surface, game_area_width/2, game_area_height/2)
 
         screen.blit(game_surface, (game_area_x, game_area_y))
 

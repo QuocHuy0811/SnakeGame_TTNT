@@ -4,8 +4,7 @@
 import pygame
 import config
 from UI.MainMenu import main_menu
-from UI.AI_screen import run_ai_game 
-from UI.AI_vs_human_screen import run_ai_vs_human_screen
+from UI import AI_screen, AI_vs_human_screen # Import gọn gàng hơn
 
 def main():
     """Hàm chính để chạy game."""
@@ -13,27 +12,26 @@ def main():
     screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
     pygame.display.set_caption(config.GAME_TITLE)
     clock = pygame.time.Clock()
-
-    game_state = "MAIN_MENU"    
     
     while True:
-        if game_state == "MAIN_MENU":
-            selected_mode, selected_map = main_menu.run_main_menu(screen)
-            print(f"Bắt đầu game với: Chế độ={selected_mode}, Map={selected_map}")
-            
-            # TODO: Dựa vào lựa chọn để chuyển sang màn hình game
-            # Ví dụ:
-            if selected_mode == "AI":
-                game_state = "MAIN_MENU"    
-                run_ai_game(screen, clock, selected_map) 
-            
-            elif selected_mode == "AI_VS_HUMAN":
-                run_ai_vs_human_screen(screen, clock, selected_map)
-                game_state = "MAIN_MENU" # Quay về menu sau khi chơi xong
-            else: break
-            
-        clock.tick(config.FPS)
-    
+        # Luôn bắt đầu hoặc quay về từ Main Menu
+        selected_mode, selected_map = main_menu.run_main_menu(screen)
+        
+        # Nếu người dùng đóng cửa sổ ở Main Menu, selected_mode có thể là None
+        if selected_mode is None:
+            break # Thoát khỏi vòng lặp chính và kết thúc game
+
+        print(f"Bắt đầu game với: Chế độ={selected_mode}, Map={selected_map}")
+        
+        if selected_mode == "AI":
+            # Chạy màn hình AI, sau khi màn hình này kết thúc, vòng lặp while sẽ
+            # tự động chạy lại và hiển thị lại main menu.
+            AI_screen.run_ai_game(screen, clock, selected_map)
+        
+        elif selected_mode == "AI_VS_HUMAN":
+            # Tương tự với màn hình AI vs Human
+            AI_vs_human_screen.run_ai_vs_human_screen(screen, clock, selected_map)
+
     pygame.quit()
 
 if __name__ == '__main__':
