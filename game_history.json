@@ -6,7 +6,6 @@
         "time": 0.0,
         "total_search_time": 0.0,
         "outcome": "Completed"
-
     },
     {
         "map": "Astar",
@@ -151,6 +150,13 @@
         "time": 0.0,
         "total_search_time": 0.027,
         "outcome": "Completed"
-
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 6,
+        "time": 0.0,
+        "total_search_time": 0.001,
+        "outcome": "Completed"
     }
 ]

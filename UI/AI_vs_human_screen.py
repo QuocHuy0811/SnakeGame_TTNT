@@ -206,7 +206,7 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
 
 
         # --- 5. VẼ LÊN MÀN HÌNH ---
-        screen.fill(config.COLORS['bg'])
+        background_effects.draw_background(screen)
 
         _draw_game_panel(game_surface_player, player_map_x, "PLAYER", config.COLORS['highlight'], player_controller, player_time)
         opponent_title = "PLAYER 2" if selected_ai_mode == "Player" else f"AI ({selected_ai_mode})"
