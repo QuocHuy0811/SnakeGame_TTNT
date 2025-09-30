@@ -4,20 +4,10 @@
 # --- Kích thước & Cài đặt màn hình ---
 TILE_SIZE = 20  # Kích thước mỗi ô vuông trong map (QUAN TRỌNG)
 FPS = 60
-GAME_TITLE = "Nhóm 15: 23110103 _ Đoàn Quốc Huy && 23110124 _ Đoàn Ngọc Mạnh --- Rắn Săn Mồi ---"    
+GAME_TITLE = "Nhóm 15: 23110103 _ Đoàn Quốc Huy && 23110124 _ Đoàn Ngọc Mạnh --- Rắn Săn Mồi ---"
 # --- Đường dẫn ---
 MAPS_DIR = "Maps"
 FONT_PATH = "Assets/Fonts/Tomorrow-Regular.ttf"
-
-# MAP_WIDTH_TILES = 40
-# MAP_HEIGHT_TILES = 30
-
-
-# PANEL_WIDTH = 300
-
-# # Tự động tính toán kích thước màn hình
-# SCREEN_WIDTH = MAP_WIDTH_TILES * TILE_SIZE + PANEL_WIDTH + 200
-# SCREEN_HEIGHT = MAP_HEIGHT_TILES * TILE_SIZE + 60
 
 # ======================================================================
 # --- CÀI ĐẶT CHO MÀN HÌNH AI (1 MAP) ---
@@ -48,6 +38,13 @@ DUAL_SCREEN_HEIGHT = (DUAL_MAP_HEIGHT_TILES * TILE_SIZE) + 200
 SCREEN_WIDTH = max(AI_SCREEN_WIDTH, DUAL_SCREEN_WIDTH)
 SCREEN_HEIGHT = max(AI_SCREEN_HEIGHT, DUAL_SCREEN_HEIGHT)
 
+# ======================================================================
+# --- CÀI ĐẶT CHO HÌNH NỀN ĐỘNG --- (Thêm vào)
+# ======================================================================
+PARTICLE_COUNT = 50           # Số lượng hạt
+PARTICLE_MAX_VELOCITY = 0.5   # Tốc độ di chuyển tối đa của hạt
+PARTICLE_RADIUS = 3           # Kích thước hạt
+CONNECT_DISTANCE = 120        # Khoảng cách tối đa giữa 2 hạt để nối đường
 
 
 # --- Màu sắc ---
@@ -68,6 +65,11 @@ COLORS = {
     'title': (0, 255, 255),         # Màu tiêu đề game
     'highlight': (0, 255, 0),
     'food': (255, 215, 0),
+
+    # --- Màu cho hình nền động --- (Thêm vào)
+    'particle_color': (150, 150, 255), # Màu của hạt
+    'line_color': (100, 100, 200),     # Màu của đường nối
+    'bg_dark_blue': (15, 15, 40),      # Màu nền xanh đậm
 }
 
 # --- Cài đặt Font ---

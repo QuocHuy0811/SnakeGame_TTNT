@@ -24,19 +24,38 @@ class GameController:
 
     # --- HÀM SET_DIRECTION VỚI LOGIC ĐÃ SỬA ---
     def set_direction(self, direction):
-        """Nhận lệnh đổi hướng từ người chơi và kiểm tra tính hợp lệ."""
-        # KIỂM TRA QUAN TRỌNG: Nếu game đã kết thúc, không làm gì cả!
-        if self.outcome != "Playing":
+        """
+        Nhận lệnh đổi hướng từ người chơi và kiểm tra tính hợp lệ.
+        Phiên bản này chống lại lỗi bấm phím nhanh gây tự va chạm.
+        """
+        # Nếu game đã kết thúc hoặc rắn quá ngắn, không làm gì cả
+        if self.outcome != "Playing" or len(self.snake_data['body']) < 2:
             return
 
-        current_dir = self.snake_data['direction']
-        if direction == 'UP' and current_dir != 'DOWN':
+        # --- LOGIC MỚI: Xác định hướng di chuyển THỰC TẾ ---
+        # So sánh vị trí của đầu và cổ để biết rắn đang thực sự đi hướng nào
+        head = self.snake_data['body'][0]
+        neck = self.snake_data['body'][1]
+        
+        true_current_dir = None
+        if head[1] < neck[1]:
+            true_current_dir = 'UP'
+        elif head[1] > neck[1]:
+            true_current_dir = 'DOWN'
+        elif head[0] < neck[0]:
+            true_current_dir = 'LEFT'
+        elif head[0] > neck[0]:
+            true_current_dir = 'RIGHT'
+        # ---------------------------------------------------
+
+        # Kiểm tra hướng đi mới với hướng đi THỰC TẾ
+        if direction == 'UP' and true_current_dir != 'DOWN':
             self.snake_data['direction'] = 'UP'
-        elif direction == 'DOWN' and current_dir != 'UP':
+        elif direction == 'DOWN' and true_current_dir != 'UP':
             self.snake_data['direction'] = 'DOWN'
-        elif direction == 'LEFT' and current_dir != 'RIGHT':
+        elif direction == 'LEFT' and true_current_dir != 'RIGHT':
             self.snake_data['direction'] = 'LEFT'
-        elif direction == 'RIGHT' and current_dir != 'LEFT':
+        elif direction == 'RIGHT' and true_current_dir != 'LEFT':
             self.snake_data['direction'] = 'RIGHT'
     
     def update(self):
@@ -58,8 +77,9 @@ class GameController:
         next_head_pos = snake_logic.get_next_head_position(self.snake_data)
 
         # --- BƯỚC 3: XỬ LÝ VA CHẠM CHO HƯỚNG ĐI ĐÓ ---
-        # 3a. Nếu va chạm với tường -> DỪNG LẠI, KHÔNG DI CHUYỂN
+        # 3a. Nếu va chạm với tường -> THUA
         if next_head_pos in self.map_data['walls']:
+            self.outcome = "Stuck"
             return
 
         # 3b. Nếu va chạm với thân -> THUA
@@ -100,4 +120,3 @@ class GameController:
         else:
             if self.outcome == "Playing":
                 self.snake_data['body'].pop()
-
