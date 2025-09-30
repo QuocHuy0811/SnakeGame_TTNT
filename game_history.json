@@ -158,5 +158,37 @@
         "time": 0.0,
         "total_search_time": 0.001,
         "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "A*",
+        "steps": 25,
+        "time": 2.0,
+        "total_search_time": 0.0,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "A*",
+        "steps": 64,
+        "time": 0.0,
+        "total_search_time": 0.009,
+        "outcome": "Stuck"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "UCS",
+        "steps": 80,
+        "time": 0.0,
+        "total_search_time": 0.013,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "DFS",
+        "steps": 0,
+        "time": 0.0,
+        "total_search_time": 0.0,
+        "outcome": "Completed"
     }
 ]

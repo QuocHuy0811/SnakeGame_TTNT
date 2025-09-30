@@ -30,6 +30,11 @@ def run_map_editor(screen, clock):
     textbox_active = False
     hover_pos = None # Vị trí ô đang di chuột tới
 
+    # BIẾN MỚI: Thêm các biến để xoay rắn
+    snake_orientation = 'RIGHT' # Hướng mặc định
+    orientation_cycle = ['RIGHT', 'DOWN', 'LEFT', 'UP']
+    orientation_index = 0
+
     # Dữ liệu map được tạo trong bộ nhớ
     map_width_tiles = config.AI_MAP_WIDTH_TILES
     map_height_tiles = config.AI_MAP_HEIGHT_TILES
@@ -113,31 +118,31 @@ def run_map_editor(screen, clock):
                         }
                         return final_map_data # Trả về dữ liệu map
                 
-                # Đặt/Xóa block trên grid
+                # Xử lý ĐẶT/XÓA cho các đối tượng click 1 lần (như Rắn)
                 if hover_pos:
-                    if event.button == 1: # Click chuột trái để đặt
-                        if active_tool == 'wall':
-                            map_data['walls'].add(hover_pos)
-                        elif active_tool == 'food':
-                            map_data['food_start'].add(hover_pos)
-                        elif active_tool == 'snake':
-                            try:
-                                size = int(snake_size_str)
-                                map_data['snake_start'] = [(hover_pos[0] - i, hover_pos[1]) for i in range(size)]
-                            except ValueError:
-                                print("Kích thước rắn không hợp lệ")
+                    # Đặt rắn (click trái)
+                    if event.button == 1 and active_tool == 'snake':
+                        try:
+                            size = int(snake_size_str)
+                            px, py = hover_pos
+                            snake_body = []
+                            if snake_orientation == 'RIGHT':
+                                snake_body = [(px - i, py) for i in range(size)]
+                            elif snake_orientation == 'LEFT':
+                                snake_body = [(px + i, py) for i in range(size)]
+                            elif snake_orientation == 'DOWN':
+                                snake_body = [(px, py - i) for i in range(size)]
+                            elif snake_orientation == 'UP':
+                                snake_body = [(px, py + i) for i in range(size)]
+                            map_data['snake_start'] = snake_body
+                        except ValueError:
+                            print("Kích thước rắn không hợp lệ")
 
-                    elif event.button == 3: # Click chuột phải để xóa
-                        # Chỉ cho phép xóa nếu block đó không nằm trên viền
-                        x, y = hover_pos
-                        is_border = (x == 0 or x == map_width_tiles - 1 or y == 0 or y == map_height_tiles - 1)
-
-                        if not is_border:
-                            if hover_pos in map_data['walls']: map_data['walls'].remove(hover_pos)
-                            if hover_pos in map_data['food_start']: map_data['food_start'].remove(hover_pos)
-                            # Xóa rắn nếu click vào bất kỳ bộ phận nào của nó
-                            if any(part == hover_pos for part in map_data['snake_start']):
-                                map_data['snake_start'] = []
+                    # Xóa rắn (click phải)
+                    elif event.button == 3:
+                        # Xóa rắn nếu click vào bất kỳ bộ phận nào của nó
+                        if any(part == hover_pos for part in map_data['snake_start']):
+                            map_data['snake_start'] = []
 
             # Xử lý gõ phím cho textbox
             if event.type == pygame.KEYDOWN and textbox_active:
@@ -145,7 +150,40 @@ def run_map_editor(screen, clock):
                     snake_size_str = snake_size_str[:-1]
                 elif event.unicode.isdigit():
                     snake_size_str += event.unicode
+            
+            # SỰ KIỆN MỚI: Xử lý lăn chuột để xoay rắn
+            if event.type == pygame.MOUSEWHEEL and active_tool == 'snake':
+                # event.y > 0 là lăn lên, < 0 là lăn xuống
+                if event.y > 0:
+                    orientation_index = (orientation_index + 1) % 4
+                else:
+                    orientation_index = (orientation_index - 1 + 4) % 4
+                snake_orientation = orientation_cycle[orientation_index]
         
+        # --- LOGIC MỚI: XỬ LÝ NHẤN GIỮ VÀ KÉO CHUỘT ---
+        # Lấy trạng thái của cả 3 nút chuột (trái, giữa, phải)
+        mouse_buttons = pygame.mouse.get_pressed()
+        
+        if hover_pos:
+            # Nếu nút chuột TRÁI đang được nhấn giữ
+            if mouse_buttons[0]:
+                if active_tool == 'wall':
+                    map_data['walls'].add(hover_pos)
+                elif active_tool == 'food':
+                    map_data['food_start'].add(hover_pos)
+            
+            # Nếu nút chuột PHẢI đang được nhấn giữ
+            elif mouse_buttons[2]:
+                x, y = hover_pos
+                is_border = (x == 0 or x == map_width_tiles - 1 or y == 0 or y == map_height_tiles - 1)
+                
+                # Chỉ cho phép xóa tường và thức ăn (không xóa viền)
+                if not is_border:
+                    if hover_pos in map_data['walls']: 
+                        map_data['walls'].remove(hover_pos)
+                    if hover_pos in map_data['food_start']: 
+                        map_data['food_start'].remove(hover_pos)
+
         # --- 6. VẼ LÊN MÀN HÌNH ---
         screen.fill(config.COLORS['bg'])
         map_surface.fill(config.COLORS['black']) # Nền đen cho map
@@ -159,7 +197,15 @@ def run_map_editor(screen, clock):
         # Vẽ các block đã đặt
         for x, y in map_data['walls']: pygame.draw.rect(map_surface, (150, 150, 150), (x*config.TILE_SIZE, y*config.TILE_SIZE, config.TILE_SIZE, config.TILE_SIZE))
         for x, y in map_data['food_start']: pygame.draw.rect(map_surface, config.COLORS['food'], (x*config.TILE_SIZE, y*config.TILE_SIZE, config.TILE_SIZE, config.TILE_SIZE))
-        for x, y in map_data['snake_start']: pygame.draw.rect(map_surface, (0, 200, 0), (x*config.TILE_SIZE, y*config.TILE_SIZE, config.TILE_SIZE, config.TILE_SIZE))
+        
+        # Vẽ con rắn, phân biệt đầu và thân
+        for i, (x, y) in enumerate(map_data['snake_start']):
+            if i == 0: # Đây là đầu rắn
+                head_color = (0, 255, 127) # Màu xanh lá cây sáng cho đầu rắn
+                pygame.draw.rect(map_surface, head_color, (x*config.TILE_SIZE, y*config.TILE_SIZE, config.TILE_SIZE, config.TILE_SIZE))
+            else: # Đây là thân rắn
+                body_color = (0, 200, 0) # Màu xanh lá cây đậm hơn cho thân
+                pygame.draw.rect(map_surface, body_color, (x*config.TILE_SIZE, y*config.TILE_SIZE, config.TILE_SIZE, config.TILE_SIZE))
 
         # Vẽ "ghost" preview khi di chuột
         if hover_pos:
@@ -176,11 +222,20 @@ def run_map_editor(screen, clock):
             elif active_tool == 'snake':
                 try:
                     size = int(snake_size_str)
-                    for i in range(size):
-                        pos_x = (hover_pos[0] - i) * config.TILE_SIZE
-                        pos_y = hover_pos[1] * config.TILE_SIZE
+                    px, py = hover_pos
+                    preview_positions = []
+                    if snake_orientation == 'RIGHT':
+                        preview_positions = [(px - i, py) for i in range(size)]
+                    elif snake_orientation == 'LEFT':
+                        preview_positions = [(px + i, py) for i in range(size)]
+                    elif snake_orientation == 'DOWN':
+                        preview_positions = [(px, py - i) for i in range(size)]
+                    elif snake_orientation == 'UP':
+                        preview_positions = [(px, py + i) for i in range(size)]
+                    
+                    for pos in preview_positions:
                         preview_surface.fill((0, 200, 0, 128))
-                        map_surface.blit(preview_surface, (pos_x, pos_y))
+                        map_surface.blit(preview_surface, (pos[0] * config.TILE_SIZE, pos[1] * config.TILE_SIZE))
                 except ValueError: pass
 
         screen.blit(map_surface, (map_area_x, map_area_y))
