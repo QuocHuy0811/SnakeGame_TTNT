@@ -1,15 +1,46 @@
 """
     Hàm điều khiển chính
 """
+import config
 from . import snake_logic, food_logic, map_logic
 from Algorithms import algorithm_helpers
 class GameController:
     """
     Quản lý trạng thái và logic của một phiên chơi game Snake.
     """
-    def __init__(self, map_name):
-        self.map_data = map_logic.load_map_data(map_name)
-        self.reset()
+    def __init__(self, map_info):
+        # 1. Tải hoặc nhận dữ liệu map
+        temp_map_data = None
+        if isinstance(map_info, str):
+            temp_map_data = map_logic.load_map_data(map_info)
+        else: # Là một dictionary
+            temp_map_data = map_info
+
+        # 2. Xử lý trường hợp map bị lỗi hoặc không tải được
+        if not temp_map_data:
+            print("Lỗi GameController: map_info không hợp lệ hoặc không tải được.")
+            # Tạo một map_data rỗng để chương trình không bị crash
+            self.map_data = {
+                'layout': [], 'walls': [], 'snake_start': [], 'food_start': []
+            }
+            # Thiết lập các thuộc tính ở trạng thái lỗi, nhưng BẮT BUỘC PHẢI TỒN TẠI
+            self.snake_data = {'body': [], 'direction': 'RIGHT'}
+            self.food_data = []
+            self.steps = 0
+            self.outcome = "Map Load Error"
+            # Không dùng 'return' ở đây để __init__ có thể hoàn thành
+        else:
+            # 3. Nếu map hợp lệ, tiếp tục như bình thường
+            self.map_data = temp_map_data
+            
+            # Tự động tạo 'layout' nếu không có (trường hợp map từ editor)
+            if not self.map_data.get('layout'):
+                width = config.AI_MAP_WIDTH_TILES
+                height = config.AI_MAP_HEIGHT_TILES
+                self.map_data['layout'] = ["." * width for _ in range(height)]
+            
+            # Gọi reset() để thiết lập trạng thái game ban đầu
+            self.reset()
 
     def reset(self):
         """Thiết lập lại game về trạng thái ban đầu."""

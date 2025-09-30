@@ -10,7 +10,7 @@ from UI.MainMenu import background_effects
 from GameLogic import game_helpers, snake_logic, food_logic
 from GameLogic.game_controller import GameController 
 from Algorithms import BFS, Astar, UCS, DFS, Greedy, IDS
-from UI import AI_selection_screen, history_screen
+from UI import AI_selection_screen, history_screen, map_editor_screen 
     
 def find_path_with_algorithm(algorithm_func, start_pos, food_data, map_data, snake_body):
     """
@@ -191,6 +191,37 @@ def run_ai_game(screen, clock, selected_map_name):
             if event.type == pygame.QUIT: 
                 running = False
 
+            if UI_helpers.handle_button_events(event, buttons['create_map']):
+                # Gọi màn hình editor
+                created_map_data = map_editor_screen.run_map_editor(screen, clock)
+
+                # Nếu người dùng hoàn thành và trả về map mới
+                if created_map_data:
+                    # Khởi tạo lại controller với map mới
+                    controller = GameController(created_map_data)
+                    map_data = controller.map_data
+
+                    # Tính toán lại kích thước và vị trí game area
+                    map_height_tiles = len(map_data['layout'])
+                    map_width_tiles = len(map_data['layout'][0]) if map_height_tiles > 0 else 0
+                    game_area_width = map_width_tiles * config.TILE_SIZE
+                    game_area_height = map_height_tiles * config.TILE_SIZE
+                    game_surface = pygame.Surface((game_area_width, game_area_height), pygame.SRCALPHA)
+                    game_area_y = (config.SCREEN_HEIGHT - game_area_height) / 2
+                    game_area_x = game_area_y
+
+                    # Reset lại toàn bộ trạng thái của màn hình AI (giống như nhấn nút Reset)
+                    game_state = "IDLE"
+                    ai_path = []
+                    animation_step = 0
+                    current_time = 0.0
+                    total_search_time = 0.0
+                    visited_nodes = []
+                    path_nodes_to_draw = []
+                    target_food_pos = None
+                    if selected_mode == "Player":
+                        game_state = "PLAYER_READY"
+
             if UI_helpers.handle_button_events(event, buttons['back_to_menu']): 
                 running = False
 
@@ -365,7 +396,7 @@ def run_ai_game(screen, clock, selected_map_name):
         UI_helpers.draw_food(game_surface, game_data['food'], blinking_info)
 
         # Vẽ màn hình Game Over nếu cần
-        if game_data['outcome'] != "Playing":
+        if game_data['outcome'] != "Playing":   
             overlay = pygame.Surface((game_area_width, game_area_height), pygame.SRCALPHA)
             text_to_show = "YOU DIED" if game_data['outcome'] == "Stuck" else "YOU WIN"
             overlay.fill((50, 50, 50, 180) if text_to_show == "YOU DIED" else (0, 80, 150, 180))

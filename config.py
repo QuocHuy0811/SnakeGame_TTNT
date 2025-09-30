@@ -12,7 +12,7 @@ FONT_PATH = "Assets/Fonts/Tomorrow-Regular.ttf"
 # ======================================================================
 # --- CÀI ĐẶT CHO MÀN HÌNH AI (1 MAP) ---
 # ======================================================================
-AI_MAP_WIDTH_TILES = 40
+AI_MAP_WIDTH_TILES = 30
 AI_MAP_HEIGHT_TILES = 30
 AI_PANEL_WIDTH = 300
 # Chiều rộng màn hình AI = Rộng Map + Rộng Panel + Khoảng đệm
@@ -30,6 +30,17 @@ DUAL_CONTROL_PANEL_WIDTH = 250
 DUAL_SCREEN_WIDTH = (DUAL_MAP_WIDTH_TILES * TILE_SIZE) * 2 + DUAL_CONTROL_PANEL_WIDTH
 # Chiều cao màn hình 1v1 = Cao Map + Khu vực thông tin
 DUAL_SCREEN_HEIGHT = (DUAL_MAP_HEIGHT_TILES * TILE_SIZE) + 200
+
+# ======================================================================
+# --- CÀI ĐẶT CHO MAP EDITOR ---
+# ======================================================================
+EDITOR_MAP_WIDTH_TILES = 30  # Chiều rộng map trong editor
+EDITOR_MAP_HEIGHT_TILES = 30 # Chiều cao map trong editor
+EDITOR_PANEL_WIDTH = 250     # Chiều rộng panel điều khiển của editor
+
+# Công thức tính kích thước cửa sổ cho editor
+EDITOR_SCREEN_WIDTH = EDITOR_PANEL_WIDTH + (EDITOR_MAP_WIDTH_TILES * TILE_SIZE) + 100
+EDITOR_SCREEN_HEIGHT = (EDITOR_MAP_HEIGHT_TILES * TILE_SIZE) + 100
 
 # ======================================================================
 # --- KÍCH THƯỚC CỬA SỔ GAME CHÍNH ---
