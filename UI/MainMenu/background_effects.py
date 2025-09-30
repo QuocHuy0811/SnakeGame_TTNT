@@ -26,7 +26,7 @@ def _spawn_shooting_star():
     """Tạo một sao băng mới với các thuộc tính ngẫu nhiên."""
     length = random.randint(150, 300) # Chiều dài vệt sáng
     speed = random.uniform(8, 15)     # Tốc độ bay
-    
+
     # Sao băng bay từ góc trên bên trái hoặc trên bên phải
     if random.random() < 0.5: # Bay từ trái sang phải
         x = -length
