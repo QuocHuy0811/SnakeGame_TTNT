@@ -8,6 +8,8 @@ def run_map_editor(screen, clock):
     # --- 1. KHỞI TẠO ---
     panel_font = pygame.font.Font(config.FONT_PATH, 24)
     info_font = pygame.font.Font(config.FONT_PATH, 18)
+    # Font mới cho phần hướng dẫn
+    instruction_font = pygame.font.Font(config.FONT_PATH, 16)
     
     # Kích thước map editor (lấy từ config cho nhất quán)
     map_width_tiles = config.AI_MAP_WIDTH_TILES
@@ -240,7 +242,7 @@ def run_map_editor(screen, clock):
 
         screen.blit(map_surface, (map_area_x, map_area_y))
         
-        # Vẽ panel điều khiển
+        # --- VẼ PANEL ĐIỀU KHIỂN ---
         UI_helpers.draw_text("Map Editor", panel_font, config.COLORS['title'], screen, panel_center_x, 50)
         for tool, btn in tool_buttons.items():
             if tool == active_tool: # Highlight nút đang được chọn
@@ -253,6 +255,33 @@ def run_map_editor(screen, clock):
         UI_helpers.draw_text("Snake Size:", info_font, config.COLORS['white'], screen, panel_center_x, 300)
         pygame.draw.rect(screen, config.COLORS['border'] if textbox_active else config.COLORS['box'], textbox_rect, border_radius=5)
         UI_helpers.draw_text(snake_size_str, panel_font, config.COLORS['white'], screen, textbox_rect.centerx, textbox_rect.centery)
+
+        # --- PHẦN MỚI: VẼ HƯỚỚNG DẪN SỬ DỤNG ---
+        instructions = [
+            "HƯỚNG DẪN:",
+            "- Chọn công cụ Wall hoặc Food.",
+            "- Nhấn giữ CHUỘT TRÁI để vẽ.",
+            "- Nhấn giữ CHUỘT PHẢI để xóa.",
+            "",
+            "- Chọn công cụ Snake:",
+            "- Chỉnh sửa kích thước ở ô 'Snake Size'.",
+            "- Dùng LĂN CHUỘT để xoay hướng rắn.",
+            "- CLICK TRÁI 1 lần để đặt rắn.",
+            "- CLICK PHẢI vào rắn để xóa.",
+            "",
+            "Nhấn 'Done' để lưu và thoát."
+        ]
+        
+        # Vị trí bắt đầu vẽ hướng dẫn
+        inst_start_x = panel_center_x - 110
+        inst_start_y = 400
+        line_height = 22
+
+        # Vẽ từng dòng hướng dẫn
+        for i, line in enumerate(instructions):
+            text_surf = instruction_font.render(line, True, config.COLORS['white'])
+            screen.blit(text_surf, (inst_start_x, inst_start_y + i * line_height))
+        # -----------------------------------------
 
         UI_helpers.draw_button(screen, done_button)
         
