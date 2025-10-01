@@ -190,5 +190,13 @@
         "time": 0.0,
         "total_search_time": 0.0,
         "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 28,
+        "time": 2.24,
+        "total_search_time": 0.007,
+        "outcome": "Completed"
     }
 ]
