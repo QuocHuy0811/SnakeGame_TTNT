@@ -190,5 +190,69 @@
         "time": 0.0,
         "total_search_time": 0.0,
         "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "A*",
+        "steps": 118,
+        "time": 9.44,
+        "total_search_time": 0.005,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "A*",
+        "steps": 255,
+        "time": 20.4,
+        "total_search_time": 0.008,
+        "outcome": "Completed"
+    },
+    {
+        "map": "BFS",
+        "algorithm": "A*",
+        "steps": 86,
+        "time": 0.0,
+        "total_search_time": 0.002,
+        "outcome": "Completed"
+    },
+    {
+        "map": "BFS",
+        "algorithm": "A*",
+        "steps": 100,
+        "time": 8.0,
+        "total_search_time": 0.004,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Astar",
+        "algorithm": "BFS",
+        "steps": 246,
+        "time": 0.0,
+        "total_search_time": 0.016,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Create1",
+        "algorithm": "DFS",
+        "steps": 1005,
+        "time": 0.0,
+        "total_search_time": 0.02,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Create1",
+        "algorithm": "DFS",
+        "steps": 0,
+        "time": 0.0,
+        "total_search_time": 0.0,
+        "outcome": "Completed"
+    },
+    {
+        "map": "Create2",
+        "algorithm": "A*",
+        "steps": 38,
+        "time": 0.0,
+        "total_search_time": 0.001,
+        "outcome": "Completed"
     }
 ]

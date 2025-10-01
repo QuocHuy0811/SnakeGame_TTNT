@@ -12,15 +12,24 @@ def find_path_dls(start_pos, food_pos_list, map_data, snake_body, limit):
     # DLS là DFS có limit
 
     stack = [(start_pos, [start_pos])]  # Ngăn xếp chứa (vị trí, đường đi)
-    visited = {start_pos}  # Set chứa các vị trí đã ghé thăm trong lần lặp DLS này
+
+    visited_in_dls = {start_pos}  # Set chứa các vị trí đã ghé thăm trong lần lặp DLS này
+    
+    generated_count = 1 # Bắt đầu với nút gốc
+    visited_count = 0
 
     while stack:
         current_pos, path = stack.pop()
+        visited_count += 1
 
         # Nếu tìm thấy thức ăn, trả về kết quả
         if current_pos in food_pos_list:
-            # Trả về cả đường đi và tập hợp các nút đã duyệt để trực quan hóa
-            return {'path': path, 'visited': visited}
+            return {
+                'path': path, 
+                'visited_nodes': visited_in_dls, 
+                'visited_count': visited_count,
+                'generated_count': generated_count
+            }
 
         # Dừng việc tìm kiếm nhánh này nếu đã vượt quá giới hạn độ sâu
         if len(path) > limit:
@@ -28,13 +37,20 @@ def find_path_dls(start_pos, food_pos_list, map_data, snake_body, limit):
 
         neighbors = get_valid_neighbors(current_pos, map_data, snake_body)
         for neighbor in reversed(neighbors): # Đảo ngược để có thứ tự duyệt giống đệ quy hơn (tùy chọn)
-            if neighbor not in visited:
-                visited.add(neighbor)
+            if neighbor not in visited_in_dls:
+                visited_in_dls.add(neighbor)
                 new_path = path + [neighbor]
                 stack.append((neighbor, new_path))
-    
+                generated_count += 1
+
     # Không tìm thấy đường đi trong giới hạn độ sâu này
-    return {'path': None, 'visited': visited}
+ 
+    return {
+        'path': None, 
+        'visited_nodes': visited_in_dls, 
+        'visited_count': visited_count,
+        'generated_count': generated_count
+    }
 
 
 def find_path_ids(start_pos, food_pos_list, map_data, snake_body):
@@ -48,24 +64,42 @@ def find_path_ids(start_pos, food_pos_list, map_data, snake_body):
     :return: Danh sách các tọa độ tạo thành đường đi, hoặc None nếu không tìm thấy.
     """
     if not food_pos_list:
-        return None
+
+        return {'path': None, 'visited_nodes': [], 'generated_count': 0, 'visited_count': 0}
 
     layout = map_data.get('layout', [])
     max_depth = len(layout) * len(layout[0]) if layout and layout[0] else 500 # Giới hạn an toàn
     
     all_visited_nodes = set()
+    total_generated_nodes = 0
+    total_visited_count = 0
 
     # Lặp qua từng giới hạn độ sâu, từ 0 đến max_depth
     for depth in range(max_depth): 
         result = find_path_dls(start_pos, food_pos_list, map_data, snake_body, depth)
         
+        total_generated_nodes += result.get('generated_count', 0)
+        total_visited_count += result.get('visited_count', 0)
+        
         # Gộp các nút đã duyệt từ mỗi lần lặp DLS để có cái nhìn tổng quan
-        if result['visited']:
-            all_visited_nodes.update(result['visited'])
+        if result['visited_nodes']:
+            all_visited_nodes.update(result['visited_nodes'])
 
         # Nếu DLS tìm thấy một đường đi, đó là đường đi ngắn nhất. Trả về ngay lập tức.
         if result['path'] is not None:
-            return {'path': result['path'], 'visited': list(all_visited_nodes)}
+  
+            return {
+                'path': result['path'], 
+                'visited_nodes': list(all_visited_nodes),
+                'visited_count': total_visited_count,
+                'generated_count': total_generated_nodes
+            }
 
     # Nếu vòng lặp kết thúc mà không tìm thấy, tức là không có đường đi
-    return {'path': None, 'visited': list(all_visited_nodes)}
+
+    return {
+        'path': None, 
+        'visited_nodes': list(all_visited_nodes),
+        'visited_count': total_visited_count,
+        'generated_count': total_generated_nodes
+    }

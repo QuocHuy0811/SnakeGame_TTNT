@@ -15,7 +15,8 @@ def find_path_greedy(start_pos, food_pos_list, map_data, snake_body):
     :return: Danh sách các tọa độ tạo thành đường đi, hoặc None nếu không tìm thấy.
     """
     if not food_pos_list:
-        return None
+        # THAY ĐỔI: Trả về đúng định dạng mới
+        return {'path': None, 'visited_nodes': [], 'generated_count': 0, 'visited_count': 0}
     
     # Greedy cần một mục tiêu cụ thể, ta sẽ chọn mục tiêu gần nhất theo heuristic ban đầu.
     target_pos = min(food_pos_list, key=lambda food: manhattan_distance(start_pos, food))
@@ -24,19 +25,37 @@ def find_path_greedy(start_pos, food_pos_list, map_data, snake_body):
     h_score = manhattan_distance(start_pos, target_pos)
     
     pq = [(h_score, start_pos, [start_pos])]
-    visited = {start_pos}
+
+    visited_set = {start_pos}
+
+    generated_count = 1 # Bắt đầu với nút gốc
+    visited_count = 0
 
     while pq:
+
         _, current_pos, path = heapq.heappop(pq)
+        visited_count += 1
 
         if current_pos == target_pos:
-            return {'path': path, 'visited': list(visited)}
+
+            return {
+                'path': path, 
+                'visited_nodes': list(visited_set),
+                'visited_count': visited_count,
+                'generated_count': generated_count
+            }
 
         neighbors = get_valid_neighbors(current_pos, map_data, snake_body)
         for neighbor in neighbors:
-            if neighbor not in visited:
-                visited.add(neighbor)
+            if neighbor not in visited_set:
+                visited_set.add(neighbor)
                 new_h = manhattan_distance(neighbor, target_pos)
                 heapq.heappush(pq, (new_h, neighbor, path + [neighbor]))
+                generated_count += 1
 
-    return {'path': None, 'visited': list(visited)} # Không tìm thấy đường đi
+    return {
+        'path': None, 
+        'visited_nodes': list(visited_set),
+        'visited_count': visited_count,
+        'generated_count': generated_count
+    }

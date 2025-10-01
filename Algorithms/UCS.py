@@ -15,28 +15,44 @@ def find_path_ucs(start_pos, food_pos_list, map_data, snake_body):
     :return: Danh sách các tọa độ tạo thành đường đi, hoặc None nếu không tìm thấy.
     """
     if not food_pos_list:
-        return None
+        return {'path': None, 'visited_nodes': [], 'generated_count': 0, 'visited_count': 0}
 
     # Hàng đợi ưu tiên chứa (chi phí, vị trí, đường đi)
     # Chi phí ở đây chính là g_score (quãng đường đã đi)
     cost = 0
     pq = [(cost, start_pos, [start_pos])]
-    visited = {start_pos}
-    
+    # THAY ĐỔI: Đổi tên 'visited' thành 'visited_set' để rõ ràng hơn
+    visited_set = {start_pos}
 
+    generated_count = 1 # Bắt đầu với nút gốc
+    visited_count = 0
+    
     while pq:
+        # THAY ĐỔI: Tăng visited_count mỗi khi lấy 1 nút ra duyệt
         current_cost, current_pos, path = heapq.heappop(pq)
+        visited_count += 1
         #  pq được sx từ bé đén lớn -> lấy ra thì luôn là phần tử có chi phí nhỏ nhất
 
         # Nếu vị trí hiện tại là một trong các mục tiêu, trả về đường đi
         if current_pos in food_pos_list:
-            return {'path': path, 'visited': list(visited)}
+            return {
+                'path': path, 
+                'visited_nodes': list(visited_set),
+                'visited_count': visited_count,
+                'generated_count': generated_count
+            }
 
         neighbors = get_valid_neighbors(current_pos, map_data, snake_body)
         for neighbor in neighbors:
-            if neighbor not in visited:
-                visited.add(neighbor)
+            if neighbor not in visited_set:
+                visited_set.add(neighbor)
                 new_cost = current_cost + 1 # Giả sử mỗi bước đi tốn 1 chi phí
                 heapq.heappush(pq, (new_cost, neighbor, path + [neighbor]))
+                generated_count += 1
 
-    return {'path': None, 'visited': list(visited)} # Không tìm thấy đường đi
+    return {
+        'path': None, 
+        'visited_nodes': list(visited_set),
+        'visited_count': visited_count,
+        'generated_count': generated_count
+    }
