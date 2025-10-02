@@ -18,13 +18,11 @@ def find_path_bfs(start_pos, food_pos_list, map_data, snake_body):
 
     queue = deque([(start_pos, [start_pos])])  # Hàng đợi chứa (vị trí, đường đi tới vị trí đó)
     visited_set = {start_pos} # Set chứa các vị trí đã ghé thăm
-    
 
     generated_count = 1 # Bắt đầu với nút gốc
     visited_count = 0
 
     while queue:
-
         # Tăng visited_count mỗi khi lấy 1 nút ra duyệt
         current_pos, path = queue.popleft()
         visited_count += 1
@@ -47,7 +45,6 @@ def find_path_bfs(start_pos, food_pos_list, map_data, snake_body):
                 new_path = path + [neighbor]
                 queue.append((neighbor, new_path))
                 generated_count += 1
-
 
     # Trả về dictionary với cấu trúc mới khi không tìm thấy đường
     return {

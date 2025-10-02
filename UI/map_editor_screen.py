@@ -1,7 +1,37 @@
 import pygame
 import config
 from UI import UI_helpers
+from Algorithms import BFS
+def _check_map_solvability(map_data):
+    """
+    Kiểm tra xem map có thể giải được không.
+    Điều kiện: Phải có đường đi từ đầu rắn đến TẤT CẢ thức ăn.
+    """
+    snake_start = map_data.get('snake_start')
+    food_start = map_data.get('food_start')
 
+    # Nếu chưa có rắn hoặc thức ăn thì không cần kiểm tra
+    if not snake_start or not food_start:
+        return False
+
+    snake_head = snake_start[0]
+    # Thân rắn (không tính đầu) cũng là vật cản
+    snake_body_obstacles = snake_start[1:]
+
+    # Dữ liệu map tối giản chỉ cần tường để gửi cho hàm BFS
+    temp_map_for_check = {'walls': list(map_data['walls'])}
+
+    # Kiểm tra từng viên thức ăn
+    for food_pos in food_start:
+        # Gọi BFS để tìm đường từ đầu rắn đến một viên thức ăn
+        result = BFS.find_path_bfs(snake_head, [food_pos], temp_map_for_check, snake_body_obstacles)
+        
+        # Nếu không tìm thấy đường đi cho DÙ CHỈ MỘT viên thức ăn, map không giải được
+        if not result or not result.get('path'):
+            return False
+
+    # Nếu vòng lặp kết thúc (tất cả thức ăn đều có đường đi), map giải được
+    return True
 def run_map_editor(screen, clock):
     """Chạy màn hình vẽ map và trả về dữ liệu map đã tạo."""
     
@@ -241,7 +271,20 @@ def run_map_editor(screen, clock):
                 btn['color'], btn['hover_color'] = config.COLORS['btn'], config.COLORS['btn_hover']
             UI_helpers.draw_button(screen, btn)
         UI_helpers.draw_button(screen, done_button)
-        
+        is_solvable = _check_map_solvability(map_data)
+
+        status_text = ""
+        status_color = config.COLORS['white']
+
+        if not map_data['snake_start'] or not map_data['food_start']:
+            status_text = "Trạng thái: Cần có Rắn và Thức ăn"
+            status_color = (255, 255, 0) # Màu vàng
+        elif is_solvable:
+            status_text = "Trạng thái: Có thể giải được"
+            status_color = (0, 255, 127) # Màu xanh lá
+        else:
+            status_text = "Trạng thái: Không giải được"
+            status_color = (255, 100, 100) # Màu đỏ
         # --- VẼ HƯỚNG DẪN SỬ DỤNG ---
         instructions = [
             "HƯỚNG DẪN:",
@@ -266,6 +309,9 @@ def run_map_editor(screen, clock):
         for i, line in enumerate(instructions):
             text_surf = instruction_font.render(line, True, config.COLORS['white'])
             screen.blit(text_surf, (inst_start_x, inst_start_y + i * line_height))
+            status_y_pos = inst_start_y + len(instructions) * line_height + 20 # Vị trí ngay dưới hướng dẫn
+            status_surf = info_font.render(status_text, True, status_color)
+            screen.blit(status_surf, (inst_start_x, status_y_pos))
 
         pygame.display.flip()
         clock.tick(config.FPS)

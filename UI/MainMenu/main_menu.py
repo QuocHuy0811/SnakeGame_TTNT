@@ -87,24 +87,22 @@ def run_main_menu(screen):
                 if is_combobox_open:
                     clicked_on_option = False
                     for btn in map_option_buttons:
-                        if btn['rect'].collidepoint(mouse_pos):
-                            # Lấy tên map không có đuôi và thêm lại .txt cho logic game
+                        # THAY ĐỔI: Sử dụng handle_button_events để có âm thanh khi chọn map
+                        if UI_helpers.handle_button_events(event, btn):
                             selected_map_name = btn['text'] + '.txt'
                             combobox_header_button['text'] = f"Map: {btn['text']}"
                             is_combobox_open = False
                             clicked_on_option = True
                             break
-                    # Nếu click ra ngoài các option (có thể là header hoặc vùng trống), đóng combobox
-                    if not clicked_on_option:
-                        is_combobox_open = False
                 
                 # Nếu combobox đang đóng
                 else:
-                    if combobox_header_button['rect'].collidepoint(mouse_pos):
+                    if UI_helpers.handle_button_events(event, combobox_header_button):
                         is_combobox_open = True
                     else: # Chỉ kiểm tra các nút mode nếu không click vào combobox
                         for btn in mode_buttons:
-                            if btn['rect'].collidepoint(mouse_pos):
+                             # Sử dụng handle_button_events để có âm thanh
+                            if UI_helpers.handle_button_events(event, btn):
                                 if btn['text'] == "AI": return "AI", selected_map_name
                                 elif btn['text'] == "AI vs Human": return "AI_VS_HUMAN", selected_map_name
             

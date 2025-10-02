@@ -19,7 +19,7 @@ def main():
 
     try:
         # THÊM NHẠC NỀN: Tải file nhạc
-        pygame.mixer.music.load("Assets/Music/NhacGame.mp3")
+        pygame.mixer.music.load("Assets/Sounds/NhacGame.mp3")
 
         # THÊM NHẠC NỀN: Cài đặt âm lượng (từ 0.0 đến 1.0)
         pygame.mixer.music.set_volume(0.5) # 50% âm lượng
