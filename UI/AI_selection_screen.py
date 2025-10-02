@@ -13,7 +13,7 @@ def run_algorithm_selection(screen):
     # --- 1. KHỞI TẠO ---
     title_font = pygame.font.Font(config.FONT_PATH, 32)
     clock = pygame.time.Clock()
-    algorithms = ["Player", "BFS", "DFS", "A*", "UCS", "Greedy", "IDS"]
+    algorithms = ["Player", "BFS", "DFS", "A*", "UCS", "Greedy", "IDS", "OnlineSearch"]
     
     # Kích thước và vị trí của cửa sổ pop-up
     popup_width, popup_height = 400, 500
