@@ -95,8 +95,7 @@ def run_map_editor(screen, clock):
         # --- 5. XỬ LÝ SỰ KIỆN ---
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
+                running = False # Dừng vòng lặp của editor và quay lại màn hình trước đó
             
             if event.type == pygame.MOUSEBUTTONDOWN:
                 # Xử lý nút

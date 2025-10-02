@@ -9,9 +9,27 @@ from UI import AI_screen, AI_vs_human_screen # Import gọn gàng hơn
 def main():
     """Hàm chính để chạy game."""
     pygame.init()
+    
+    # THÊM NHẠC NỀN: Khởi tạo mixer
+    pygame.mixer.init()
+
     screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
     pygame.display.set_caption(config.GAME_TITLE)
     clock = pygame.time.Clock()
+
+    try:
+        # THÊM NHẠC NỀN: Tải file nhạc
+        pygame.mixer.music.load("Assets/Music/NhacGame.mp3")
+
+        # THÊM NHẠC NỀN: Cài đặt âm lượng (từ 0.0 đến 1.0)
+        pygame.mixer.music.set_volume(0.5) # 50% âm lượng
+
+        # THÊM NHẠC NỀN: Bật nhạc, lặp lại vô tận (loops=-1)
+        pygame.mixer.music.play(loops=-1)
+
+    except pygame.error as e:
+        print(f"Lỗi không thể tải hoặc phát file nhạc: {e}")
+        # Nếu không có file nhạc, game vẫn chạy bình thường
     
     while True:
         # Luôn bắt đầu hoặc quay về từ Main Menu

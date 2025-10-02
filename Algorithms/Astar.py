@@ -17,8 +17,9 @@ def find_path_astar(start_pos, food_pos_list, map_data, snake_body):
     # A* cần tìm đường đến một mục tiêu cụ thể, nên ta sẽ chọn mục tiêu gần nhất
     # dựa trên khoảng cách Manhattan ban đầu.
     if not food_pos_list:
-        # THAY ĐỔI: Trả về đúng định dạng mới
-        return {'path': None, ' ': [], 'generated_count': 0, 'visited_count': 0}
+
+
+        return {'path': None, 'visited_nodes': [], 'generated_count': 0, 'visited_count': 0}
     
     target_pos = min(food_pos_list, key=lambda food: manhattan_distance(start_pos, food))
 
@@ -29,10 +30,9 @@ def find_path_astar(start_pos, food_pos_list, map_data, snake_body):
     f_score = g_score + h_score
     
     pq = [(f_score, g_score, start_pos, [start_pos])]
-    # THAY ĐỔI: Đổi tên 'visited' thành 'visited_set' để rõ ràng hơn
+
     visited_set = {start_pos}
-    
-    # THAY ĐỔI: Thêm biến đếm visited_count
+
     generated_count = 1 # Bắt đầu với nút gốc
     visited_count = 0
 
@@ -59,7 +59,7 @@ def find_path_astar(start_pos, food_pos_list, map_data, snake_body):
                 new_f = new_g + new_h
                 heapq.heappush(pq, (new_f, new_g, neighbor, path + [neighbor]))
                 generated_count += 1
-
+                
     # Trả về dictionary với cấu trúc mới khi không tìm thấy đường
     return {
         'path': None, 
