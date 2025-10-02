@@ -10,7 +10,7 @@ from UI import UI_helpers
 from UI.MainMenu import background_effects
 from GameLogic import game_helpers, snake_logic, food_logic
 from GameLogic.game_controller import GameController 
-from Algorithms import BFS, Astar, UCS, DFS, Greedy, IDS
+from Algorithms import BFS, Astar, UCS, DFS, Greedy, IDS, OnlineSearch
 from UI import AI_selection_screen, history_screen, map_editor_screen 
     
 def find_path_with_algorithm(algorithm_func, start_pos, food_data, map_data, snake_body):
@@ -39,8 +39,8 @@ def find_path_with_algorithm(algorithm_func, start_pos, food_data, map_data, sna
 
 def _calculate_full_playthrough(initial_snake, initial_food, selected_mode, map_data):
     """
-    Hàm này tính toán toàn bộ quá trình chơi của AI để có được kết quả cuối cùng.
-    Nó trả về trạng thái rắn, tổng số bước, và tổng thời gian tìm kiếm.
+        Hàm này tính toán toàn bộ quá trình chơi của AI để có được kết quả cuối cùng.
+        Nó trả về trạng thái rắn, tổng số bước, và tổng thời gian tìm kiếm.
     """
     # Tạo bản sao sâu để không ảnh hưởng đến game thật
     temp_snake_body = copy.deepcopy(initial_snake['body'])
@@ -65,7 +65,9 @@ def _calculate_full_playthrough(initial_snake, initial_food, selected_mode, map_
         search_result = find_path_with_algorithm(algorithm_to_run, temp_snake_body[0], temp_food, map_data, temp_snake_body)
         path = search_result.get('path')
 
+
         total_search_time += (time.perf_counter() - search_start_time) # THAY ĐỔI
+
         # SỬA LỖI: Lấy đúng các giá trị đếm từ thuật toán
         total_visited += search_result.get('visited_count', 0)
         total_generated += search_result.get('generated_count', 0)
@@ -115,6 +117,9 @@ def run_ai_game(screen, clock, selected_map_name):
     #  Thêm một bộ đếm cho các map tự tạo
     custom_map_counter = 1
 
+    # BIẾN MỚI: Thêm một bộ đếm cho các map tự tạo
+    custom_map_counter = 1
+
     background_effects.init_background(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 1000)
     
     # Tải controller và dữ liệu map
@@ -155,6 +160,9 @@ def run_ai_game(screen, clock, selected_map_name):
 
     player_move_interval = 200 # Tốc độ di chuyển của người chơi
     last_player_move_time = 0
+
+    online_ai_move_interval = 200 # Tốc độ của AI Online (ms mỗi bước)
+    last_online_ai_move_time = 0
 
     current_time = 0.0 
     total_search_time = 0.0
@@ -270,6 +278,7 @@ def run_ai_game(screen, clock, selected_map_name):
             if UI_helpers.handle_button_events(event, buttons['solve']):
                 if game_state == "IDLE" or game_state == "PLAYER_READY":
                     controller.reset()
+
                     # Reset các biến và kết quả đã lưu
                     total_search_time = 0.0
                     total_visited_nodes = 0
@@ -286,12 +295,14 @@ def run_ai_game(screen, clock, selected_map_name):
                         full_playthrough_result = _calculate_full_playthrough(initial_snake, initial_food, selected_mode, controller.map_data)
                         
                         # Sau khi có kết quả, bắt đầu chế độ autoplay như bình thường
+
                         game_state = "AI_AUTOPLAY"
 
             if UI_helpers.handle_button_events(event, buttons['history']):
                 history_screen.run_history_screen(screen, clock)
 
             if UI_helpers.handle_button_events(event, skip_button) and game_state in ["AI_AUTOPLAY", "ANIMATING_PATH"]:
+
                 # Nếu đã có kết quả tính toán trước, hãy sử dụng nó
                 if full_playthrough_result:
                     # Cập nhật controller với trạng thái cuối cùng
@@ -310,7 +321,6 @@ def run_ai_game(screen, clock, selected_map_name):
                         full_playthrough_result['generated']
                     )
                     
-                    # Dọn dẹp và quay về trạng thái chờ
                     game_state = "IDLE"
                     ai_path, visited_nodes, path_nodes_to_draw = [], [], []
                     target_food_pos = None
@@ -362,6 +372,27 @@ def run_ai_game(screen, clock, selected_map_name):
             # Kiểm tra kết thúc game
             if game_data['outcome'] != "Playing":
                 game_state = "IDLE"
+        elif game_state == "AI_ONLINE_PLAYING":
+            if current_ticks - last_online_ai_move_time > online_ai_move_interval:
+                game_data = controller.get_state()
+                if game_data['outcome'] == "Playing":
+                    next_move = OnlineSearch.find_best_next_move(
+                        game_data['snake'], 
+                        game_data['food'], 
+                        controller.map_data
+                    )
+
+                    if next_move:
+                        controller.set_direction(next_move)
+                        controller.update()
+                    else:
+                        # Nếu AI không tìm được nước đi (bị kẹt), kết thúc game
+                        controller.outcome = "Stuck"
+
+                    last_online_ai_move_time = current_ticks
+                else:
+                    # Nếu game đã kết thúc (thắng hoặc thua)
+                    game_state = "IDLE"
 
         elif game_state == "AI_AUTOPLAY" and game_data['food']:
             if not ai_path and game_data['food']:
@@ -388,6 +419,7 @@ def run_ai_game(screen, clock, selected_map_name):
                         visualization_timer_start = pygame.time.get_ticks()
                     else:
                         controller.outcome = "Stuck"
+
                         # Sử dụng kết quả đã tính toán trước để lưu
                         if full_playthrough_result:
                             game_helpers.save_game_result(
@@ -432,6 +464,7 @@ def run_ai_game(screen, clock, selected_map_name):
                 game_state = "IDLE"
                 target_food_pos = None
                 current_time = controller.get_state()['steps'] * (animation_interval / 1000.0)
+
                 
                 # Sử dụng kết quả đã tính toán trước để lưu
                 if full_playthrough_result:
@@ -446,6 +479,7 @@ def run_ai_game(screen, clock, selected_map_name):
                         current_time, total_search_time, "Completed",
                         total_visited_nodes, total_generated_nodes
                     )
+
                 visited_nodes, path_nodes_to_draw = [], [] # Xóa các chấm visualize khi thắng
 
         # --- VẼ LÊN MÀN HÌNH ---
