@@ -14,25 +14,22 @@ def find_path_bfs(start_pos, food_pos_list, map_data, snake_body):
     :return: Danh sách các tọa độ tạo thành đường đi, hoặc None nếu không tìm thấy.
     """
     if not food_pos_list:
-        # THAY ĐỔI: Trả về đúng định dạng mới
         return {'path': None, 'visited_nodes': [], 'generated_count': 0, 'visited_count': 0}
 
     queue = deque([(start_pos, [start_pos])])  # Hàng đợi chứa (vị trí, đường đi tới vị trí đó)
-    # THAY ĐỔI: Đổi tên 'visited' thành 'visited_set' để rõ ràng hơn
     visited_set = {start_pos} # Set chứa các vị trí đã ghé thăm
     
-    # THAY ĐỔI: Thêm biến đếm visited_count
     generated_count = 1 # Bắt đầu với nút gốc
     visited_count = 0
 
     while queue:
-        # THAY ĐỔI: Tăng visited_count mỗi khi lấy 1 nút ra duyệt
+        # Tăng visited_count mỗi khi lấy 1 nút ra duyệt
         current_pos, path = queue.popleft()
         visited_count += 1
 
         # Nếu vị trí hiện tại là thức ăn, trả về đường đi
         if current_pos in food_pos_list:
-            # THAY ĐỔI: Trả về dictionary với cấu trúc mới
+            # Trả về dictionary với cấu trúc mớI
             return {
                 'path': path, 
                 'visited_nodes': list(visited_set),

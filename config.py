@@ -34,12 +34,14 @@ DUAL_SCREEN_HEIGHT = (DUAL_MAP_HEIGHT_TILES * TILE_SIZE) + 200
 # ======================================================================
 # --- CÀI ĐẶT CHO MAP EDITOR ---
 # ======================================================================
-EDITOR_MAP_WIDTH_TILES = 30  # Chiều rộng map trong editor
-EDITOR_MAP_HEIGHT_TILES = 30 # Chiều cao map trong editor
-EDITOR_PANEL_WIDTH = 250     # Chiều rộng panel điều khiển của editor
+EDITOR_MAP_WIDTH_TILES = 40       # Chiều rộng map trong editor (số ô)
+EDITOR_MAP_HEIGHT_TILES = 30      # Chiều cao map trong editor (số ô)
+EDITOR_PANEL_WIDTH = 250          # Chiều rộng panel điều khiển bên trái
+EDITOR_INSTRUCTIONS_WIDTH = 250   # Chiều rộng panel hướng dẫn bên phải
 
 # Công thức tính kích thước cửa sổ cho editor
-EDITOR_SCREEN_WIDTH = EDITOR_PANEL_WIDTH + (EDITOR_MAP_WIDTH_TILES * TILE_SIZE) + 100
+PADDING = 50 # Khoảng cách giữa các cột
+EDITOR_SCREEN_WIDTH = EDITOR_PANEL_WIDTH + (EDITOR_MAP_WIDTH_TILES * TILE_SIZE) + EDITOR_INSTRUCTIONS_WIDTH + (PADDING * 2)
 EDITOR_SCREEN_HEIGHT = (EDITOR_MAP_HEIGHT_TILES * TILE_SIZE) + 100
 
 # ======================================================================
