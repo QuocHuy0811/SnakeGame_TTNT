@@ -5,6 +5,7 @@ import pygame
 from Algorithms.algorithm_helpers import manhattan_distance
 import config
 import copy
+import time
 from UI import UI_helpers
 from UI.MainMenu import background_effects
 from GameLogic import game_helpers, snake_logic, food_logic
@@ -60,11 +61,11 @@ def _calculate_full_playthrough(initial_snake, initial_food, selected_mode, map_
     if not algorithm_to_run: return None
 
     while temp_food:
-        search_start_time = pygame.time.get_ticks()
+        search_start_time = time.perf_counter() # THAY ĐỔI
         search_result = find_path_with_algorithm(algorithm_to_run, temp_snake_body[0], temp_food, map_data, temp_snake_body)
         path = search_result.get('path')
 
-        total_search_time += (pygame.time.get_ticks() - search_start_time) / 1000.0
+        total_search_time += (time.perf_counter() - search_start_time) # THAY ĐỔI
         # SỬA LỖI: Lấy đúng các giá trị đếm từ thuật toán
         total_visited += search_result.get('visited_count', 0)
         total_generated += search_result.get('generated_count', 0)
@@ -109,8 +110,9 @@ def run_ai_game(screen, clock, selected_map_name):
     info_font = pygame.font.Font(config.FONT_PATH, 26)
     instruction_font = pygame.font.Font(config.FONT_PATH, 18)
     end_game_font = pygame.font.Font(config.FONT_PATH, 50)
-
-    # BIẾN MỚI: Thêm một bộ đếm cho các map tự tạo
+    #  Lưu kết quả tính toán đầy đủ khi nhấn Solve
+    full_playthrough_result = None
+    #  Thêm một bộ đếm cho các map tự tạo
     custom_map_counter = 1
 
     background_effects.init_background(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 1000)
@@ -257,6 +259,8 @@ def run_ai_game(screen, clock, selected_map_name):
                 visited_nodes = []
                 path_nodes_to_draw = []
                 target_food_pos = None
+                
+                full_playthrough_result = None # <-- THÊM DÒNG QUAN TRỌNG NÀY
 
                 if selected_mode == "Player":
                     game_state = "PLAYER_READY"
@@ -266,43 +270,49 @@ def run_ai_game(screen, clock, selected_map_name):
             if UI_helpers.handle_button_events(event, buttons['solve']):
                 if game_state == "IDLE" or game_state == "PLAYER_READY":
                     controller.reset()
+                    # Reset các biến và kết quả đã lưu
                     total_search_time = 0.0
                     total_visited_nodes = 0
                     total_generated_nodes = 0
+                    full_playthrough_result = None 
+
                     if selected_mode == "Player":
                         game_state = "PLAYER_PLAYING"
                         last_player_move_time = pygame.time.get_ticks()
                     else:
+                        # TÍNH TOÁN TRƯỚC TOÀN BỘ LỜI GIẢI VÀ LƯU LẠI
+                        initial_snake = snake_logic.create_snake_from_map(controller.map_data)
+                        initial_food = food_logic.create_food_from_map(controller.map_data)
+                        full_playthrough_result = _calculate_full_playthrough(initial_snake, initial_food, selected_mode, controller.map_data)
+                        
+                        # Sau khi có kết quả, bắt đầu chế độ autoplay như bình thường
                         game_state = "AI_AUTOPLAY"
 
             if UI_helpers.handle_button_events(event, buttons['history']):
                 history_screen.run_history_screen(screen, clock)
 
             if UI_helpers.handle_button_events(event, skip_button) and game_state in ["AI_AUTOPLAY", "ANIMATING_PATH"]:
-                final_result = _calculate_full_playthrough(game_data['snake'], game_data['food'], selected_mode, controller.map_data)
-                
-                if final_result:
-                    # Cập nhật controller với kết quả cuối cùng
-                    controller.snake_data = final_result['snake']
-                    controller.steps = final_result['steps']
-                    controller.food_data = [] # Ăn hết thức ăn
-                    controller.outcome = final_result['outcome']
+                # Nếu đã có kết quả tính toán trước, hãy sử dụng nó
+                if full_playthrough_result:
+                    # Cập nhật controller với trạng thái cuối cùng
+                    controller.snake_data = full_playthrough_result['snake']
+                    controller.steps = full_playthrough_result['steps']
+                    controller.food_data = [] 
+                    controller.outcome = full_playthrough_result['outcome']
 
-                    # Cập nhật các biến hiển thị
-                    total_search_time = final_result['search_time']
-                    current_time = 0.0 # Animation time = 0 theo yêu cầu
-
-                    # Lưu kết quả và quay về trạng thái chờ
+                    # Lưu kết quả CHÍNH XÁC đã tính toán trước đó
                     game_helpers.save_game_result(
                         selected_map_name, selected_mode, controller.steps, 
-                        current_time, total_search_time, controller.outcome,
-                        final_result['visited'], final_result['generated']
+                        0.0, # Animation time khi skip là 0
+                        full_playthrough_result['search_time'], 
+                        controller.outcome,
+                        full_playthrough_result['visited'], 
+                        full_playthrough_result['generated']
                     )
+                    
+                    # Dọn dẹp và quay về trạng thái chờ
                     game_state = "IDLE"
-                    ai_path  = []
-
-                    visited_nodes = []
-                    path_nodes_to_draw = []
+                    ai_path, visited_nodes, path_nodes_to_draw = [], [], []
                     target_food_pos = None
             
             if UI_helpers.handle_button_events(event, buttons['change_mode']):
@@ -378,10 +388,18 @@ def run_ai_game(screen, clock, selected_map_name):
                         visualization_timer_start = pygame.time.get_ticks()
                     else:
                         controller.outcome = "Stuck"
-                        game_helpers.save_game_result(
-                            selected_map_name, selected_mode, game_data['steps'], current_time, 
-                            total_search_time, "Stuck", total_visited_nodes, total_generated_nodes
-                        )
+                        # Sử dụng kết quả đã tính toán trước để lưu
+                        if full_playthrough_result:
+                            game_helpers.save_game_result(
+                                selected_map_name, selected_mode, game_data['steps'], current_time, 
+                                full_playthrough_result['search_time'], "Stuck", 
+                                full_playthrough_result['visited'], full_playthrough_result['generated']
+                            )
+                        else: # Fallback trong trường hợp không có dữ liệu tính trước
+                             game_helpers.save_game_result(
+                                selected_map_name, selected_mode, game_data['steps'], current_time, 
+                                total_search_time, "Stuck", total_visited_nodes, total_generated_nodes
+                            )
                         game_state = "IDLE"
 
         if game_state == "VISUALIZING":
@@ -414,11 +432,20 @@ def run_ai_game(screen, clock, selected_map_name):
                 game_state = "IDLE"
                 target_food_pos = None
                 current_time = controller.get_state()['steps'] * (animation_interval / 1000.0)
-                game_helpers.save_game_result(
-                    selected_map_name, selected_mode, controller.get_state()['steps'],
-                    current_time, total_search_time, "Completed",
-                    total_visited_nodes, total_generated_nodes
-                )
+                
+                # Sử dụng kết quả đã tính toán trước để lưu
+                if full_playthrough_result:
+                    game_helpers.save_game_result(
+                        selected_map_name, selected_mode, controller.get_state()['steps'],
+                        current_time, full_playthrough_result['search_time'], "Completed",
+                        full_playthrough_result['visited'], full_playthrough_result['generated']
+                    )
+                else: # Fallback
+                    game_helpers.save_game_result(
+                        selected_map_name, selected_mode, controller.get_state()['steps'],
+                        current_time, total_search_time, "Completed",
+                        total_visited_nodes, total_generated_nodes
+                    )
                 visited_nodes, path_nodes_to_draw = [], [] # Xóa các chấm visualize khi thắng
 
         # --- VẼ LÊN MÀN HÌNH ---
