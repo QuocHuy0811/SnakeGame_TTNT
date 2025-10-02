@@ -247,6 +247,7 @@ def run_map_editor(screen, clock):
         instructions = [
             "HƯỚNG DẪN:",
             "- Chọn Wall/Food: Giữ Chuột Trái/Phải để Thêm/Xóa.",
+
             "",
             "- Chọn Snake:",
             "  1. CLICK TRÁI để đặt ĐUÔI.",
