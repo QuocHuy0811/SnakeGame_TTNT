@@ -126,7 +126,7 @@ def draw_search_visualization(surface, visited_nodes, path_nodes):
     for pos in visited_nodes:
         center_x = pos[0] * config.TILE_SIZE + config.TILE_SIZE // 2
         center_y = pos[1] * config.TILE_SIZE + config.TILE_SIZE // 2
-        pygame.draw.circle(surface, (255, 255, 255, 100), (center_x, center_y), 3) # Chấm trắng mờ
+        pygame.draw.circle(surface, (255, 255, 255), (center_x, center_y), 3) # Chấm trắng
 
     # Vẽ đường đi cuối cùng đè lên trên
     for pos in path_nodes:
