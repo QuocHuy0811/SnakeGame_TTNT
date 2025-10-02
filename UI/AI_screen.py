@@ -9,7 +9,7 @@ from UI import UI_helpers
 from UI.MainMenu import background_effects
 from GameLogic import game_helpers, snake_logic, food_logic
 from GameLogic.game_controller import GameController 
-from Algorithms import BFS, Astar, UCS, DFS, Greedy, IDS
+from Algorithms import BFS, Astar, UCS, DFS, Greedy, IDS, OnlineSearch
 from UI import AI_selection_screen, history_screen, map_editor_screen 
     
 def find_path_with_algorithm(algorithm_func, start_pos, food_data, map_data, snake_body):
@@ -154,6 +154,9 @@ def run_ai_game(screen, clock, selected_map_name):
     player_move_interval = 200 # Tốc độ di chuyển của người chơi
     last_player_move_time = 0
 
+    online_ai_move_interval = 200 # Tốc độ của AI Online (ms mỗi bước)
+    last_online_ai_move_time = 0
+
     current_time = 0.0 
     total_search_time = 0.0
     total_visited_nodes = 0
@@ -272,6 +275,9 @@ def run_ai_game(screen, clock, selected_map_name):
                     if selected_mode == "Player":
                         game_state = "PLAYER_PLAYING"
                         last_player_move_time = pygame.time.get_ticks()
+                    elif selected_mode == "OnlineSearch": # <-- THÊM NHÁNH NÀY
+                        game_state = "AI_ONLINE_PLAYING"
+                        last_online_ai_move_time = pygame.time.get_ticks()
                     else:
                         game_state = "AI_AUTOPLAY"
 
@@ -352,6 +358,30 @@ def run_ai_game(screen, clock, selected_map_name):
             # Kiểm tra kết thúc game
             if game_data['outcome'] != "Playing":
                 game_state = "IDLE"
+        elif game_state == "AI_ONLINE_PLAYING":
+            if current_ticks - last_online_ai_move_time > online_ai_move_interval:
+                game_data = controller.get_state()
+                if game_data['outcome'] == "Playing":
+                    # 1. Hỏi AI nước đi tiếp theo
+                    next_move = OnlineSearch.find_best_next_move(
+                        game_data['snake'], 
+                        game_data['food'], 
+                        controller.map_data
+                    )
+
+                    if next_move:
+                        # 2. Ra lệnh cho controller đổi hướng
+                        controller.set_direction(next_move)
+                        # 3. Cập nhật game một bước
+                        controller.update()
+                    else:
+                        # Nếu AI không tìm được nước đi (bị kẹt), kết thúc game
+                        controller.outcome = "Stuck"
+
+                    last_online_ai_move_time = current_ticks
+                else:
+                    # Nếu game đã kết thúc (thắng hoặc thua)
+                    game_state = "IDLE"
 
         elif game_state == "AI_AUTOPLAY" and game_data['food']:
             if not ai_path and game_data['food']:
