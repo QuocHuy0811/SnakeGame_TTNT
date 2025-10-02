@@ -9,10 +9,20 @@ from Algorithms.algorithm_helpers import manhattan_distance
 
 
 pygame.init()
-
-_snake_sprites = None
-_food_sprite = None
-
+try:
+    # Đảm bảo mixer đã được khởi tạo (giống trong file main.py)
+    pygame.mixer.init()
+    _click_sound = pygame.mixer.Sound("Assets/Sounds/click_button.mp3")
+except pygame.error as e:
+    print(f"Lỗi: Không thể tải file âm thanh 'click_button.mp3': {e}")
+    _click_sound = None
+    _snake_sprites = None
+    _food_sprite = None
+try:
+    _hover_sound = pygame.mixer.Sound("Assets/Sounds/cuon.wav")
+except pygame.error as e:
+    print(f"Lỗi: Không thể tải file âm thanh cuon.wav: {e}")
+    _hover_sound = None
 # --- Khởi tạo font dùng chung ---
 BUTTON_FONT = pygame.font.Font(config.FONT_PATH, config.BUTTON_FONT_SIZE)
 
@@ -38,6 +48,7 @@ def create_button(x, y, width, height, text):
         'hover_color': config.COLORS['btn_hover'],
         'disabled_color': config.COLORS['btn_disabled'],
         'is_hovered': False,
+        'was_hovered': False, # <-- THÊM DÒNG NÀY
         'is_enabled': True
     }
 
@@ -61,17 +72,35 @@ def handle_button_events(event, button_data):
         Trạng thái hover được cập nhật riêng.
     """
     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and button_data['is_hovered'] and button_data['is_enabled']:
+        # --- THÊM MỚI: Phát âm thanh khi click ---
+        if _click_sound:
+            _click_sound.play()
+        # -----------------------------------------
         return True
     return False
 
 def update_button_hover_state(button_data, mouse_pos):
     """
-        Cập nhật trạng thái hover cho một nút.
+        Cập nhật trạng thái hover cho một nút và phát âm thanh khi bắt đầu hover.
     """
-    if button_data['is_enabled']:
-        button_data['is_hovered'] = button_data['rect'].collidepoint(mouse_pos)
-    else:
+    if not button_data['is_enabled']:
         button_data['is_hovered'] = False
+        return
+
+    # Lấy trạng thái hover của frame trước
+    was_hovered = button_data.get('was_hovered', False)
+
+    # Tính trạng thái hover của frame này
+    is_hovered_now = button_data['rect'].collidepoint(mouse_pos)
+    button_data['is_hovered'] = is_hovered_now
+
+    # Chỉ phát âm thanh nếu trạng thái thay đổi từ không-hover sang hover
+    if is_hovered_now and not was_hovered:
+        if _hover_sound:
+            _hover_sound.play()
+
+    # Cập nhật lại trạng thái 'was_hovered' cho frame tiếp theo
+    button_data['was_hovered'] = is_hovered_now
 
 def draw_game_grid(surface):
     """
