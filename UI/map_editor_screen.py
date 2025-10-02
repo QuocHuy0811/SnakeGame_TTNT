@@ -221,8 +221,12 @@ def run_map_editor(screen, clock):
             is_border = (x == 0 or x == map_width_tiles - 1 or y == 0 or y == map_height_tiles - 1)
             if not is_border:
                 if mouse_buttons[0]: # Chuột trái
-                    if active_tool == 'wall': map_data['walls'].add(hover_pos)
-                    elif active_tool == 'food': map_data['food_start'].add(hover_pos)
+                 # Nếu vẽ TƯỜNG, kiểm tra xem ô đó có phải là THỨC ĂN không
+                    if active_tool == 'wall' and hover_pos not in map_data['food_start']:
+                        map_data['walls'].add(hover_pos)
+                    # Nếu vẽ THỨC ĂN, kiểm tra xem ô đó có phải là TƯỜNG không
+                    elif active_tool == 'food' and hover_pos not in map_data['walls']:
+                        map_data['food_start'].add(hover_pos)
                 elif mouse_buttons[2]: # Chuột phải
                     if active_tool == 'wall' and hover_pos in map_data['walls']: map_data['walls'].remove(hover_pos)
                     elif active_tool == 'food' and hover_pos in map_data['food_start']: map_data['food_start'].remove(hover_pos)
