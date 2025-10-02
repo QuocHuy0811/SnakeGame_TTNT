@@ -112,10 +112,11 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT: 
-                running = False
+                pygame.quit()
+                exit()
                 
             if UI_helpers.handle_button_events(event, buttons['back']): 
-                running = False
+                running = False # Giữ nguyên: Nút "Back" vẫn quay về menu
 
             if UI_helpers.handle_button_events(event, buttons['change_mode']):
                 new_mode = AI_selection_screen.run_algorithm_selection(screen)
