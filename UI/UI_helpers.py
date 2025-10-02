@@ -9,7 +9,13 @@ from Algorithms.algorithm_helpers import manhattan_distance
 
 
 pygame.init()
-
+try:
+    # Đảm bảo mixer đã được khởi tạo (giống trong file main.py)
+    pygame.mixer.init()
+    _click_sound = pygame.mixer.Sound("Assets/Sounds/click_button.mp3")
+except pygame.error as e:
+    print(f"Lỗi: Không thể tải file âm thanh 'click_button.mp3': {e}")
+    _click_sound = None
 _snake_sprites = None
 _food_sprite = None
 
@@ -61,6 +67,10 @@ def handle_button_events(event, button_data):
         Trạng thái hover được cập nhật riêng.
     """
     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and button_data['is_hovered'] and button_data['is_enabled']:
+        # --- THÊM MỚI: Phát âm thanh khi click ---
+        if _click_sound:
+            _click_sound.play()
+        # -----------------------------------------
         return True
     return False
 
