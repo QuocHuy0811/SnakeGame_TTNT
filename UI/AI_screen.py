@@ -38,8 +38,8 @@ def find_path_with_algorithm(algorithm_func, start_pos, food_data, map_data, sna
 
 def _calculate_full_playthrough(initial_snake, initial_food, selected_mode, map_data):
     """
-    Hàm này tính toán toàn bộ quá trình chơi của AI để có được kết quả cuối cùng.
-    Nó trả về trạng thái rắn, tổng số bước, và tổng thời gian tìm kiếm.
+        Hàm này tính toán toàn bộ quá trình chơi của AI để có được kết quả cuối cùng.
+        Nó trả về trạng thái rắn, tổng số bước, và tổng thời gian tìm kiếm.
     """
     # Tạo bản sao sâu để không ảnh hưởng đến game thật
     temp_snake_body = copy.deepcopy(initial_snake['body'])
@@ -362,7 +362,6 @@ def run_ai_game(screen, clock, selected_map_name):
             if current_ticks - last_online_ai_move_time > online_ai_move_interval:
                 game_data = controller.get_state()
                 if game_data['outcome'] == "Playing":
-                    # 1. Hỏi AI nước đi tiếp theo
                     next_move = OnlineSearch.find_best_next_move(
                         game_data['snake'], 
                         game_data['food'], 
@@ -370,9 +369,7 @@ def run_ai_game(screen, clock, selected_map_name):
                     )
 
                     if next_move:
-                        # 2. Ra lệnh cho controller đổi hướng
                         controller.set_direction(next_move)
-                        # 3. Cập nhật game một bước
                         controller.update()
                     else:
                         # Nếu AI không tìm được nước đi (bị kẹt), kết thúc game
