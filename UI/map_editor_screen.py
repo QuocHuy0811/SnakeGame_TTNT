@@ -153,8 +153,12 @@ def run_map_editor(screen, clock):
                 if hover_pos and active_tool == 'snake':
                     # Click trái: Đặt đầu rắn và bắt đầu vẽ
                     if event.button == 1:
-                        is_drawing_snake = True
-                        map_data['snake_start'] = [hover_pos] # Chỉ đặt đầu rắn
+                    # Chỉ đặt rắn nếu ô đó không phải là tường và không phải là thức ăn
+                        if hover_pos not in map_data['walls'] and hover_pos not in map_data['food_start']:
+                            is_drawing_snake = True
+                            map_data['snake_start'] = [hover_pos] # Chỉ đặt đầu rắn
+                        else:
+                            print("Lỗi: Không thể đặt rắn lên tường hoặc thức ăn!")
                     
                     # Click phải: Xóa toàn bộ con rắn nếu click vào nó
                     elif event.button == 3:
@@ -185,7 +189,7 @@ def run_map_editor(screen, clock):
 
                     if new_head:
                         is_valid_move = True
-                        if new_head in map_data['walls'] or new_head in map_data['snake_start']:
+                        if new_head in map_data['walls'] or new_head in map_data['snake_start'] or new_head in map_data['food_start']:
                             is_valid_move = False
                         if len(map_data['snake_start']) > 1 and new_head == map_data['snake_start'][1]:
                             is_valid_move = False
