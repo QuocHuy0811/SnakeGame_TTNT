@@ -7,7 +7,7 @@ from UI import UI_helpers, AI_selection_screen
 from UI.MainMenu import background_effects
 from GameLogic.game_controller import GameController # <-- DÙNG GAMECONTROLLER
 from GameLogic import snake_logic, food_logic
-from Algorithms import BFS, Astar, UCS, DFS, Greedy, IDS, OnlineSearch # (Giả định AI cũng dùng các thuật toán này)
+from Algorithms import BFS, Astar, UCS, DFS, Greedy, IDS, OnlineSearch, BeamSearch, HillClimbing# (Giả định AI cũng dùng các thuật toán này)
 
 def find_path_for_ai(controller, selected_mode):
     """Hàm tìm đường đi cho AI dựa vào thuật toán được chọn."""
@@ -22,7 +22,9 @@ def find_path_for_ai(controller, selected_mode):
         "BFS": BFS.find_path_bfs, "A*": Astar.find_path_astar,
         "UCS": UCS.find_path_ucs, "DFS": DFS.find_path_dfs,
         "Greedy": Greedy.find_path_greedy, "IDS": IDS.find_path_ids,
-        "Online": OnlineSearch.find_best_next_move
+        "BeamSearch": BeamSearch.find_path_beam_search,
+        "Online": OnlineSearch.find_best_next_move,
+        "HillClimbing": HillClimbing.find_path_hill_climbing
     }
     algorithm_to_run = algorithm_map.get(selected_mode)
     if not algorithm_to_run:
