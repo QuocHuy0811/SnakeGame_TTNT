@@ -10,7 +10,7 @@ def main():
     """Hàm chính để chạy game."""
     pygame.init()
     
-    # THÊM NHẠC NỀN: Khởi tạo mixer
+    # THÊM NHẠC NỀN: Khởi tạo mixer 
     pygame.mixer.init()
 
     screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))

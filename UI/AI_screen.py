@@ -57,13 +57,15 @@ def _calculate_full_playthrough(initial_snake, initial_food, selected_mode, map_
     path_history = temp_snake_body[:] # Bắt đầu với vị trí ban đầu
 
     algorithm_map = {
-        "BFS": BFS.find_path_bfs, "A*": Astar.find_path_astar, 
-        "UCS": UCS.find_path_ucs, "DFS": DFS.find_path_dfs, 
-        "Greedy": Greedy.find_path_greedy, "IDS": IDS.find_path_ids, 
+        "BFS": BFS.find_path_bfs, 
+        "DFS": DFS.find_path_dfs,
+        "IDS": IDS.find_path_ids,  
+        "UCS": UCS.find_path_ucs, 
+        "A*": Astar.find_path_astar, 
+        "Greedy": Greedy.find_path_greedy, 
         "BeamSearch": BeamSearch.find_path_beam_search,
-        "Online": OnlineSearch.find_best_next_move,
-        "HillClimbing": HillClimbing.find_path_hill_climbing    
-        
+        "HillClimbing": HillClimbing.find_path_hill_climbing,
+        "Online": OnlineSearch.find_best_next_move
     }
     algorithm_to_run = algorithm_map.get(selected_mode)
     if not algorithm_to_run: return None
@@ -82,9 +84,12 @@ def _calculate_full_playthrough(initial_snake, initial_food, selected_mode, map_
 
         if not path or len(path) <= 1:
             return {
-                'outcome': 'Stuck', 'steps': total_steps, 'search_time': total_search_time,
+                'outcome': 'Stuck', 
+                'steps': total_steps, 
+                'search_time': total_search_time,
                 'snake': {'body': temp_snake_body, 'direction': 'RIGHT'},
-                'visited': total_visited, 'generated': total_generated
+                'visited': total_visited, 
+                'generated': total_generated
             }
         eaten_food_pos = path[-1]
         
@@ -103,14 +108,16 @@ def _calculate_full_playthrough(initial_snake, initial_food, selected_mode, map_
         while len(temp_snake_body) > final_snake_length:
             temp_snake_body.pop()
 
-    # --- XÂY DỰNG LẠI THÂN RẮN CUỐI CÙNG ---
     # Thân rắn cuối cùng là các vị trí cuối cùng trong lịch sử di chuyển
     final_snake_length = initial_length + total_food_eaten
     final_body = path_history[-final_snake_length:]
     return {
-        'outcome': 'Completed', 'steps': total_steps, 'search_time': total_search_time,
+        'outcome': 'Completed', 
+        'steps': total_steps, 
+        'search_time': total_search_time,
         'snake': {'body': final_body, 'direction': 'RIGHT'},
-        'visited': total_visited, 'generated': total_generated
+        'visited': total_visited, 
+        'generated': total_generated
     }
 
 def run_ai_game(screen, clock, selected_map_name):
@@ -282,7 +289,7 @@ def run_ai_game(screen, clock, selected_map_name):
                 path_nodes_to_draw = []
                 target_food_pos = None
                 
-                full_playthrough_result = None # <-- THÊM DÒNG QUAN TRỌNG NÀY
+                full_playthrough_result = None
 
                 if selected_mode == "Player":
                     game_state = "PLAYER_READY"
@@ -306,14 +313,11 @@ def run_ai_game(screen, clock, selected_map_name):
                         game_state = "AI_ONLINE_PLAYING"
                         last_online_ai_move_time = pygame.time.get_ticks()
                     else:
+                        game_state = "AI_AUTOPLAY"
                         # TÍNH TOÁN TRƯỚC TOÀN BỘ LỜI GIẢI VÀ LƯU LẠI
                         initial_snake = snake_logic.create_snake_from_map(controller.map_data)
                         initial_food = food_logic.create_food_from_map(controller.map_data)
                         full_playthrough_result = _calculate_full_playthrough(initial_snake, initial_food, selected_mode, controller.map_data)
-                        
-                        # Sau khi có kết quả, bắt đầu chế độ autoplay như bình thường
-
-                        game_state = "AI_AUTOPLAY"
 
             if UI_helpers.handle_button_events(event, buttons['history']):
                 history_screen.run_history_screen(screen, clock)
@@ -419,13 +423,16 @@ def run_ai_game(screen, clock, selected_map_name):
         elif game_state == "AI_AUTOPLAY" and game_data['food']:
             if not ai_path and game_data['food']:
                 algorithm_map = {
-        "BFS": BFS.find_path_bfs, "A*": Astar.find_path_astar, 
-        "UCS": UCS.find_path_ucs, "DFS": DFS.find_path_dfs, 
-        "Greedy": Greedy.find_path_greedy, "IDS": IDS.find_path_ids, 
-        "BeamSearch": BeamSearch.find_path_beam_search,
-        "HillClimbing": HillClimbing.find_path_hill_climbing,
-        "Online": OnlineSearch.find_best_next_move
-    }
+                    "BFS": BFS.find_path_bfs, 
+                    "DFS": DFS.find_path_dfs,
+                    "IDS": IDS.find_path_ids,  
+                    "UCS": UCS.find_path_ucs, 
+                    "A*": Astar.find_path_astar, 
+                    "Greedy": Greedy.find_path_greedy, 
+                    "BeamSearch": BeamSearch.find_path_beam_search,
+                    "HillClimbing": HillClimbing.find_path_hill_climbing,
+                    "Online": OnlineSearch.find_best_next_move
+                }
                 algorithm_to_run = algorithm_map.get(selected_mode)
                 
                 if algorithm_to_run:
@@ -433,7 +440,7 @@ def run_ai_game(screen, clock, selected_map_name):
                     search_result = find_path_with_algorithm(algorithm_to_run, game_data['snake']['body'][0], game_data['food'], controller.map_data, game_data['snake']['body'])
                     total_search_time += (pygame.time.get_ticks() - search_start_time) / 1000.0
 
-                    # SỬA LỖI: Lấy đúng các giá trị đếm
+                    # Lấy đúng các giá trị đếm
                     total_visited_nodes += search_result.get('visited_count', 0)
                     total_generated_nodes += search_result.get('generated_count', 0)
                     
