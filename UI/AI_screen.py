@@ -2,7 +2,8 @@
     Giao diện chế độ AI
 """
 import pygame
-from Algorithms.algorithm_helpers import manhattan_distance
+from functools import partial
+from Algorithms.algorithm_helpers import manhattan_distance, euclidean_distance
 import config
 import copy
 import time
@@ -61,11 +62,14 @@ def _calculate_full_playthrough(initial_snake, initial_food, selected_mode, map_
         "DFS": DFS.find_path_dfs,
         "IDS": IDS.find_path_ids,  
         "UCS": UCS.find_path_ucs, 
-        "A*": Astar.find_path_astar, 
-        "Greedy": Greedy.find_path_greedy, 
-        "BeamSearch": BeamSearch.find_path_beam_search,
         "HillClimbing": HillClimbing.find_path_hill_climbing,
-        "Online": OnlineSearch.find_best_next_move
+        "BeamSearch": BeamSearch.find_path_beam_search,
+
+        # Sử dụng partial để tạo các phiên bản khác nhau của A* và Greedy
+        "A* (Manhattan)": partial(Astar.find_path_astar, heuristic_func=manhattan_distance),
+        "A* (Euclidean)": partial(Astar.find_path_astar, heuristic_func=euclidean_distance),
+        "Greedy (Manhattan)": partial(Greedy.find_path_greedy, heuristic_func=manhattan_distance),
+        "Greedy (Euclidean)": partial(Greedy.find_path_greedy, heuristic_func=euclidean_distance)
     }
     algorithm_to_run = algorithm_map.get(selected_mode)
     if not algorithm_to_run: return None
@@ -427,11 +431,14 @@ def run_ai_game(screen, clock, selected_map_name):
                     "DFS": DFS.find_path_dfs,
                     "IDS": IDS.find_path_ids,  
                     "UCS": UCS.find_path_ucs, 
-                    "A*": Astar.find_path_astar, 
-                    "Greedy": Greedy.find_path_greedy, 
-                    "BeamSearch": BeamSearch.find_path_beam_search,
                     "HillClimbing": HillClimbing.find_path_hill_climbing,
-                    "Online": OnlineSearch.find_best_next_move
+                    "BeamSearch": BeamSearch.find_path_beam_search,
+
+                    # Sử dụng partial để tạo các phiên bản khác nhau của A* và Greedy
+                    "A* (Manhattan)": partial(Astar.find_path_astar, heuristic_func=manhattan_distance),
+                    "A* (Euclidean)": partial(Astar.find_path_astar, heuristic_func=euclidean_distance),
+                    "Greedy (Manhattan)": partial(Greedy.find_path_greedy, heuristic_func=manhattan_distance),
+                    "Greedy (Euclidean)": partial(Greedy.find_path_greedy, heuristic_func=euclidean_distance)
                 }
                 algorithm_to_run = algorithm_map.get(selected_mode)
                 

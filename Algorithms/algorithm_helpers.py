@@ -2,6 +2,7 @@
     CÁC HÀM DÙNG CHUNG TRONG FOLDER ALGORITHMS: Hàm tìm vị trí xung quanh (neighbors), Hàm tính khoảng các mahatan 
 """
 import config
+import math
 
 def get_valid_neighbors(position, map_data, snake_body):
     """
@@ -25,5 +26,14 @@ def get_valid_neighbors(position, map_data, snake_body):
 
     return neighbors
 def manhattan_distance(pos1, pos2):
-    """Tính khoảng cách Manhattan giữa hai điểm."""
+    """
+        Tính khoảng cách Manhattan giữa hai điểm.
+    """
     return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+def euclidean_distance(pos1, pos2):
+    """
+        Tính khoảng cách Euclid (đường chim bay) giữa hai điểm.
+    """
+    dx = pos1[0] - pos2[0]
+    dy = pos1[1] - pos2[1]
+    return math.sqrt(dx**2 + dy**2)
