@@ -406,22 +406,38 @@ def run_ai_game(screen, clock, selected_map_name):
             if current_ticks - last_online_ai_move_time > online_ai_move_interval:
                 game_data = controller.get_state()
                 if game_data['outcome'] == "Playing":
-                    next_move = OnlineSearch.find_best_next_move(
+                    search_start_time = pygame.time.get_ticks()
+                    
+                    search_result = OnlineSearch.find_best_next_move(
                         game_data['snake'], 
                         game_data['food'], 
                         controller.map_data
                     )
 
+                    total_search_time += (pygame.time.get_ticks() - search_start_time) / 1000.0
+                    
+                    next_move = next_move = search_result.get('move')
                     if next_move:
                         controller.set_direction(next_move)
                         controller.update()
+                        visited_nodes = []
+                        path_nodes_to_draw = []
                     else:
                         # Nếu AI không tìm được nước đi (bị kẹt), kết thúc game
                         controller.outcome = "Stuck"
+                        game_helpers.save_game_result(
+                            selected_map_name, selected_mode, game_data['steps'], 0,
+                            total_search_time, "Stuck", total_visited_nodes, total_generated_nodes
+                        )
 
                     last_online_ai_move_time = current_ticks
                 else:
                     # Nếu game đã kết thúc (thắng hoặc thua)
+                    if game_data['outcome'] == "Completed":
+                        game_helpers.save_game_result(
+                            selected_map_name, selected_mode, game_data['steps'], 0,
+                            total_search_time, "Completed", total_visited_nodes, total_generated_nodes
+                        )
                     game_state = "IDLE"
 
         elif game_state == "AI_AUTOPLAY" and game_data['food']:
