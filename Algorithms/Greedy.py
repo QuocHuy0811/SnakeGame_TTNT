@@ -2,9 +2,9 @@
     Thuật toán Greedy
 """
 import heapq
-from Algorithms.algorithm_helpers import get_valid_neighbors, manhattan_distance
+from Algorithms.algorithm_helpers import get_valid_neighbors, manhattan_distance, euclidean_distance
 
-def find_path_greedy(start_pos, food_pos_list, map_data, snake_body):
+def find_path_greedy(start_pos, food_pos_list, map_data, snake_body, heuristic_func=manhattan_distance):
     """
     Tìm đường đi từ start_pos đến thức ăn gần nhất bằng thuật toán Greedy Best-First Search.
     LƯU Ý: Thuật toán này nhanh nhưng không đảm bảo tìm ra đường đi ngắn nhất.
@@ -19,10 +19,10 @@ def find_path_greedy(start_pos, food_pos_list, map_data, snake_body):
         return {'path': None, 'visited_nodes': [], 'generated_count': 0, 'visited_count': 0}
     
     # Greedy cần một mục tiêu cụ thể, ta sẽ chọn mục tiêu gần nhất theo heuristic ban đầu.
-    target_pos = min(food_pos_list, key=lambda food: manhattan_distance(start_pos, food))
+    target_pos = min(food_pos_list, key=lambda food: heuristic_func(start_pos, food))
 
     # Hàng đợi ưu tiên chỉ chứa (h_score, vị trí, đường đi)
-    h_score = manhattan_distance(start_pos, target_pos)
+    h_score = heuristic_func(start_pos, target_pos)
     
     pq = [(h_score, start_pos, [start_pos])]
 
@@ -49,7 +49,7 @@ def find_path_greedy(start_pos, food_pos_list, map_data, snake_body):
         for neighbor in neighbors:
             if neighbor not in visited_set:
                 visited_set.add(neighbor)
-                new_h = manhattan_distance(neighbor, target_pos)
+                new_h = heuristic_func(neighbor, target_pos)
                 heapq.heappush(pq, (new_h, neighbor, path + [neighbor]))
                 generated_count += 1
 

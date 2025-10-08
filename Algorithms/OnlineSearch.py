@@ -1,3 +1,4 @@
+from functools import partial
 from Algorithms import Astar
 from Algorithms.algorithm_helpers import manhattan_distance
 def _get_safe_neighbor_moves(head, snake_body, walls):
@@ -36,21 +37,43 @@ def find_best_next_move(snake_data, food_data, map_data):
     """
     snake_body = snake_data.get('body')
     if not snake_body:
-        return None
+        return {
+            'move': None, 
+            'path': None, 
+            'visited_nodes': [], 
+            'visited_count': 0, 
+            'generated_count': 0
+        }
     
     head = snake_body[0]
     
     safe_moves = _get_safe_neighbor_moves(head, snake_body, map_data.get('walls', []))
     
     if not safe_moves:
-        return None # Bị kẹt hoàn toàn
+        return {
+            'move': None, 
+            'path': None, 
+            'visited_nodes': [], 
+            'visited_count': 0, 
+            'generated_count': 0
+        }
 
     food_positions = [food['pos'] for food in food_data]
     if not food_positions:
-        return safe_moves[0] 
+        return {
+                'move': safe_moves[0], 
+                'path': None, 
+                'visited_nodes': [], 
+                'visited_count': 0, 
+                'generated_count': 0
+            }
 
     move_options = []
+    total_visited_nodes_set = set()
+    total_visited_count = 0
+    total_generated_count = 0
 
+    astar = partial(Astar.find_path_astar, heuristic_func=manhattan_distance)
     for move in safe_moves:
         new_head = None
         if move == 'UP': new_head = (head[0], head[1] - 1)
@@ -58,17 +81,37 @@ def find_best_next_move(snake_data, food_data, map_data):
         elif move == 'LEFT': new_head = (head[0] - 1, head[1])
         elif move == 'RIGHT': new_head = (head[0] + 1, head[1])
 
-        result = Astar.find_path_astar(new_head, food_positions, map_data, snake_body)
+        result = astar(new_head, food_positions, map_data, snake_body)
         path = result.get('path')
+        total_visited_nodes_set.update(result.get('visited_nodes', set()))
+        total_visited_count += result.get('visited_count', 0)
+        total_generated_count += result.get('generated_count', 0)
 
         if path:
             path_length = len(path)
-            move_options.append({'move': move, 'length': path_length})
+            move_options.append({'move': move, 'length': path_length, 'path': path})
         else:
-            move_options.append({'move': move, 'length': float('inf')})
+            move_options.append({'move': move, 'length': float('inf'), 'path': None})
 
     if not move_options:
-        return safe_moves[0] if safe_moves else None
+        if safe_moves:
+        # Nếu vẫn còn nước đi an toàn, chọn nước đi đầu tiên.
+            return {
+                'move': safe_moves[0], 
+                'path': None, 
+                'visited_nodes': [], 
+                'visited_count': 0, 
+                'generated_count': 0
+            }
+        else:
+            # Nếu không còn cả nước đi an toàn --> bị kẹt hoàn toàn.
+            return {
+                'move': None, 
+                'path': None, 
+                'visited_nodes': [], 
+                'visited_count': 0, 
+                'generated_count': 0
+            }
 
     best_option = min(move_options, key=lambda x: x['length'])
     
@@ -91,6 +134,18 @@ def find_best_next_move(snake_data, food_data, map_data):
 
         # 4. Chọn nước đi có khoảng cách Manhattan nhỏ nhất
         best_survival_move = min(survival_options, key=lambda x: x['dist'])
-        return best_survival_move['move']
+        return {
+            'move': best_survival_move['move'],
+            'path': None,
+            'visited_nodes': list(total_visited_nodes_set),
+            'visited_count': total_visited_count,
+            'generated_count': total_generated_count
+        }
         
-    return best_option['move']
+    return {
+        'move': best_option['move'],
+        'path': best_option['path'],
+        'visited_nodes': list(total_visited_nodes_set),
+        'visited_count': total_visited_count,
+        'generated_count': total_generated_count
+    }

@@ -2,7 +2,8 @@
     Giao diện chế độ AI
 """
 import pygame
-from Algorithms.algorithm_helpers import manhattan_distance
+from functools import partial
+from Algorithms.algorithm_helpers import manhattan_distance, euclidean_distance
 import config
 import copy
 import time
@@ -61,11 +62,14 @@ def _calculate_full_playthrough(initial_snake, initial_food, selected_mode, map_
         "DFS": DFS.find_path_dfs,
         "IDS": IDS.find_path_ids,  
         "UCS": UCS.find_path_ucs, 
-        "A*": Astar.find_path_astar, 
-        "Greedy": Greedy.find_path_greedy, 
-        "BeamSearch": BeamSearch.find_path_beam_search,
         "HillClimbing": HillClimbing.find_path_hill_climbing,
-        "Online": OnlineSearch.find_best_next_move
+        "BeamSearch": BeamSearch.find_path_beam_search,
+
+        # Sử dụng partial để tạo các phiên bản khác nhau của A* và Greedy
+        "A* (Manhattan)": partial(Astar.find_path_astar, heuristic_func=manhattan_distance),
+        "A* (Euclidean)": partial(Astar.find_path_astar, heuristic_func=euclidean_distance),
+        "Greedy (Manhattan)": partial(Greedy.find_path_greedy, heuristic_func=manhattan_distance),
+        "Greedy (Euclidean)": partial(Greedy.find_path_greedy, heuristic_func=euclidean_distance)
     }
     algorithm_to_run = algorithm_map.get(selected_mode)
     if not algorithm_to_run: return None
@@ -402,22 +406,38 @@ def run_ai_game(screen, clock, selected_map_name):
             if current_ticks - last_online_ai_move_time > online_ai_move_interval:
                 game_data = controller.get_state()
                 if game_data['outcome'] == "Playing":
-                    next_move = OnlineSearch.find_best_next_move(
+                    search_start_time = pygame.time.get_ticks()
+                    
+                    search_result = OnlineSearch.find_best_next_move(
                         game_data['snake'], 
                         game_data['food'], 
                         controller.map_data
                     )
 
+                    total_search_time += (pygame.time.get_ticks() - search_start_time) / 1000.0
+                    
+                    next_move = next_move = search_result.get('move')
                     if next_move:
                         controller.set_direction(next_move)
                         controller.update()
+                        visited_nodes = []
+                        path_nodes_to_draw = []
                     else:
                         # Nếu AI không tìm được nước đi (bị kẹt), kết thúc game
                         controller.outcome = "Stuck"
+                        game_helpers.save_game_result(
+                            selected_map_name, selected_mode, game_data['steps'], 0,
+                            total_search_time, "Stuck", total_visited_nodes, total_generated_nodes
+                        )
 
                     last_online_ai_move_time = current_ticks
                 else:
                     # Nếu game đã kết thúc (thắng hoặc thua)
+                    if game_data['outcome'] == "Completed":
+                        game_helpers.save_game_result(
+                            selected_map_name, selected_mode, game_data['steps'], 0,
+                            total_search_time, "Completed", total_visited_nodes, total_generated_nodes
+                        )
                     game_state = "IDLE"
 
         elif game_state == "AI_AUTOPLAY" and game_data['food']:
@@ -427,11 +447,14 @@ def run_ai_game(screen, clock, selected_map_name):
                     "DFS": DFS.find_path_dfs,
                     "IDS": IDS.find_path_ids,  
                     "UCS": UCS.find_path_ucs, 
-                    "A*": Astar.find_path_astar, 
-                    "Greedy": Greedy.find_path_greedy, 
-                    "BeamSearch": BeamSearch.find_path_beam_search,
                     "HillClimbing": HillClimbing.find_path_hill_climbing,
-                    "Online": OnlineSearch.find_best_next_move
+                    "BeamSearch": BeamSearch.find_path_beam_search,
+
+                    # Sử dụng partial để tạo các phiên bản khác nhau của A* và Greedy
+                    "A* (Manhattan)": partial(Astar.find_path_astar, heuristic_func=manhattan_distance),
+                    "A* (Euclidean)": partial(Astar.find_path_astar, heuristic_func=euclidean_distance),
+                    "Greedy (Manhattan)": partial(Greedy.find_path_greedy, heuristic_func=manhattan_distance),
+                    "Greedy (Euclidean)": partial(Greedy.find_path_greedy, heuristic_func=euclidean_distance)
                 }
                 algorithm_to_run = algorithm_map.get(selected_mode)
                 

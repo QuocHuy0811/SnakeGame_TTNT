@@ -2,9 +2,9 @@
     Thuật toán A*
 """
 import heapq
-from Algorithms.algorithm_helpers import get_valid_neighbors, manhattan_distance
+from Algorithms.algorithm_helpers import get_valid_neighbors, manhattan_distance, euclidean_distance
 
-def find_path_astar(start_pos, food_pos_list, map_data, snake_body):
+def find_path_astar(start_pos, food_pos_list, map_data, snake_body, heuristic_func=manhattan_distance):
     """
     Tìm đường đi ngắn nhất từ start_pos đến thức ăn gần nhất bằng A*.
     :param start_pos: Tọa độ (x, y) của đầu rắn.
@@ -21,12 +21,12 @@ def find_path_astar(start_pos, food_pos_list, map_data, snake_body):
 
         return {'path': None, 'visited_nodes': [], 'generated_count': 0, 'visited_count': 0}
     
-    target_pos = min(food_pos_list, key=lambda food: manhattan_distance(start_pos, food))
+    target_pos = min(food_pos_list, key=lambda food: heuristic_func(start_pos, food))
 
     # Hàng đợi ưu tiên chứa (f_score, g_score, vị trí, đường đi)
     # f_score = g_score + h_score
     g_score = 0                                         # Chi phí đã đi
-    h_score = manhattan_distance(start_pos, target_pos) # Chi phí ước tính để đến đích
+    h_score = heuristic_func(start_pos, target_pos) # Chi phí ước tính để đến đích
     f_score = g_score + h_score
     
     pq = [(f_score, g_score, start_pos, [start_pos])]
@@ -55,7 +55,7 @@ def find_path_astar(start_pos, food_pos_list, map_data, snake_body):
             if neighbor not in visited_set:
                 visited_set.add(neighbor)
                 new_g = current_g + 1
-                new_h = manhattan_distance(neighbor, target_pos)
+                new_h = heuristic_func  (neighbor, target_pos)
                 new_f = new_g + new_h
                 heapq.heappush(pq, (new_f, new_g, neighbor, path + [neighbor]))
                 generated_count += 1
