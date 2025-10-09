@@ -93,26 +93,6 @@ def find_best_next_move(snake_data, food_data, map_data):
         else:
             move_options.append({'move': move, 'length': float('inf'), 'path': None})
 
-    if not move_options:
-        if safe_moves:
-        # Nếu vẫn còn nước đi an toàn, chọn nước đi đầu tiên.
-            return {
-                'move': safe_moves[0], 
-                'path': None, 
-                'visited_nodes': [], 
-                'visited_count': 0, 
-                'generated_count': 0
-            }
-        else:
-            # Nếu không còn cả nước đi an toàn --> bị kẹt hoàn toàn.
-            return {
-                'move': None, 
-                'path': None, 
-                'visited_nodes': [], 
-                'visited_count': 0, 
-                'generated_count': 0
-            }
-
     best_option = min(move_options, key=lambda x: x['length'])
     
     if best_option['length'] == float('inf'):

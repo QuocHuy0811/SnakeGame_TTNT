@@ -11,8 +11,9 @@ def load_map_data(map_filename):
     Tải dữ liệu map từ file .txt.
     Hàm này trả về một dictionary chứa layout và vị trí các đối tượng.
     """
+    # Khởi tạo cấu trúc dữ liệu cho map
     map_data = {
-        'layout': [], # <-- THÊM KEY QUAN TRỌNG NÀY
+        'layout': [],
         'walls': [],
         'snake_start': [],
         'food_start': []
@@ -42,7 +43,7 @@ def load_map_data(map_filename):
                     map_data['food_start'].append((x, y))
     
     # Sắp xếp lại vị trí của rắn để đảm bảo đúng thứ tự đầu-thân
-    # Cách này giả định đầu rắn là ký tự 'x' ở trên cùng và/hoặc bên trái nhất
+    # Giả định các đốt rắn 'x' trong file map được đặt liền kề
     map_data['snake_start'].sort(key=lambda pos: (pos[1], pos[0]))
     
     return map_data

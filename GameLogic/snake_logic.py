@@ -5,14 +5,18 @@ from Algorithms.algorithm_helpers import manhattan_distance
 from UI import UI_helpers
 import config
 import pygame
+
+# Biến global để lưu trữ các sprite của rắn, giúp tránh tải lại ảnh nhiều lần
 _snake_sprites = None
 
 def load_snake_sprites():
     """
-    Tải các sprite gốc của rắn từ file. Việc xoay sẽ được xử lý khi vẽ.
+        Tải các sprite gốc của rắn từ file. 
+        Việc xoay sẽ được xử lý khi vẽ.
     """
     global _snake_sprites
     if _snake_sprites:
+        # Nếu sprite đã được tải, trả về ngay lập tức
         return _snake_sprites
 
     sprites = {}
@@ -40,18 +44,18 @@ def load_snake_sprites():
         print(f"Lỗi khi tải sprite của rắn: {e}")
         return None
 
-    # Thay đổi kích thước tất cả các sprite để khớp với TILE_SIZE
+    # Thay đổi kích thước tất cả các sprite để vừa với một ô trong game
     size = (config.TILE_SIZE, config.TILE_SIZE)
     for key, sprite in sprites.items():
         sprites[key] = pygame.transform.scale(sprite, size)
 
+    # Lưu vào biến global và trả về
     _snake_sprites = sprites
     return sprites
 
 def create_snake_from_map(map_data):
     """
-    Tạo dữ liệu rắn từ map_data.
-    Đầu rắn là phần tử đầu tiên trong list snake_start đã được sắp xếp.
+        Tạo dữ liệu rắn (tọa độ thân, hướng) từ dữ liệu map.
     """
     snake_body_coords = map_data.get('snake_start')
 
@@ -78,38 +82,23 @@ def create_snake_from_map(map_data):
         'body': snake_body,
         'direction': initial_direction
     }
-
-def move_snake(snake_data, grow=False):
+def get_next_head_position(snake_data):
     """
-    Di chuyển con rắn. Nếu grow=True, rắn sẽ không bị cắt đuôi và dài ra.
+        Tính toán vị trí tiếp theo của đầu rắn dựa trên hướng hiện tại mà không di chuyển nó.
     """
-    body = snake_data['body']
     direction = snake_data['direction']
-    
-    # Kiểm tra xem rắn có thân không để tránh lỗi
-    if not body:
-        return
-        
-    current_head = body[0]
-    
+    current_head = snake_data['body'][0]
     x, y = current_head
     if direction == 'UP': y -= 1
     elif direction == 'DOWN': y += 1
     elif direction == 'LEFT': x -= 1
     elif direction == 'RIGHT': x += 1
-    new_head = (x, y)
-    
-    body.insert(0, new_head)
-    
-    # Chỉ cắt đuôi nếu không trong trạng thái phát triển
-    if not grow:
-        body.pop()
+    return (x, y)
 
-# hàm kiểm tra va chạm của người chơi
 def check_collision(snake_data, map_data):
     """
-    Kiểm tra xem đầu rắn có va chạm với tường, ranh giới map, hoặc chính nó không.
-    Trả về True nếu có va chạm, ngược lại trả về False.
+        Kiểm tra xem đầu rắn có va chạm với tường, ranh giới map, hoặc chính nó không.
+        Trả về True nếu có va chạm, ngược lại trả về False.
     """
     head = snake_data['body'][0]
     body_without_head = snake_data['body'][1:]
@@ -128,15 +117,3 @@ def check_collision(snake_data, map_data):
         return True
 
     return False
-def get_next_head_position(snake_data):
-    """
-    Tính toán và trả về vị trí tiếp theo của đầu rắn mà không di chuyển nó.
-    """
-    direction = snake_data['direction']
-    current_head = snake_data['body'][0]
-    x, y = current_head
-    if direction == 'UP': y -= 1
-    elif direction == 'DOWN': y += 1
-    elif direction == 'LEFT': x -= 1
-    elif direction == 'RIGHT': x += 1
-    return (x, y)

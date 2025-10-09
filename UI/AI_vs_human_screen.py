@@ -1,36 +1,60 @@
 """
     Giao diện chế độ Người với AI
 """
+from functools import partial
 import pygame
+from Algorithms.algorithm_helpers import manhattan_distance, euclidean_distance
 import config
 from UI import UI_helpers, AI_selection_screen
 from UI.MainMenu import background_effects
-from GameLogic.game_controller import GameController # <-- DÙNG GAMECONTROLLER
-from GameLogic import snake_logic, food_logic
+from GameLogic.game_controller import GameController
 from Algorithms import BFS, Astar, UCS, DFS, Greedy, IDS, OnlineSearch, BeamSearch, HillClimbing# (Giả định AI cũng dùng các thuật toán này)
 
 def find_path_for_ai(controller, selected_mode):
-    """Hàm tìm đường đi cho AI dựa vào thuật toán được chọn."""
+    """
+        Hàm tìm đường đi cho AI dựa vào thuật toán được chọn.
+    """
+    # Lấy trạng thái game hiện tại từ controller của AI.
     game_data = controller.get_state()
-     # Kiểm tra xem rắn có thân không
-    if not game_data['snake']['body']: return None
+    # Nếu rắn không tồn tại, không thể tìm đường.
+    if not game_data['snake']['body']: 
+        return None
+    
+    if selected_mode == "OnlineSearch":
+        # Gọi hàm riêng của OnlineSearch để tìm ra nước đi TỐT NHẤT tiếp theo.
+        result = OnlineSearch.find_best_next_move(
+            game_data['snake'], 
+            game_data['food'], 
+            controller.map_data
+        )
+        # Trả về hướng đi ('UP', 'DOWN',...) thay vì path
+        return result.get('move') 
+    
+    # Lấy các thông tin cần thiết để chạy thuật toán.
     start_pos = game_data['snake']['body'][0]
     food_positions = [food['pos'] for food in game_data['food']]
     
     # Map để tra cứu hàm thuật toán tương ứng
     algorithm_map = {
-        "BFS": BFS.find_path_bfs, "A*": Astar.find_path_astar,
-        "UCS": UCS.find_path_ucs, "DFS": DFS.find_path_dfs,
-        "Greedy": Greedy.find_path_greedy, "IDS": IDS.find_path_ids,
+        "BFS": BFS.find_path_bfs, 
+        "DFS": DFS.find_path_dfs,
+        "IDS": IDS.find_path_ids,  
+        "UCS": UCS.find_path_ucs, 
+        "HillClimbing": HillClimbing.find_path_hill_climbing,
         "BeamSearch": BeamSearch.find_path_beam_search,
-        "Online": OnlineSearch.find_best_next_move,
-        "HillClimbing": HillClimbing.find_path_hill_climbing
+
+        # Sử dụng partial để tạo các phiên bản khác nhau của A* và Greedy
+        "A* (Manhattan)": partial(Astar.find_path_astar, heuristic_func=manhattan_distance),
+        "A* (Euclidean)": partial(Astar.find_path_astar, heuristic_func=euclidean_distance),
+        "Greedy (Manhattan)": partial(Greedy.find_path_greedy, heuristic_func=manhattan_distance),
+        "Greedy (Euclidean)": partial(Greedy.find_path_greedy, heuristic_func=euclidean_distance)
     }
+    # Lấy hàm thuật toán tương ứng với mode đã chọn.
     algorithm_to_run = algorithm_map.get(selected_mode)
     if not algorithm_to_run:
         return None # Nếu không tìm thấy thuật toán, trả về None
 
-    # Các thuật toán giờ trả về dictionary, ta cần lấy ra 'path'
+    # Gọi hàm thuật toán đã chọn.
     result = algorithm_to_run(start_pos, food_positions, controller.map_data, game_data['snake']['body'])
     return result.get('path')
 
@@ -54,15 +78,13 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
     game_surface_ai = pygame.Surface((map_width_px, map_height_px))
 
     # --- 2. QUẢN LÝ TRẠNG THÁI GIAO DIỆN ---
-    game_status = "IDLE" # Các trạng thái: IDLE, playing, game_over
-    player_time = 0.0
-    ai_time = 0.0
-    ai_path = []
-    ai_animation_step = 0
-    last_move_time = 0
-    move_interval = 200 # Tốc độ game
-
-    selected_ai_mode = "BFS"
+    game_status = "IDLE"  # "IDLE": Chờ bắt đầu, "playing": Đang chạy, "game_over": Đã kết thúc.
+    player_time = 0.0     # Thời gian thi đấu của người chơi.
+    ai_time = 0.0         # Thời gian thi đấu của đối thủ.
+    ai_path = []          # Lưu trữ lộ trình cho các AI offline.
+    last_move_time = 0    # Mốc thời gian di chuyển cuối cùng, dùng để điều khiển tốc độ game.
+    move_interval = 200   # Khoảng thời gian (ms) giữa mỗi bước di chuyển.
+    selected_ai_mode = "BFS" # Chế độ mặc định của AI
 
     # --- 3. GIAO DIỆN BẢNG ĐIỀU KHIỂN ---
     total_content_width = map_width_px * 2 + config.DUAL_CONTROL_PANEL_WIDTH
@@ -125,7 +147,7 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
                 new_mode = AI_selection_screen.run_algorithm_selection(screen)
                 if new_mode is not None:
                     selected_ai_mode = new_mode
-                    buttons['change_mode']['text'] = f"Mode: {selected_ai_mode}"
+                    buttons['change_mode']['text'] = f"{selected_ai_mode}"
             
             if UI_helpers.handle_button_events(event, buttons['start']) and game_status == "IDLE":
                 game_status = "playing"
@@ -175,6 +197,15 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
                 if selected_ai_mode == "Player":
                     # Nếu là người chơi, cập nhật di chuyển bình thường
                     ai_controller.update()
+                elif selected_ai_mode == "OnlineSearch":
+                    # Với OnlineSearch, ta phải hỏi nó nước đi ở MỖI BƯỚC
+                    next_move = find_path_for_ai(ai_controller, selected_ai_mode)
+                    if next_move:
+                        ai_controller.set_direction(next_move)
+                        ai_controller.update()
+                    else:
+                        # Nếu không tìm được nước đi -> bị kẹt
+                        ai_controller.outcome = "Stuck"
                 else:
                     # Nếu là AI, làm theo logic đơn giản hơn:
                     # 1. Nếu AI không có đường đi, tìm một đường đi mới.
@@ -207,7 +238,6 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
                 elif ai_outcome == "Stuck" and player_outcome == "Playing":
                     player_controller.outcome = "Completed" # Player 1 thắng
                 # (Trường hợp cả hai cùng thua hoặc một bên thắng do ăn hết mồi đã được xử lý tự động)
-
 
         # --- 5. VẼ LÊN MÀN HÌNH ---
         background_effects.draw_background(screen)

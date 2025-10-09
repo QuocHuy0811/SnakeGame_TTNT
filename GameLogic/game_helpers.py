@@ -1,12 +1,14 @@
 """
-    Hàm phụ trong GameLogic
+    Hàm phụ trong GameLogic, lưu/tải lịch sử chơi
 """
 
-# Biến toàn cục để lưu trữ lịch sử trong phiên làm việc hiện tại
+# Biến global để lưu trữ lịch sử các ván đã chơi trong phiên làm việc hiện tại
 session_history = []
 
 def save_game_result(map_name, algorithm, steps, time, total_search_time, outcome, visited_count, generated_count):
-    """Lưu kết quả (bao gồm visited và generated) vào danh sách lịch sử của phiên."""
+    """
+        Lưu kết quả (bao gồm visited và generated) vào danh sách lịch sử của phiên làm việc hiện tại.
+    """
     
     new_result = {
         "map": map_name.replace('.txt', ''),
