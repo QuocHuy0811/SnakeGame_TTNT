@@ -43,11 +43,26 @@ class GameController:
             self.reset()
 
     def reset(self):
-        """Thiết lập lại game về trạng thái ban đầu."""
+        """
+            Thiết lập lại game về trạng thái ban đầu với logic thức ăn tuần tự.
+        """
         self.snake_data = snake_logic.create_snake_from_map(self.map_data)
-        self.food_data = food_logic.create_food_from_map(self.map_data)
         self.steps = 0
         self.outcome = "Playing"
+
+        # --- THAY ĐỔI LOGIC THỨC ĂN ---
+        # 1. Lưu lại toàn bộ danh sách tọa độ thức ăn ban đầu.
+        self.food_spawn_list = self.map_data.get('food_start', [])
+        # 2. Theo dõi vị trí của viên thức ăn tiếp theo.
+        self.next_food_index = 0
+        # 3. Xóa danh sách thức ăn đang hoạt động.
+        self.food_data = []
+
+        # 4. Nếu có thức ăn trong danh sách chờ, thêm viên đầu tiên vào game.
+        if self.next_food_index < len(self.food_spawn_list):
+            first_food_pos = self.food_spawn_list[self.next_food_index]
+            self.food_data.append({'pos': first_food_pos})
+            self.next_food_index += 1
 
     def get_state(self):
         """Lấy trạng thái hiện tại của game để giao diện có thể vẽ."""
@@ -125,10 +140,20 @@ class GameController:
         # 5. Kiểm tra ăn mồi
         eaten_food = next((food for food in self.food_data if food['pos'] == next_head_pos), None)
         if eaten_food:
+            # Xóa viên thức ăn vừa ăn khỏi danh sách hoạt động.
             self.food_data.remove(eaten_food)
-            if not self.food_data:
+
+            # Kiểm tra xem còn thức ăn trong danh sách chờ không.
+            if self.next_food_index < len(self.food_spawn_list):
+                # Nếu còn, lấy tọa độ viên tiếp theo và thêm vào game.
+                next_food_pos = self.food_spawn_list[self.next_food_index]
+                self.food_data.append({'pos': next_food_pos})
+                self.next_food_index += 1
+            else:
+                # Nếu không còn, người chơi đã thắng.
                 self.outcome = "Completed"
         else:
+            # Nếu không ăn mồi, xóa đốt đuôi cuối cùng để rắn di chuyển
             self.snake_data['body'].pop()
             
     def update_by_path_step(self, next_pos):
@@ -146,8 +171,17 @@ class GameController:
         eaten_food = next((food for food in self.food_data if food['pos'] == head), None)
         if eaten_food:
             self.food_data.remove(eaten_food)
-            if not self.food_data:
+
+            # Kiểm tra xem còn thức ăn trong danh sách chờ không.
+            if self.next_food_index < len(self.food_spawn_list):
+                # Nếu còn, lấy tọa độ viên tiếp theo và thêm vào game.
+                next_food_pos = self.food_spawn_list[self.next_food_index]
+                self.food_data.append({'pos': next_food_pos})
+                self.next_food_index += 1
+            else:
+                # Nếu không còn, AI đã thắng.
                 self.outcome = "Completed"
         else:
+            # Nếu không ăn mồi và game vẫn đang tiếp diễn, cắt đuôi
             if self.outcome == "Playing":
                 self.snake_data['body'].pop()

@@ -4,7 +4,7 @@
 import pygame
 import config
 from UI.MainMenu import main_menu
-from UI import AI_screen, AI_vs_human_screen # Import gọn gàng hơn
+from UI import AI_screen, AI_vs_human_screen 
 
 def main():
     """Hàm chính để chạy game."""
@@ -19,7 +19,7 @@ def main():
 
     try:
         # THÊM NHẠC NỀN: Tải file nhạc
-        pygame.mixer.music.load("Assets/Sounds/NhacGame.mp3")
+        # pygame.mixer.music.load("Assets/Sounds/NhacGame.mp3")
 
         # THÊM NHẠC NỀN: Cài đặt âm lượng (từ 0.0 đến 1.0)
         pygame.mixer.music.set_volume(0.5) # 50% âm lượng

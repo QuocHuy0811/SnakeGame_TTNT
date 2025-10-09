@@ -2,6 +2,8 @@
     Giao diện chế độ Người với AI
 """
 import pygame
+from functools import partial
+from Algorithms.algorithm_helpers import manhattan_distance, euclidean_distance
 import config
 from UI import UI_helpers, AI_selection_screen
 from UI.MainMenu import background_effects
@@ -24,7 +26,11 @@ def find_path_for_ai(controller, selected_mode):
         "Greedy": Greedy.find_path_greedy, "IDS": IDS.find_path_ids,
         "BeamSearch": BeamSearch.find_path_beam_search,
         "Online": OnlineSearch.find_best_next_move,
-        "HillClimbing": HillClimbing.find_path_hill_climbing
+        "HillClimbing": HillClimbing.find_path_hill_climbing,
+        "A* (Manhattan)": partial(Astar.find_path_astar, heuristic_func=manhattan_distance),
+        "A* (Euclidean)": partial(Astar.find_path_astar, heuristic_func=euclidean_distance),
+        "Greedy (Manhattan)": partial(Greedy.find_path_greedy, heuristic_func=manhattan_distance),
+        "Greedy (Euclidean)": partial(Greedy.find_path_greedy, heuristic_func=euclidean_distance)
     }
     algorithm_to_run = algorithm_map.get(selected_mode)
     if not algorithm_to_run:
@@ -60,9 +66,15 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
     ai_path = []
     ai_animation_step = 0
     last_move_time = 0
-    move_interval = 200 # Tốc độ game
-
-    selected_ai_mode = "BFS"
+    move_interval = 200   # Khoảng thời gian (ms) giữa mỗi bước di chuyển.
+    # MỚI: Thêm biến cho từng người chơi
+    player1_mode = "Player" # Player 1 mặc định là người
+    player2_mode = "BFS"    # Player 2 mặc định là AI BFS
+    
+    # MỚI: Thêm biến để lưu đường đi cho AI của Player 1
+    p1_ai_path = []
+    # Đổi tên biến ai_path để rõ ràng hơn
+    p2_ai_path = []         # Lưu trữ lộ trình cho AI của Player 2.
 
     # --- 3. GIAO DIỆN BẢNG ĐIỀU KHIỂN ---
     total_content_width = map_width_px * 2 + config.DUAL_CONTROL_PANEL_WIDTH
@@ -76,7 +88,10 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
         'start': UI_helpers.create_button(panel_center_x - 110, 150, 220, 50, "Start Race"),
         'reset': UI_helpers.create_button(panel_center_x - 110, 220, 220, 50, "Reset"),
         'back': UI_helpers.create_button(panel_center_x - 110, 290, 220, 50, "Back to Menu"),
-        'change_mode': UI_helpers.create_button(panel_center_x - 110, 400, 220, 40, f"Mode: {selected_ai_mode}")
+        # Nút cho Player 1
+        'change_mode_p1': UI_helpers.create_button(panel_center_x - 110, 400, 220, 40, f"P1 Mode: {player1_mode}"),
+        # Nút cho Player 2
+        'change_mode_p2': UI_helpers.create_button(panel_center_x - 110, 450, 220, 40, f"P2 Mode: {player2_mode}")
     }
     
     def _draw_game_panel(surface, pos_x, title, title_color, controller, time):
@@ -121,19 +136,39 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
             if UI_helpers.handle_button_events(event, buttons['back']): 
                 running = False # Giữ nguyên: Nút "Back" vẫn quay về menu
 
-            if UI_helpers.handle_button_events(event, buttons['change_mode']):
+            # Xử lý nút cho Player 1
+            if UI_helpers.handle_button_events(event, buttons['change_mode_p1']):
                 new_mode = AI_selection_screen.run_algorithm_selection(screen)
                 if new_mode is not None:
-                    selected_ai_mode = new_mode
-                    buttons['change_mode']['text'] = f"Mode: {selected_ai_mode}"
+                    player1_mode = new_mode
+                    buttons['change_mode_p1']['text'] = f"P1 Mode: {player1_mode}"
+
+            # Xử lý nút cho Player 2
+            if UI_helpers.handle_button_events(event, buttons['change_mode_p2']):
+                new_mode = AI_selection_screen.run_algorithm_selection(screen)
+                if new_mode is not None:
+                    player2_mode = new_mode
+                    # Sửa lỗi: Chỉ cho phép Player 2 là AI
+                    if new_mode == "Player":
+                        print("Player 2 must be an AI.")
+                        # Nếu người dùng chọn Player, tự động chuyển về BFS
+                        player2_mode = "BFS" 
+                    buttons['change_mode_p2']['text'] = f"P2 Mode: {player2_mode}"
             
             if UI_helpers.handle_button_events(event, buttons['start']) and game_status == "IDLE":
                 game_status = "playing"
                 start_time = current_ticks
                 last_move_time = current_ticks
-                if selected_ai_mode != "Player": # Chỉ tìm đường nếu đối thủ là AI
-                    ai_path = find_path_for_ai(ai_controller, selected_ai_mode)
-                    ai_animation_step = 1
+                
+                # Tìm đường đi cho P1 nếu là AI
+                if player1_mode != "Player":
+                    p1_ai_path = find_path_for_ai(player_controller, player1_mode)
+                    p1_animation_step = 1
+                
+                # Tìm đường đi cho P2 (luôn là AI trong logic mới)
+                if player2_mode != "Player": 
+                    p2_ai_path = find_path_for_ai(ai_controller, player2_mode)
+                    p2_animation_step = 1
 
             if UI_helpers.handle_button_events(event, buttons['reset']):
                 player_controller.reset()
@@ -141,23 +176,27 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
                 game_status = "IDLE"
                 player_time = 0.0
                 ai_time = 0.0
-                ai_path = []
+                p1_ai_path = [] # Sửa
+                p2_ai_path = [] # Sửa
 
             # Xử lý input cho người chơi
             if event.type == pygame.KEYDOWN and game_status == "playing":
                 # XỬ LÝ DI CHUYỂN CHO PLAYER 1 (WASD)
-                if event.key == pygame.K_w: player_controller.set_direction('UP')
-                elif event.key == pygame.K_s: player_controller.set_direction('DOWN')
-                elif event.key == pygame.K_a: player_controller.set_direction('LEFT')
-                elif event.key == pygame.K_d: player_controller.set_direction('RIGHT')
+                if player1_mode == "Player":
+                    if event.key == pygame.K_w: player_controller.set_direction('UP')
+                    elif event.key == pygame.K_s: player_controller.set_direction('DOWN')
+                    elif event.key == pygame.K_a: player_controller.set_direction('LEFT')
+                    elif event.key == pygame.K_d: player_controller.set_direction('RIGHT')
+
 
                 # XỬ LÝ DI CHUYỂN CHO PLAYER 2 (MŨI TÊN) - CHỈ KHI MODE LÀ PLAYER
-                if selected_ai_mode == "Player":
+                if player2_mode == "Player" == "Player":
                     if event.key == pygame.K_UP: ai_controller.set_direction('UP')
                     elif event.key == pygame.K_DOWN: ai_controller.set_direction('DOWN')
                     elif event.key == pygame.K_LEFT: ai_controller.set_direction('LEFT')
                     elif event.key == pygame.K_RIGHT: ai_controller.set_direction('RIGHT')
         
+        # --- CẬP NHẬT LOGIC GAME ---
         # --- CẬP NHẬT LOGIC GAME ---
         if game_status == "playing":
             # Cập nhật thời gian cho cả hai
@@ -168,53 +207,64 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
 
             # Kiểm tra xem đã đến lúc di chuyển chưa
             if current_ticks - last_move_time > move_interval:
-                # Cập nhật trạng thái của người chơi
-                player_controller.update()
                 
-                # --- LOGIC MỚI CHO ĐỐI THỦ (AI/PLAYER 2) ---
-                if selected_ai_mode == "Player":
-                    # Nếu là người chơi, cập nhật di chuyển bình thường
-                    ai_controller.update()
-                else:
-                    # Nếu là AI, làm theo logic đơn giản hơn:
-                    # 1. Nếu AI không có đường đi, tìm một đường đi mới.
-                    if not ai_path:
-                        ai_path = find_path_for_ai(ai_controller, selected_ai_mode)
-                        ai_animation_step = 1 # Reset để bắt đầu từ bước đầu tiên
-
-                    # 2. Nếu AI có đường đi, đi bước tiếp theo.
-                    if ai_path and ai_animation_step < len(ai_path):
-                        next_pos = ai_path[ai_animation_step]
-                        ai_controller.update_by_path_step(next_pos)
-                        ai_animation_step += 1
+                # --- CẬP NHẬT PLAYER 1 (BÊN TRÁI) ---
+                if player1_mode == "Player":
+                    player_controller.update() # Người chơi di chuyển bình thường
+                else: # Nếu Player 1 là AI
+                    if not p1_ai_path:
+                        p1_ai_path = find_path_for_ai(player_controller, player1_mode)
+                        p1_animation_step = 1
                     
-                    # 3. Nếu AI đã đi hết đường, xóa đường đi để lượt sau tìm đường mới.
-                    if ai_path and ai_animation_step >= len(ai_path):
-                        ai_path = [] 
+                    if p1_ai_path and p1_animation_step < len(p1_ai_path):
+                        player_controller.update_by_path_step(p1_ai_path[p1_animation_step])
+                        p1_animation_step += 1
+                    
+                    if p1_ai_path and p1_animation_step >= len(p1_ai_path):
+                        p1_ai_path = []
+
+                # --- CẬP NHẬT PLAYER 2 (BÊN PHẢI) ---
+                # Logic cho Player 2 (luôn là AI) giữ nguyên như cũ
+                if player2_mode == "OnlineSearch":
+                    next_move = find_path_for_ai(ai_controller, player2_mode)
+                    if next_move:
+                        ai_controller.set_direction(next_move)
+                        ai_controller.update()
+                    else:
+                        ai_controller.outcome = "Stuck"
+                else: # Các AI offline khác
+                    if not p2_ai_path:
+                        p2_ai_path = find_path_for_ai(ai_controller, player2_mode)
+                        p2_animation_step = 1
+
+                    if p2_ai_path and p2_animation_step < len(p2_ai_path):
+                        ai_controller.update_by_path_step(p2_ai_path[p2_animation_step])
+                        p2_animation_step += 1
+                    
+                    if p2_ai_path and p2_animation_step >= len(p2_ai_path):
+                        p2_ai_path = []
 
                 last_move_time = current_ticks
             
             player_outcome = player_controller.get_state()['outcome']
             ai_outcome = ai_controller.get_state()['outcome']
 
-            # Nếu một trong hai người chơi đã có kết quả (không còn là "Playing")
             if player_outcome != "Playing" or ai_outcome != "Playing":
-                game_status = "game_over" # Dừng game ngay lập tức
+                game_status = "game_over"
 
-                # Xác định người thắng cuộc
                 if player_outcome == "Stuck" and ai_outcome == "Playing":
-                    ai_controller.outcome = "Completed" # AI/Player 2 thắng
+                    ai_controller.outcome = "Completed" 
                 elif ai_outcome == "Stuck" and player_outcome == "Playing":
-                    player_controller.outcome = "Completed" # Player 1 thắng
-                # (Trường hợp cả hai cùng thua hoặc một bên thắng do ăn hết mồi đã được xử lý tự động)
+                    player_controller.outcome = "Completed"
 
 
         # --- 5. VẼ LÊN MÀN HÌNH ---
         background_effects.draw_background(screen)
 
-        _draw_game_panel(game_surface_player, player_map_x, "PLAYER", config.COLORS['highlight'], player_controller, player_time)
-        opponent_title = "PLAYER 2" if selected_ai_mode == "Player" else f"AI ({selected_ai_mode})"
-        _draw_game_panel(game_surface_ai, ai_map_x, opponent_title, config.COLORS['combo'], ai_controller, ai_time)
+        p1_title = f"P1 ({player1_mode})"
+        p2_title = f"P2 ({player2_mode})"
+        _draw_game_panel(game_surface_player, player_map_x, p1_title, config.COLORS['highlight'], player_controller, player_time)
+        _draw_game_panel(game_surface_ai, ai_map_x, p2_title, config.COLORS['combo'], ai_controller, ai_time)
         
         # --- THÊM PHẦN VẼ HƯỚNG DẪN ---
         # Tính toán vị trí Y chung cho các dòng hướng dẫn
@@ -228,7 +278,7 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
         )
 
         # Vẽ hướng dẫn cho Player 2 (bên phải) chỉ khi là người chơi
-        if selected_ai_mode == "Player":
+        if player2_mode == "Player":
             UI_helpers.draw_text(
                 "Di chuyển bằng phím mũi tên",
                 instruction_font, config.COLORS['white'], screen,
