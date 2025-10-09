@@ -4,9 +4,9 @@
 import config
 import pygame
 
-# Biến toàn cục để lưu trữ sprite thức ăn đã được tải và thay đổi kích thước
-# Giúp chúng ta không phải tải lại ảnh từ ổ cứng ở mỗi frame.
+# Biến global để lưu trữ sprite thức ăn, tránh tải lại ảnh
 _food_sprite = None
+
 def load_food_sprite():
     """
     Hàm helper để tải, thay đổi kích thước và lưu trữ sprite thức ăn.
@@ -29,4 +29,21 @@ def create_food_from_map(map_data):
     """
     Tạo ra một danh sách các dictionary thức ăn dựa trên thông tin từ map_data.
     """
-    return [{'pos': pos} for pos in map_data.get('food_start', [])]
+    # map_data['food_start'] là một list các tọa độ (x, y)
+    # Tạo một danh sách rỗng để chứa kết quả cuối cùng
+    food_list = []
+
+    # Lấy danh sách các tọa độ thức ăn ban đầu từ map_data
+    # Nếu key 'food_start' không tồn tại, nó sẽ dùng một danh sách rỗng để không bị lỗi
+    start_positions = map_data.get('food_start', [])
+
+    # Lặp qua từng tọa độ (ví dụ: pos = (10, 5)) trong danh sách tọa độ ban đầu
+    for pos in start_positions:
+        # Với mỗi tọa độ, tạo một dictionary mới có dạng {'pos': (10, 5)}
+        new_food_item = {'pos': pos}
+        
+        # Thêm dictionary vừa tạo vào danh sách kết quả
+        food_list.append(new_food_item)
+
+    # Trả về danh sách thức ăn đã được định dạng lại
+    return food_list

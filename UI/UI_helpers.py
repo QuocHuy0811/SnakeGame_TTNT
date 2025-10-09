@@ -9,15 +9,13 @@ from Algorithms.algorithm_helpers import manhattan_distance
 
 
 pygame.init()
+pygame.mixer.init()
+# Tải âm thanh cho nút bấm, có xử lý lỗi nếu không tìm thấy file.
 try:
-    # Đảm bảo mixer đã được khởi tạo (giống trong file main.py)
-    pygame.mixer.init()
     _click_sound = pygame.mixer.Sound("Assets/Sounds/click_button.mp3")
 except pygame.error as e:
     print(f"Lỗi: Không thể tải file âm thanh 'click_button.mp3': {e}")
     _click_sound = None
-    _snake_sprites = None
-    _food_sprite = None
 try:
     _hover_sound = pygame.mixer.Sound("Assets/Sounds/cuon.wav")
 except pygame.error as e:

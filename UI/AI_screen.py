@@ -16,15 +16,14 @@ from UI import AI_selection_screen, history_screen, map_editor_screen
     
 def find_path_with_algorithm(algorithm_func, start_pos, food_data, map_data, snake_body):
     """
-    Chạy thuật toán tìm đường MỘT LẦN DUY NHẤT để có kết quả chính xác.
+        Chạy thuật toán tìm đường MỘT LẦN DUY NHẤT để có kết quả chính xác.
     """
     food_positions = [food['pos'] for food in food_data]
     if not food_positions:
-        # THAY ĐỔI: Trả về đúng định dạng mới
         return {'path': None, 'visited_nodes': [], 'generated_count': 0, 'visited_count': 0}
 
     # Đối với A* và Greedy, chúng cần một mục tiêu duy nhất.
-    # Ta sẽ chọn mục tiêu gần nhất dựa trên khoảng cách Manhattan.
+    # Ta sẽ chọn mục tiêu gần nhất dựa trên hàm Manhattan.
     if algorithm_func in [Astar.find_path_astar, Greedy.find_path_greedy]:
         
         # Tìm mục tiêu gần nhất
@@ -72,17 +71,17 @@ def _calculate_full_playthrough(initial_snake, initial_food, selected_mode, map_
         "Greedy (Euclidean)": partial(Greedy.find_path_greedy, heuristic_func=euclidean_distance)
     }
     algorithm_to_run = algorithm_map.get(selected_mode)
-    if not algorithm_to_run: return None
+    if not algorithm_to_run: 
+        return None
 
     while temp_food:
-        search_start_time = time.perf_counter() # THAY ĐỔI
+        search_start_time = time.perf_counter()
         search_result = find_path_with_algorithm(algorithm_to_run, temp_snake_body[0], temp_food, map_data, temp_snake_body)
         path = search_result.get('path')
 
 
-        total_search_time += (time.perf_counter() - search_start_time) # THAY ĐỔI
+        total_search_time += (time.perf_counter() - search_start_time)
 
-        # SỬA LỖI: Lấy đúng các giá trị đếm từ thuật toán
         total_visited += search_result.get('visited_count', 0)
         total_generated += search_result.get('generated_count', 0)
 
@@ -93,7 +92,7 @@ def _calculate_full_playthrough(initial_snake, initial_food, selected_mode, map_
                 'search_time': total_search_time,
                 'snake': {'body': temp_snake_body, 'direction': 'RIGHT'},
                 'visited': total_visited, 
-                'generated': total_generated
+                'generated': total_generated    
             }
         eaten_food_pos = path[-1]
         
@@ -160,40 +159,87 @@ def run_ai_game(screen, clock, selected_map_name):
     game_area_x = game_area_y   
     
     # --- 2. QUẢN LÝ TRẠNG THÁI GIAO DIỆN ---
+    # game_state là biến quan trọng nhất, quyết định xem game đang làm gì.
+    # Các trạng thái có thể là:
+    # "IDLE": Chờ người dùng nhấn "Solve".
+    # "PLAYER_READY": Chế độ người chơi, chờ phím di chuyển đầu tiên.
+    # "PLAYER_PLAYING": Người chơi đang điều khiển rắn.
+    # "AI_AUTOPLAY": Trạng thái chính của AI, tìm đường đến mồi tiếp theo.
+    # "VISUALIZING": Hiển thị các nút đã duyệt và path tìm được trong một khoảng ngắn.
+    # "ANIMATING_PATH": Diễn hoạt con rắn di chuyển theo path đã tìm được.
+    # "AI_ONLINE_PLAYING": Chế độ cho AI online, ra quyết định theo từng bước.
+
     game_state = "IDLE"
     selected_mode =  "Player"
 
     if selected_mode == "Player":
         game_state = "PLAYER_READY"
 
+    # --- NHÓM BIẾN ĐIỀU KHIỂN DIỄN HOẠT (ANIMATION) ---
+    # Mục đích: Quản lý việc cho con rắn AI di chuyển theo đường đi đã tìm được.
+
+    # Lưu danh sách các tọa độ (path) mà thuật toán tìm ra.
     ai_path = [] 
+    # Biến đếm, cho biết con rắn đang ở bước thứ mấy trong 'ai_path'.
     animation_step = 0 
+    # Lưu mốc thời gian (ms) của lần di chuyển gần nhất trong diễn hoạt.
     last_animation_time = 0 
+    # Khoảng thời gian (ms) giữa mỗi bước di chuyển của rắn, quyết định tốc độ diễn hoạt.
     animation_interval = 80
 
+    # --- NHÓM BIẾN TRỰC QUAN HÓA (VISUALIZATION) ---
+    # Mục đích: Hiển thị quá trình "suy nghĩ" của thuật toán trước khi rắn di chuyển.
+
+    # Lưu danh sách các ô mà thuật toán đã duyệt qua (để vẽ các chấm xám).
     visited_nodes = []
+    # Lưu danh sách các ô thuộc đường đi cuối cùng (để vẽ đường đi nổi bật).
     path_nodes_to_draw = []
 
+
+    # Ghi lại mốc thời gian khi bắt đầu hiển thị quá trình tìm kiếm.
     visualization_timer_start = 0
+    # Thời gian (ms) mà quá trình trực quan hóa được hiển thị trước khi rắn bắt đầu chạy.
     VISUALIZATION_DELAY = 500 #ms
 
-    player_move_interval = 200 # Tốc độ di chuyển của người chơi
+    # --- NHÓM BIẾN ĐIỀU KHIỂN TỐC ĐỘ (SPEED CONTROL) ---
+    # Mục đích: Quản lý tốc độ di chuyển của rắn trong các chế độ chơi khác nhau.
+
+    # Tốc độ di chuyển của người chơi (ms mỗi bước).
+    player_move_interval = 200
+    # Lưu mốc thời gian di chuyển cuối cùng của người chơi.
     last_player_move_time = 0
 
-    online_ai_move_interval = 200 # Tốc độ của AI Online (ms mỗi bước)
+
+    # Tốc độ của AI Online (ms cho mỗi lần ra quyết định).
+    online_ai_move_interval = 200
+    # Lưu mốc thời gian di chuyển cuối cùng của AI Online.
     last_online_ai_move_time = 0
 
+    # --- NHÓM BIẾN TRẠNG THÁI & THỐNG KÊ CHUNG ---
+    # Mục đích: Theo dõi trạng thái chung của game và các số liệu để báo cáo.
+
+    # Cờ (True/False) xác định xem diễn hoạt có đang bị tạm dừng hay không.
     is_paused = False
+    # Lưu tổng thời gian diễn hoạt (Animation Time) đã trôi qua, tính bằng giây.
     current_time = 0.0 
+    # Cộng dồn tổng thời gian "suy nghĩ" (Search Time) của thuật toán.
     total_search_time = 0.0
+    # Cộng dồn tổng số nút đã được duyệt (Visited) qua tất cả các lần tìm kiếm.
     total_visited_nodes = 0
+    # Cộng dồn tổng số nút đã được sinh ra (Generated) qua tất cả các lần tìm kiếm.
     total_generated_nodes = 0
 
-    # --- THÊM BIẾN CHO HIỆU ỨNG NHẤP NHÁY ---
+    # --- NHÓM BIẾN CHO HIỆU ỨNG NHẤP NHÁY ---
+    # Mục đích: Tạo hiệu ứng nhấp nháy cho viên thức ăn mà AI đang nhắm tới.
+
+    # Lưu tọa độ của viên thức ăn mà AI đang tìm đường đến.
     target_food_pos = None
+    # Cờ (True/False) xác định xem viên thức ăn nên được vẽ hay ẩn đi.
     is_blinking_visible = True
+    # Lưu mốc thời gian của lần thay đổi trạng thái nhấp nháy gần nhất.
     last_blink_time = 0
-    BLINK_INTERVAL = 200 # Tốc độ nháy (ms)
+    # Tốc độ nháy (ms giữa mỗi lần hiện và ẩn).
+    BLINK_INTERVAL = 200 #ms
 
     # --- 3. TẠO CÁC THÀNH PHẦN GIAO DIỆN (UI) ---
     panel_x = config.SCREEN_WIDTH - config.AI_PANEL_WIDTH
@@ -219,6 +265,7 @@ def run_ai_game(screen, clock, selected_map_name):
 
     running = True
     while running:
+        # Lấy trạng thái game mới nhất từ controller
         game_data = controller.get_state()
         mouse_pos = pygame.mouse.get_pos()
         current_ticks = pygame.time.get_ticks()
@@ -232,11 +279,13 @@ def run_ai_game(screen, clock, selected_map_name):
 
         if game_state in ["AI_AUTOPLAY", "VISUALIZING", "ANIMATING_PATH"]:
             UI_helpers.update_button_hover_state(skip_button, mouse_pos)
-        
+
+        # ==================== A. XỬ LÝ SỰ KIỆN ====================
         for event in pygame.event.get():
             if event.type == pygame.QUIT: 
                 running = False
 
+            # Xử lý sự kiện click cho từng nút
             if UI_helpers.handle_button_events(event, buttons['create_map']):
                 # Gọi màn hình editor
                 created_map_data = map_editor_screen.run_map_editor(screen, clock)
@@ -279,7 +328,9 @@ def run_ai_game(screen, clock, selected_map_name):
                 running = False
 
             if UI_helpers.handle_button_events(event, buttons['reset']):
+                # Gọi hàm reset của controller để đưa rắn và mồi về vị trí ban đầu.
                 controller.reset()
+                # Đặt lại toàn bộ các biến trạng thái của màn hình game về giá trị mặc định.
                 game_state = "IDLE"
                 is_paused = False
                 stop_button['text'] = "Stop"
@@ -292,9 +343,9 @@ def run_ai_game(screen, clock, selected_map_name):
                 visited_nodes = []
                 path_nodes_to_draw = []
                 target_food_pos = None
-                
+                # Xóa kết quả tính toán trước (nếu có).
                 full_playthrough_result = None
-
+                # Đặt lại trạng thái game phù hợp với chế độ đang chọn.
                 if selected_mode == "Player":
                     game_state = "PLAYER_READY"
                 else: # Các chế độ AI
@@ -302,6 +353,7 @@ def run_ai_game(screen, clock, selected_map_name):
 
             if UI_helpers.handle_button_events(event, buttons['solve']):
                 if game_state == "IDLE" or game_state == "PLAYER_READY":
+                    # Reset lại trạng thái của rắn và mồi để bắt đầu một lượt chơi mới.
                     controller.reset()
 
                     # Reset các biến và kết quả đã lưu
@@ -310,25 +362,35 @@ def run_ai_game(screen, clock, selected_map_name):
                     total_generated_nodes = 0
                     full_playthrough_result = None 
 
+                     # Dựa vào chế độ đang chọn ('selected_mode') để quyết định trạng thái tiếp theo.
                     if selected_mode == "Player":
+                        # Chuyển sang trạng thái người chơi đang điều khiển rắn.
                         game_state = "PLAYER_PLAYING"
+                        # Ghi lại mốc thời gian để điều khiển tốc độ di chuyển của người chơi.
                         last_player_move_time = pygame.time.get_ticks()
+
                     elif selected_mode == "OnlineSearch":
+                        # Chuyển sang trạng thái dành riêng cho AI Online.
                         game_state = "AI_ONLINE_PLAYING"
+                        # Ghi lại mốc thời gian để điều khiển tốc độ của AI Online.
                         last_online_ai_move_time = pygame.time.get_ticks()
-                    else:
+                    else: # Tất cả các thuật toán offline còn lại (BFS, A*, DFS,...)
+                        # Chuyển sang trạng thái AI tự động chơi.
                         game_state = "AI_AUTOPLAY"
-                        # TÍNH TOÁN TRƯỚC TOÀN BỘ LỜI GIẢI VÀ LƯU LẠI
+                        # Gọi hàm _calculate_full_playthrough để tính toán trước toàn bộ kết quả.
+                        # Kết quả này sẽ được lưu vào biến 'full_playthrough_result'.
                         initial_snake = snake_logic.create_snake_from_map(controller.map_data)
                         initial_food = food_logic.create_food_from_map(controller.map_data)
                         full_playthrough_result = _calculate_full_playthrough(initial_snake, initial_food, selected_mode, controller.map_data)
 
             if UI_helpers.handle_button_events(event, buttons['history']):
+                # Tạm dừng màn hình game này và gọi hàm để chạy màn hình Lịch sử.
                 history_screen.run_history_screen(screen, clock)
 
+            # Kiểm tra sự kiện click vào nút "Skip".
+            # Chỉ hoạt động khi game đang trong các trạng thái của AI (AI_AUTOPLAY, ANIMATING_PATH).
             if UI_helpers.handle_button_events(event, skip_button) and game_state in ["AI_AUTOPLAY", "ANIMATING_PATH"]:
-
-                # Nếu đã có kết quả tính toán trước, hãy sử dụng nó
+                # Kiểm tra xem đã có kết quả được tính toán trước hay chưa.
                 if full_playthrough_result:
                     # Cập nhật controller với trạng thái cuối cùng
                     controller.snake_data = full_playthrough_result['snake']
@@ -336,7 +398,7 @@ def run_ai_game(screen, clock, selected_map_name):
                     controller.food_data = [] 
                     controller.outcome = full_playthrough_result['outcome']
 
-                    # Lưu kết quả CHÍNH XÁC đã tính toán trước đó
+                    # Lưu kết quả CHÍNH XÁC từ full_playthrough_result đã tính toán trước đó
                     game_helpers.save_game_result(
                         selected_map_name, selected_mode, controller.steps, 
                         0.0, # Animation time khi skip là 0
@@ -346,18 +408,25 @@ def run_ai_game(screen, clock, selected_map_name):
                         full_playthrough_result['generated']
                     )
                     
+                    # Đưa game về trạng thái chờ ban đầu.
                     game_state = "IDLE"
-                    ai_path, visited_nodes, path_nodes_to_draw = [], [], []
+                    # Xóa các biến tạm thời
+                    ai_path = [] 
+                    visited_nodes = [] 
+                    path_nodes_to_draw = []
                     target_food_pos = None
             
             if UI_helpers.handle_button_events(event, buttons['change_mode']):
-                # Gọi cửa sổ pop-up và chờ kết quả trả về
+                # Gọi màn hình chọn thuật toán.
                 new_mode = AI_selection_screen.run_algorithm_selection(screen)
-                if new_mode is not None: # Nếu người dùng chọn một mode mới
+                # Nếu người dùng chọn một mode mới
+                if new_mode is not None: 
+                    # Cập nhật chế độ đã chọn
                     selected_mode = new_mode
-                    buttons['change_mode']['text'] = f"Mode: {selected_mode}"
+                    # Cập nhật lại text trên nút bấm
+                    buttons['change_mode']['text'] = f"{selected_mode}"
                     
-                    # Cập nhật trạng thái nút Solve
+                    # Cập nhật trạng thái nút "Solve" và trạng thái game cho phù hợp với mode mới.
                     if selected_mode == "Player":
                         buttons['solve']['is_enabled'] = False
                         buttons['solve']['text'] = "Start Game"
@@ -366,20 +435,29 @@ def run_ai_game(screen, clock, selected_map_name):
                         buttons['solve']['is_enabled'] = True
                         buttons['solve']['text'] = "Solve"
                         game_state = "IDLE" # Chuyển về trạng thái chờ cho AI
+
+            # Kiểm tra sự kiện click vào nút "Stop/Resume".
+            # Chỉ hoạt động khi rắn đang di chuyển theo path (ANIMATING_PATH).            
             if UI_helpers.handle_button_events(event, stop_button) and game_state == "ANIMATING_PATH":
+                # Đảo ngược trạng thái tạm dừng (True -> False, False -> True).
                 is_paused = not is_paused
+                # Cập nhật text trên nút cho phù hợp.
                 if is_paused:
                     stop_button['text'] = "Resume"
                 else:
                     stop_button['text'] = "Stop"
-            if selected_mode == "Player":
-                if event.type == pygame.KEYDOWN:
-                    # Nếu game đang chờ, phím bấm đầu tiên sẽ bắt đầu game
+            
+            # Kiểm tra sự kiện nhấn phím trong chế độ người chơi.
+            if selected_mode == "Player" and event.type == pygame.KEYDOWN:
+                    # Nếu game đang ở trạng thái sẵn sàng.
                     if game_state == "PLAYER_READY":
+                        # Nếu phím được nhấn là một phím di chuyển.
                         if event.key in [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]:
+                            # Bắt đầu game.
                             game_state = "PLAYER_PLAYING"
+                            # Ghi lại mốc thời gian
                             last_player_move_time = pygame.time.get_ticks()
-                            # Đặt hướng đi ngay lập tức
+                            # Đặt hướng đi ngay lập tức dựa trên phím đã nhấn
                             if event.key == pygame.K_UP: controller.set_direction('UP')
                             elif event.key == pygame.K_DOWN: controller.set_direction('DOWN')
                             elif event.key == pygame.K_LEFT: controller.set_direction('LEFT')
@@ -392,56 +470,73 @@ def run_ai_game(screen, clock, selected_map_name):
                         elif event.key == pygame.K_LEFT: controller.set_direction('LEFT')
                         elif event.key == pygame.K_RIGHT: controller.set_direction('RIGHT')
 
-        # --- LOGIC ĐIỀU KHIỂN ---
+        # ==================== B. CẬP NHẬT LOGIC GAME ====================
+        # --- Trạng thái 1: Người chơi đang chơi ---
         if game_state == "PLAYER_PLAYING":
-            # current_ticks = pygame.time.get_ticks()
+            # Kiểm tra xem đã đủ thời gian trôi qua để thực hiện bước đi tiếp theo chưa.
+            # current_ticks là thời gian hiện tại của hệ thống
             if current_ticks - last_player_move_time > player_move_interval:
-                controller.update() # Gọi hàm update của controller cho người chơi
+                # Nếu đã đủ thời gian, gọi hàm update() của controller để di chuyển rắn 1 bước.
+                controller.update() 
+                # Cập nhật lại mốc thời gian của lần di chuyển cuối cùng.
                 last_player_move_time = current_ticks
             
-            # Kiểm tra kết thúc game
+            # Sau mỗi lần di chuyển, kiểm tra xem game đã kết thúc chưa (thắng/thua).
             if game_data['outcome'] != "Playing":
                 game_state = "IDLE"
+        
+        # --- Trạng thái 2: AI Online đang chơi ---
         elif game_state == "AI_ONLINE_PLAYING":
+            # Kiểm tra xem đã đến lúc AI ra quyết định tiếp theo chưa.
             if current_ticks - last_online_ai_move_time > online_ai_move_interval:
+                # Lấy trạng thái game mới nhất.
                 game_data = controller.get_state()
+                # Chỉ thực hiện nếu game vẫn đang tiếp diễn.
                 if game_data['outcome'] == "Playing":
+                    # Ghi lại thời gian bắt đầu "suy nghĩ".
                     search_start_time = pygame.time.get_ticks()
-                    
-                    search_result = OnlineSearch.find_best_next_move(
-                        game_data['snake'], 
-                        game_data['food'], 
-                        controller.map_data
-                    )
-
+                    # Gọi hàm Online Search
+                    search_result = OnlineSearch.find_best_next_move(game_data['snake'], game_data['food'], controller.map_data)
+                    # Cộng dồn thời gian "suy nghĩ" vào biến tổng.
                     total_search_time += (pygame.time.get_ticks() - search_start_time) / 1000.0
                     
+                    # Lấy nước đi ('UP', 'DOWN',...) từ kết quả trả về.
                     next_move = next_move = search_result.get('move')
+                    # Nếu tìm thấy một nước đi hợp lệ.
                     if next_move:
+                        # Ra lệnh cho controller đổi hướng và cập nhật di chuyển.
                         controller.set_direction(next_move)
                         controller.update()
+                        # Xóa các visualization cũ (nếu có) sau khi di chuyển.
                         visited_nodes = []
                         path_nodes_to_draw = []
                     else:
                         # Nếu AI không tìm được nước đi (bị kẹt), kết thúc game
                         controller.outcome = "Stuck"
+                        # Lưu kết quả thua cuộc vào lịch sử.
                         game_helpers.save_game_result(
                             selected_map_name, selected_mode, game_data['steps'], 0,
                             total_search_time, "Stuck", total_visited_nodes, total_generated_nodes
                         )
 
+                    # Cập nhật lại mốc thời gian của lần ra quyết định cuối cùng.
                     last_online_ai_move_time = current_ticks
                 else:
                     # Nếu game đã kết thúc (thắng hoặc thua)
                     if game_data['outcome'] == "Completed":
+                        # Lưu kết quả thắng cuộc vào lịch sử.
                         game_helpers.save_game_result(
                             selected_map_name, selected_mode, game_data['steps'], 0,
                             total_search_time, "Completed", total_visited_nodes, total_generated_nodes
                         )
+                    # Chuyển về trạng thái chờ.
                     game_state = "IDLE"
 
+        # --- Trạng thái 3: AI Offline đang tự chơi (chưa có đường đi) ---
+        # Trạng thái này chỉ được kích hoạt khi AI cần tìm đường đến viên thức ăn tiếp theo.
         elif game_state == "AI_AUTOPLAY" and game_data['food']:
-            if not ai_path and game_data['food']:
+            # Chỉ tìm đường đi mới nếu chưa có đường đi ('ai_path' đang rỗng).
+            if not ai_path:
                 algorithm_map = {
                     "BFS": BFS.find_path_bfs, 
                     "DFS": DFS.find_path_dfs,
@@ -456,64 +551,85 @@ def run_ai_game(screen, clock, selected_map_name):
                     "Greedy (Manhattan)": partial(Greedy.find_path_greedy, heuristic_func=manhattan_distance),
                     "Greedy (Euclidean)": partial(Greedy.find_path_greedy, heuristic_func=euclidean_distance)
                 }
+                # Lấy hàm thuật toán tương ứng với mode đã chọn.
                 algorithm_to_run = algorithm_map.get(selected_mode)
                 
                 if algorithm_to_run:
+                    # Bắt đầu đo thời gian tìm kiếm.
                     search_start_time = pygame.time.get_ticks()
+                    # Gọi thuật toán để tìm đường đi.
                     search_result = find_path_with_algorithm(algorithm_to_run, game_data['snake']['body'][0], game_data['food'], controller.map_data, game_data['snake']['body'])
+                    # Cộng dồn thời gian tìm kiếm vào biến tổng.
                     total_search_time += (pygame.time.get_ticks() - search_start_time) / 1000.0
 
-                    # Lấy đúng các giá trị đếm
+                    # Cộng dồn các thống kê 'visited' và 'generated' vào biến tổng.
                     total_visited_nodes += search_result.get('visited_count', 0)
                     total_generated_nodes += search_result.get('generated_count', 0)
                     
-                    # Lấy danh sách các nút đã duyệt để vẽ
-                    visited_nodes = search_result.get('visited_nodes', [])
-                    ai_path = search_result.get('path', None)
+                    # Lấy kết quả trả về từ thuật toán.
+                    visited_nodes = search_result.get('visited_nodes', [])  # Các nút đã duyệt để vẽ.
+                    ai_path = search_result.get('path', None)               # Đường đi để di chuyển.
                     
+                    # Nếu tìm thấy một đường đi hợp lệ.
                     if ai_path: 
+                        # Chuẩn bị cho việc trực quan hóa.
                         path_nodes_to_draw = ai_path
+                        # Lưu lại vị trí thức ăn mục tiêu để làm hiệu ứng nhấp nháy.
                         target_food_pos = ai_path[-1]
+                        # Chuyển sang trạng thái "VISUALIZING".
                         game_state = "VISUALIZING"
+                        # Bắt đầu đếm thời gian cho visualization.
                         visualization_timer_start = pygame.time.get_ticks()
                     else:
+                        # Nếu thuật toán không tìm thấy đường đi -> bị kẹt.
                         controller.outcome = "Stuck"
-
-                        # Sử dụng kết quả đã tính toán trước để lưu
+                        # Lưu kết quả thua cuộc sử dụng kết quả đã tính toán trước
                         if full_playthrough_result:
                             game_helpers.save_game_result(
                                 selected_map_name, selected_mode, game_data['steps'], current_time, 
                                 full_playthrough_result['search_time'], "Stuck", 
                                 full_playthrough_result['visited'], full_playthrough_result['generated']
                             )
-                        else: # Fallback trong trường hợp không có dữ liệu tính trước
+                        else: # Trường hợp không có dữ liệu tính trước
                              game_helpers.save_game_result(
                                 selected_map_name, selected_mode, game_data['steps'], current_time, 
                                 total_search_time, "Stuck", total_visited_nodes, total_generated_nodes
                             )
+                        # Chuyển về trạng thái chờ.
                         game_state = "IDLE"
 
+        # --- Trạng thái 4: Đang hiển thị quá trình tìm kiếm ---
         if game_state == "VISUALIZING":
+            # Tạo hiệu ứng nhấp nháy cho viên thức ăn mục tiêu.
             if current_ticks - last_blink_time > BLINK_INTERVAL:
                 is_blinking_visible = not is_blinking_visible
                 last_blink_time = current_ticks
 
+            # Kiểm tra xem đã hết thời gian hiển thị (VISUALIZATION_DELAY) chưa.
             if current_ticks - visualization_timer_start > VISUALIZATION_DELAY:
+                # Nếu đã hết, chuyển sang trạng thái diễn hoạt rắn di chuyển.
                 game_state = "ANIMATING_PATH"
+                # Bắt đầu đếm thời gian cho animation.
                 last_animation_time = current_ticks
+                # Bắt đầu từ bước đầu tiên của path.
                 animation_step = 1
 
+        # --- Trạng thái 5: Đang diễn hoạt rắn di chuyển theo path ---
         elif game_state == "ANIMATING_PATH":
+            # Chỉ di chuyển nếu game không bị tạm dừng.
             if not is_paused:
                 current_render_time = pygame.time.get_ticks()
+                # Kiểm tra xem đã đến lúc di chuyển bước tiếp theo chưa.
                 if current_render_time - last_animation_time > animation_interval:
                     # Kiểm tra xem có còn bước đi trong path không
                     if animation_step < len(ai_path):
+                        # Di chuyển rắn đến bước tiếp theo trong path.
                         controller.update_by_path_step(ai_path[animation_step])
                         animation_step += 1
                         last_animation_time = current_render_time
                     # Nếu đã đi hết path, animation cho đoạn này kết thúc
                     else: 
+                        # Xóa các visualization cũ.
                         visited_nodes, path_nodes_to_draw = [], [] # Xóa các chấm visualize
                         ai_path = [] # Xóa path cũ
                         target_food_pos = None
@@ -521,11 +637,12 @@ def run_ai_game(screen, clock, selected_map_name):
 
                 # Kiểm tra điều kiện thắng (có thể xảy ra bất cứ lúc nào trong lúc di chuyển)
                 if controller.get_state()['outcome'] == "Completed":
+                    # Chuyển về trạng thái chờ.
                     game_state = "IDLE"
                     target_food_pos = None
+                    # Tính toán tổng thời gian diễn hoạt.
                     current_time = controller.get_state()['steps'] * (animation_interval / 1000.0)
 
-                    
                     # Sử dụng kết quả đã tính toán trước để lưu
                     if full_playthrough_result:
                         game_helpers.save_game_result(
@@ -539,10 +656,10 @@ def run_ai_game(screen, clock, selected_map_name):
                             current_time, total_search_time, "Completed",
                             total_visited_nodes, total_generated_nodes
                         )
+                    # Xóa các chấm visualize khi thắng
+                    visited_nodes, path_nodes_to_draw = [], [] 
 
-                    visited_nodes, path_nodes_to_draw = [], [] # Xóa các chấm visualize khi thắng
-
-        # --- VẼ LÊN MÀN HÌNH ---
+        # ==================== C. VẼ LÊN MÀN HÌNH ====================
         background_effects.draw_background(screen)
         game_surface.fill((0,0,0,0))
 

@@ -1,7 +1,6 @@
 """
     CÁC HÀM DÙNG CHUNG TRONG FOLDER ALGORITHMS: Hàm tìm vị trí xung quanh (neighbors), Hàm tính khoảng các mahatan 
 """
-import config
 import math
 
 def get_valid_neighbors(position, map_data, snake_body):
@@ -14,13 +13,16 @@ def get_valid_neighbors(position, map_data, snake_body):
     # Các hướng di chuyển có thể: (dx, dy) -> Lên, Xuống, Trái, Phải
     possible_moves = [ (0, -1), (0, 1), (-1, 0), (1, 0) ]
 
+    # Lấy kích thước map động
+    map_height = len(map_data['layout'])
+    map_width = len(map_data['layout'][0]) if map_height > 0 else 0
+
     for dx, dy in possible_moves:
         nx, ny = x + dx, y + dy
 
         # Kiểm tra xem có nằm trong ranh giới bản đồ không
-        if 0 <= nx < config.AI_MAP_WIDTH_TILES and 0 <= ny < config.AI_MAP_HEIGHT_TILES:
+        if 0 <= nx < map_width and 0 <= ny < map_height:
             neighbor_pos = (nx, ny)
-            # --- KHÔI PHỤC KIỂM TRA VA CHẠM TƯỜNG ---
             if neighbor_pos not in map_data['walls'] and neighbor_pos not in snake_body:
                 neighbors.append(neighbor_pos)
 

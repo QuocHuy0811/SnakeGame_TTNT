@@ -4,9 +4,10 @@ from UI import UI_helpers
 from Algorithms import BFS
 def _check_map_solvability(map_data):
     """
-    Kiểm tra xem map có thể giải được không.
-    Điều kiện: Phải có đường đi từ đầu rắn đến TẤT CẢ thức ăn.
+        Kiểm tra xem map có thể giải được không.
+        Điều kiện: Phải có đường đi từ đầu rắn đến TẤT CẢ thức ăn.
     """
+    # Lấy ra danh sách tọa độ của rắn và thức ăn từ dữ liệu map.
     snake_start = map_data.get('snake_start')
     food_start = map_data.get('food_start')
 
@@ -14,8 +15,9 @@ def _check_map_solvability(map_data):
     if not snake_start or not food_start:
         return False
 
+    # Xác định đầu rắn (luôn là phần tử đầu tiên trong danh sách).
     snake_head = snake_start[0]
-    # Thân rắn (không tính đầu) cũng là vật cản
+    # Các phần còn lại của rắn được coi là vật cản.
     snake_body_obstacles = snake_start[1:]
 
     # Dữ liệu map tối giản chỉ cần tường để gửi cho hàm BFS
@@ -32,6 +34,7 @@ def _check_map_solvability(map_data):
 
     # Nếu vòng lặp kết thúc (tất cả thức ăn đều có đường đi), map giải được
     return True
+
 def run_map_editor(screen, clock):
     """Chạy màn hình vẽ map và trả về dữ liệu map đã tạo."""
     
@@ -67,14 +70,11 @@ def run_map_editor(screen, clock):
     instructions_x = map_area_x + map_width_px + padding
 
     # --- 2. QUẢN LÝ TRẠNG THÁI ---
+    # Biến này theo dõi xem công cụ nào đang được chọn (vẽ Tường, Rắn, hay Thức ăn)
     active_tool = 'wall' # 'wall', 'snake', 'food'
     hover_pos = None # Vị trí ô đang di chuột tới
+    # Một cờ (flag) đặc biệt để bật/tắt chế độ vẽ thân rắn bằng bàn phím.
     is_drawing_snake = False
-
-    # BIẾN MỚI: Thêm các biến để xoay rắn
-    snake_orientation = 'RIGHT' # Hướng mặc định
-    orientation_cycle = ['RIGHT', 'DOWN', 'LEFT', 'UP']
-    orientation_index = 0
 
     # --- TẠO KHUNG VIỀN MẶC ĐỊNH ---
     initial_walls = set()
@@ -127,12 +127,15 @@ def run_map_editor(screen, clock):
             if event.type == pygame.QUIT:
                 running = False # Dừng vòng lặp của editor và quay lại màn hình trước đó
             
+            # --- Xử lý nhấn chuột ---
             if event.type == pygame.MOUSEBUTTONDOWN:
                 # Xử lý nút
+                # Nếu click vào nút công cụ -> đổi `active_tool`.
                 for tool, btn in tool_buttons.items():
                     if UI_helpers.handle_button_events(event, btn):
                         active_tool = tool
-                
+
+                # Nếu click vào nút "Done" -> kiểm tra, định dạng lại dữ liệu và `return final_map_data`.
                 if UI_helpers.handle_button_events(event, done_button):
                     if not map_data['snake_start']:
                         print("Lỗi: Cần phải vẽ rắn trước khi hoàn thành!")
@@ -185,6 +188,7 @@ def run_map_editor(screen, clock):
                         map_data['snake_start'].pop()
                     
                     elif event.key == pygame.K_RETURN:
+                        # Nhấn Enter để kết thúc việc vẽ rắn.
                         is_drawing_snake = False
 
                     if new_head:
@@ -198,27 +202,6 @@ def run_map_editor(screen, clock):
                             map_data['snake_start'].insert(0, new_head)
                     
         # Lấy trạng thái của cả 3 nút chuột (trái, giữa, phải)
-        # mouse_buttons = pygame.mouse.get_pressed()
-        
-        # if hover_pos:
-        #     # Nếu nút chuột TRÁI đang được nhấn giữ
-        #     if mouse_buttons[0]:
-        #         if active_tool == 'wall':
-        #             map_data['walls'].add(hover_pos)
-        #         elif active_tool == 'food':
-        #             map_data['food_start'].add(hover_pos)
-            
-        #     # Nếu nút chuột PHẢI đang được nhấn giữ
-        #     elif mouse_buttons[2]:
-        #         x, y = hover_pos
-        #         is_border = (x == 0 or x == map_width_tiles - 1 or y == 0 or y == map_height_tiles - 1)
-                
-        #         # Chỉ cho phép xóa tường và thức ăn (không xóa viền)
-        #         if not is_border:
-        #             if hover_pos in map_data['walls']: 
-        #                 map_data['walls'].remove(hover_pos)
-        #             if hover_pos in map_data['food_start']: 
-        #                 map_data['food_start'].remove(hover_pos)
         mouse_buttons = pygame.mouse.get_pressed()
         if hover_pos and (active_tool == 'wall' or active_tool == 'food'):
             x, y = hover_pos

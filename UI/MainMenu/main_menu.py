@@ -16,7 +16,6 @@ def run_main_menu(screen):
     """
     
     # --- 1. KHỞI TẠO ---
-    # Khởi tạo các đối tượng font chữ.
     title_font = pygame.font.Font(config.FONT_PATH, config.TITLE_FONT_SIZE)
     label_font = pygame.font.Font(config.FONT_PATH, config.LABEL_FONT_SIZE)
     
