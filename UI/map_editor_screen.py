@@ -40,7 +40,7 @@ def run_map_editor(screen, clock):
     info_font = pygame.font.Font(config.FONT_PATH, 18)
     # Font mới cho phần hướng dẫn
     instruction_font = pygame.font.Font(config.FONT_PATH, 16)
-    
+    number_font = pygame.font.Font(config.FONT_PATH, 14)
     # Kích thước map editor (lấy từ config cho nhất quán)
     map_width_tiles = config.AI_MAP_WIDTH_TILES
     map_height_tiles = config.AI_MAP_HEIGHT_TILES
@@ -91,7 +91,7 @@ def run_map_editor(screen, clock):
     map_data = {
         'walls': initial_walls,
         'snake_start': [],
-        'food_start': set()
+        'food_start': []
     }
 
     # --- 3. TẠO GIAO DIỆN ---
@@ -229,8 +229,9 @@ def run_map_editor(screen, clock):
                     if active_tool == 'wall' and hover_pos not in map_data['food_start'] and hover_pos not in map_data['snake_start']:
                         map_data['walls'].add(hover_pos)
                     # Nếu vẽ THỨC ĂN, kiểm tra xem ô đó có phải là TƯỜNG hoặc RẮN không
-                    elif active_tool == 'food' and hover_pos not in map_data['walls'] and hover_pos not in map_data['snake_start']:
-                        map_data['food_start'].add(hover_pos)
+                    elif active_tool == 'food' and hover_pos not in map_data['walls'] and hover_pos not in map_data['snake_start']and \
+                                                  hover_pos not in map_data['food_start']:
+                        map_data['food_start'].append(hover_pos)
                 elif mouse_buttons[2]: # Chuột phải
                     if active_tool == 'wall' and hover_pos in map_data['walls']: map_data['walls'].remove(hover_pos)
                     elif active_tool == 'food' and hover_pos in map_data['food_start']: map_data['food_start'].remove(hover_pos)
@@ -247,7 +248,20 @@ def run_map_editor(screen, clock):
 
         # Vẽ các block đã đặt
         for x, y in map_data['walls']: pygame.draw.rect(map_surface, (150, 150, 150), (x*config.TILE_SIZE, y*config.TILE_SIZE, config.TILE_SIZE, config.TILE_SIZE))
-        for x, y in map_data['food_start']: pygame.draw.rect(map_surface, config.COLORS['food'], (x*config.TILE_SIZE, y*config.TILE_SIZE, config.TILE_SIZE, config.TILE_SIZE))
+        
+        # SỬA LẠI VÒNG LẶP VẼ THỨC ĂN
+        for i, (x, y) in enumerate(map_data['food_start']):
+            # Vẽ viên thức ăn
+            pygame.draw.rect(map_surface, config.COLORS['food'], (x*config.TILE_SIZE, y*config.TILE_SIZE, config.TILE_SIZE, config.TILE_SIZE))
+            # Vẽ số thứ tự (i+1) lên trên
+            UI_helpers.draw_text(
+                str(i + 1), 
+                number_font, 
+                config.COLORS['text_dark'], 
+                map_surface, 
+                x * config.TILE_SIZE + config.TILE_SIZE / 2, 
+                y * config.TILE_SIZE + config.TILE_SIZE / 2
+            )
         
         # Vẽ con rắn, phân biệt đầu và thân
         for i, (x, y) in enumerate(map_data['snake_start']):
