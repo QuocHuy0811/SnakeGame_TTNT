@@ -1,6 +1,7 @@
 """
     Quản lý vị trí đầu, thân, đuôi, 
 """
+import copy
 from Algorithms.algorithm_helpers import manhattan_distance
 from UI import UI_helpers
 import config
@@ -57,16 +58,20 @@ def create_snake_from_map(map_data):
     """
         Tạo dữ liệu rắn (tọa độ thân, hướng) từ dữ liệu map.
     """
-    snake_body_coords = map_data.get('snake_start')
+    snake_start_data = map_data.get('snake_start')
+
+    # Nếu map từ editor, snake_start_data đã là một dictionary hoàn chỉnh
+    if isinstance(snake_start_data, dict):
+        return copy.deepcopy(snake_start_data)
 
     # Nếu map không có rắn ('x'), tạo một con mặc định
-    if not snake_body_coords:
+    if not snake_start_data:
         return {'body': [(5, 5), (4, 5), (3, 5)], 'direction': 'RIGHT'}
 
     # Dữ liệu snake_start từ map_logic đã được sắp xếp,
     # nên phần tử đầu tiên (index 0) là đầu rắn.
     # Ta chỉ cần đảo ngược lại để có thứ tự [đầu, thân, đuôi]
-    snake_body = list(reversed(snake_body_coords))
+    snake_body = list(reversed(snake_start_data))
     
     # Xác định hướng ban đầu dựa trên 2 đốt đầu tiên
     initial_direction = 'RIGHT' # Mặc định

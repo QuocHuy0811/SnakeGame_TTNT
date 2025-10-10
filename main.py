@@ -11,7 +11,7 @@ def main():
         Hàm chính để chạy game.
     """
     # Khởi tạo tất cả các module của Pygame
-    pygame.init()
+    pygame.init()   
     # Khởi tạo module âm thanh
     pygame.mixer.init()
 

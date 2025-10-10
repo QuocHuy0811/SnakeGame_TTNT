@@ -102,7 +102,6 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
         'start': UI_helpers.create_button(panel_center_x - 110, 150, 220, 50, "Start Race"),
         'reset': UI_helpers.create_button(panel_center_x - 110, 220, 220, 50, "Reset"),
         'back': UI_helpers.create_button(panel_center_x - 110, 290, 220, 50, "Back to Menu"),
-        # 'change_mode': UI_helpers.create_button(panel_center_x - 110, 400, 220, 40, f"Mode: {selected_ai_mode}")
         'change_mode_p1': UI_helpers.create_button(panel_center_x - 110, 400, 220, 40, f"P1 Mode: {player1_mode}"),
         'change_mode_p2': UI_helpers.create_button(panel_center_x - 110, 450, 220, 40, f"P2 Mode: {player2_mode}")
     }
@@ -166,13 +165,13 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
                 new_mode = AI_selection_screen.run_algorithm_selection(screen)
                 if new_mode is not None:
                     player1_mode = new_mode
-                    buttons['change_mode_p1']['text'] = f"{player1_mode}"
+                    buttons['change_mode_p1']['text'] = f"P1: {player1_mode}"
             
             if UI_helpers.handle_button_events(event, buttons['change_mode_p2']):
                 new_mode = AI_selection_screen.run_algorithm_selection(screen)
                 if new_mode is not None:
                     player2_mode = new_mode
-                    buttons['change_mode_p2']['text'] = f"{player2_mode}"
+                    buttons['change_mode_p2']['text'] = f"P2: {player2_mode}"
 
             if UI_helpers.handle_button_events(event, buttons['start']) and game_status == "IDLE":
                 game_status = "playing"

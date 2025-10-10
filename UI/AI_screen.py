@@ -262,6 +262,12 @@ def run_ai_game(screen, clock, selected_map_name):
     if selected_mode == "Player":
         buttons['solve']['is_enabled'] = False
         buttons['solve']['text'] = "Start Game"
+    
+    # --- Bật tắt nút Skip ---
+    if controller.map_data.get('food_mode') == 'sequential':
+        skip_button['is_enabled'] = False
+    else:
+        skip_button['is_enabled'] = True
 
     running = True
     while running:
@@ -323,6 +329,8 @@ def run_ai_game(screen, clock, selected_map_name):
                     target_food_pos = None
                     if selected_mode == "Player":
                         game_state = "PLAYER_READY"
+                    # Khóa Skip
+                    skip_button['is_enabled'] = False
 
             if UI_helpers.handle_button_events(event, buttons['back_to_menu']): 
                 running = False
@@ -350,6 +358,14 @@ def run_ai_game(screen, clock, selected_map_name):
                     game_state = "PLAYER_READY"
                 else: # Các chế độ AI
                     game_state = "IDLE"
+                
+                # Bật/Tắt Skip
+                if controller.map_data.get('food_mode') == 'sequential':
+                    # Nếu là map tự tạo, khóa nút Skip
+                    skip_button['is_enabled'] = False
+                else:
+                    # Nếu là map thường, bật lại nút Skip
+                    skip_button['is_enabled'] = True
 
             if UI_helpers.handle_button_events(event, buttons['solve']):
                 if game_state == "IDLE" or game_state == "PLAYER_READY":
@@ -380,7 +396,14 @@ def run_ai_game(screen, clock, selected_map_name):
                         # Gọi hàm _calculate_full_playthrough để tính toán trước toàn bộ kết quả.
                         # Kết quả này sẽ được lưu vào biến 'full_playthrough_result'.
                         initial_snake = snake_logic.create_snake_from_map(controller.map_data)
-                        initial_food = food_logic.create_food_from_map(controller.map_data)
+                        initial_food = []
+                        if controller.map_data.get('food_mode') == 'sequential':
+                            food_sequence = controller.map_data.get('food_sequence', [])
+                            if food_sequence: # Nếu có thức ăn trong chuỗi
+                                # Lấy viên đầu tiên làm mục tiêu ban đầu
+                                initial_food = [{'pos': food_sequence[0], 'type': 'normal'}]
+                        else: # Chế độ all_at_once cho map cũ
+                            initial_food = food_logic.create_food_from_map(controller.map_data)
                         full_playthrough_result = _calculate_full_playthrough(initial_snake, initial_food, selected_mode, controller.map_data)
 
             if UI_helpers.handle_button_events(event, buttons['history']):
@@ -393,9 +416,9 @@ def run_ai_game(screen, clock, selected_map_name):
                 # Kiểm tra xem đã có kết quả được tính toán trước hay chưa.
                 if full_playthrough_result:
                     # Cập nhật controller với trạng thái cuối cùng
-                    controller.snake_data = full_playthrough_result['snake']
+                    controller.snake = full_playthrough_result['snake']
                     controller.steps = full_playthrough_result['steps']
-                    controller.food_data = [] 
+                    controller.food = [] 
                     controller.outcome = full_playthrough_result['outcome']
 
                     # Lưu kết quả CHÍNH XÁC từ full_playthrough_result đã tính toán trước đó
@@ -658,6 +681,13 @@ def run_ai_game(screen, clock, selected_map_name):
                         )
                     # Xóa các chấm visualize khi thắng
                     visited_nodes, path_nodes_to_draw = [], [] 
+                elif game_state == "AI_AUTOPLAY" and not game_data['food']:
+                    # Kiểm tra xem đã đến lúc di chuyển chưa (để rắn không chạy quá nhanh)
+                    if current_ticks - last_animation_time > animation_interval:
+                        # Ra lệnh cho rắn đi thẳng một bước
+                        controller.update()
+                        # Cập nhật lại mốc thời gian
+                        last_animation_time = current_ticks
 
         # ==================== C. VẼ LÊN MÀN HÌNH ====================
         background_effects.draw_background(screen)

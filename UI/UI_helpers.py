@@ -227,6 +227,8 @@ def draw_snake(surface, snake_data, food_data):
                 elif head_pos[0] < next_pos[0]: actual_direction = 'LEFT'
                 elif head_pos[1] > next_pos[1]: actual_direction = 'DOWN'
                 elif head_pos[1] < next_pos[1]: actual_direction = 'UP'
+            else:
+                actual_direction = snake_data.get('direction', 'UP')
 
             # 1c. Xoay và vẽ đầu rắn
             if original_head_sprite:
@@ -273,7 +275,10 @@ def draw_snake(surface, snake_data, food_data):
                 elif (prev_vec in [(0, -1), (-1, 0)]) and (next_vec in [(0, -1), (-1, 0)]): key = 'bend_UP_LEFT'
                 elif (prev_vec in [(0, -1), (1, 0)]) and (next_vec in [(0, -1), (1, 0)]): key = 'bend_UP_RIGHT'
                 
-                if key: surface.blit(sprites[key], rect)
+                if key: 
+                    surface.blit(sprites[key], rect)
+                else:
+                    surface.blit(sprites['body_straight'], rect)
 
 def draw_food(surface, food_data, blinking_info=None):
     food_sprite = food_logic.load_food_sprite()
