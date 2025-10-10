@@ -9,43 +9,58 @@ import config
 def load_map_data(map_filename):
     """
     Tải dữ liệu map từ file .txt.
-    Hàm này trả về một dictionary chứa layout và vị trí các đối tượng.
+    Hàm này được tối ưu để chỉ hỗ trợ thức ăn tuần tự (1, 2, 3,...).
     """
     # Khởi tạo cấu trúc dữ liệu cho map
     map_data = {
         'layout': [],
         'walls': [],
         'snake_start': [],
-        'food_start': []
+        'food_sequence': [],
+        'food_mode': 'all_at_once' # Sẽ được đổi nếu tìm thấy thức ăn
     }
     
     full_path = f"Maps/{map_filename}"
     
     if not os.path.exists(full_path):
         print(f"Lỗi: Không tìm thấy file map '{full_path}'")
-        return None # Trả về None nếu không tìm thấy file
+        return None
+
+    # Biến tạm để lưu thức ăn theo thứ tự trước khi sắp xếp
+    temp_sequential_food = []
 
     with open(full_path, 'r') as f:
         lines = f.readlines()
         if not lines:
             print(f"Lỗi: File map '{full_path}' bị trống.")
-            return None # Trả về None nếu file trống
+            return None
 
         for y, line in enumerate(lines):
             clean_line = line.strip()
-            map_data['layout'].append(clean_line) # <-- LƯU LẠI CẤU TRÚC MAP
+            map_data['layout'].append(clean_line)
             for x, char in enumerate(clean_line):
                 if char == '#':
                     map_data['walls'].append((x, y))
                 elif char == 'x':
                     map_data['snake_start'].append((x, y))
-                elif char == '*':
-                    map_data['food_start'].append((x, y))
+                elif char.isdigit():
+                    # Chỉ nhận diện các ký tự là số để làm thức ăn
+                    order = int(char)
+                    temp_sequential_food.append((order, (x, y)))
     
-    # Sắp xếp lại vị trí của rắn để đảm bảo đúng thứ tự đầu-thân
-    # Giả định các đốt rắn 'x' trong file map được đặt liền kề
+    # Sắp xếp lại vị trí của rắn để đảm bảo đúng thứ tự
     map_data['snake_start'].sort(key=lambda pos: (pos[1], pos[0]))
-    
+
+    # Nếu có bất kỳ thức ăn nào được tìm thấy, kích hoạt chế độ tuần tự
+    if temp_sequential_food:
+        map_data['food_mode'] = 'sequential'
+        
+        # Sắp xếp các viên thức ăn theo đúng thứ tự (1, 2, 3, ...)
+        temp_sequential_food.sort(key=lambda item: item[0])
+        
+        # Lưu lại chuỗi tọa độ thức ăn đã sắp xếp
+        map_data['food_sequence'] = [pos for order, pos in temp_sequential_food]
+
     return map_data
 
 _wall_sprite = None

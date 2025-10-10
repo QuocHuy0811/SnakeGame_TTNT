@@ -557,69 +557,62 @@ def run_ai_game(screen, clock, selected_map_name):
 
         # --- Trạng thái 3: AI Offline đang tự chơi (chưa có đường đi) ---
         # Trạng thái này chỉ được kích hoạt khi AI cần tìm đường đến viên thức ăn tiếp theo.
-        elif game_state == "AI_AUTOPLAY" and game_data['food']:
-            # Chỉ tìm đường đi mới nếu chưa có đường đi ('ai_path' đang rỗng).
-            if not ai_path:
-                algorithm_map = {
-                    "BFS": BFS.find_path_bfs, 
-                    "DFS": DFS.find_path_dfs,
-                    "IDS": IDS.find_path_ids,  
-                    "UCS": UCS.find_path_ucs, 
-                    "HillClimbing": HillClimbing.find_path_hill_climbing,
-                    "BeamSearch": BeamSearch.find_path_beam_search,
+        elif game_state == "AI_AUTOPLAY":
+    # KỊCH BẢN 1: NẾU CÓ THỨC ĂN, TÌM ĐƯỜNG ĐI MỚI
+            if game_data['food']:
+                if not ai_path:
+                    algorithm_map = {
+                        "BFS": BFS.find_path_bfs, 
+                        "DFS": DFS.find_path_dfs,
+                        "IDS": IDS.find_path_ids,  
+                        "UCS": UCS.find_path_ucs, 
+                        "HillClimbing": HillClimbing.find_path_hill_climbing,
+                        "BeamSearch": BeamSearch.find_path_beam_search,
+                        "A* (Manhattan)": partial(Astar.find_path_astar, heuristic_func=manhattan_distance),
+                        "A* (Euclidean)": partial(Astar.find_path_astar, heuristic_func=euclidean_distance),
+                        "Greedy (Manhattan)": partial(Greedy.find_path_greedy, heuristic_func=manhattan_distance),
+                        "Greedy (Euclidean)": partial(Greedy.find_path_greedy, heuristic_func=euclidean_distance)
+                    }
+                    algorithm_to_run = algorithm_map.get(selected_mode)
 
-                    # Sử dụng partial để tạo các phiên bản khác nhau của A* và Greedy
-                    "A* (Manhattan)": partial(Astar.find_path_astar, heuristic_func=manhattan_distance),
-                    "A* (Euclidean)": partial(Astar.find_path_astar, heuristic_func=euclidean_distance),
-                    "Greedy (Manhattan)": partial(Greedy.find_path_greedy, heuristic_func=manhattan_distance),
-                    "Greedy (Euclidean)": partial(Greedy.find_path_greedy, heuristic_func=euclidean_distance)
-                }
-                # Lấy hàm thuật toán tương ứng với mode đã chọn.
-                algorithm_to_run = algorithm_map.get(selected_mode)
-                
-                if algorithm_to_run:
-                    # Bắt đầu đo thời gian tìm kiếm.
-                    search_start_time = pygame.time.get_ticks()
-                    # Gọi thuật toán để tìm đường đi.
-                    search_result = find_path_with_algorithm(algorithm_to_run, game_data['snake']['body'][0], game_data['food'], controller.map_data, game_data['snake']['body'])
-                    # Cộng dồn thời gian tìm kiếm vào biến tổng.
-                    total_search_time += (pygame.time.get_ticks() - search_start_time) / 1000.0
+                    if algorithm_to_run:
+                        search_start_time = pygame.time.get_ticks()
+                        search_result = find_path_with_algorithm(algorithm_to_run, game_data['snake']['body'][0], game_data['food'], controller.map_data, game_data['snake']['body'])
+                        total_search_time += (pygame.time.get_ticks() - search_start_time) / 1000.0
+                        total_visited_nodes += search_result.get('visited_count', 0)
+                        total_generated_nodes += search_result.get('generated_count', 0)
 
-                    # Cộng dồn các thống kê 'visited' và 'generated' vào biến tổng.
-                    total_visited_nodes += search_result.get('visited_count', 0)
-                    total_generated_nodes += search_result.get('generated_count', 0)
-                    
-                    # Lấy kết quả trả về từ thuật toán.
-                    visited_nodes = search_result.get('visited_nodes', [])  # Các nút đã duyệt để vẽ.
-                    ai_path = search_result.get('path', None)               # Đường đi để di chuyển.
-                    
-                    # Nếu tìm thấy một đường đi hợp lệ.
-                    if ai_path: 
-                        # Chuẩn bị cho việc trực quan hóa.
-                        path_nodes_to_draw = ai_path
-                        # Lưu lại vị trí thức ăn mục tiêu để làm hiệu ứng nhấp nháy.
-                        target_food_pos = ai_path[-1]
-                        # Chuyển sang trạng thái "VISUALIZING".
-                        game_state = "VISUALIZING"
-                        # Bắt đầu đếm thời gian cho visualization.
-                        visualization_timer_start = pygame.time.get_ticks()
-                    else:
-                        # Nếu thuật toán không tìm thấy đường đi -> bị kẹt.
-                        controller.outcome = "Stuck"
-                        # Lưu kết quả thua cuộc sử dụng kết quả đã tính toán trước
-                        if full_playthrough_result:
-                            game_helpers.save_game_result(
-                                selected_map_name, selected_mode, game_data['steps'], current_time, 
-                                full_playthrough_result['search_time'], "Stuck", 
-                                full_playthrough_result['visited'], full_playthrough_result['generated']
-                            )
-                        else: # Trường hợp không có dữ liệu tính trước
-                             game_helpers.save_game_result(
-                                selected_map_name, selected_mode, game_data['steps'], current_time, 
-                                total_search_time, "Stuck", total_visited_nodes, total_generated_nodes
-                            )
-                        # Chuyển về trạng thái chờ.
-                        game_state = "IDLE"
+                        visited_nodes = search_result.get('visited_nodes', [])
+                        ai_path = search_result.get('path', None)
+
+                        if ai_path: 
+                            path_nodes_to_draw = ai_path
+                            target_food_pos = ai_path[-1]
+                            game_state = "VISUALIZING"
+                            visualization_timer_start = pygame.time.get_ticks()
+                        else:
+                            controller.outcome = "Stuck"
+                            if full_playthrough_result:
+                                game_helpers.save_game_result(
+                                    selected_map_name, selected_mode, game_data['steps'], current_time, 
+                                    full_playthrough_result['search_time'], "Stuck", 
+                                    full_playthrough_result['visited'], full_playthrough_result['generated']
+                                )
+                            else:
+                                game_helpers.save_game_result(
+                                    selected_map_name, selected_mode, game_data['steps'], current_time, 
+                                    total_search_time, "Stuck", total_visited_nodes, total_generated_nodes
+                                )
+                            game_state = "IDLE"
+
+            # KỊCH BẢN 2: NẾU KHÔNG CÓ THỨC ĂN (ĐANG CHỜ SPAWN)
+            else:
+                # Ép rắn di chuyển thêm 1 bước theo hướng hiện tại để nó rời khỏi vị trí spawn,
+                # tạo điều kiện cho controller có cơ hội tạo mồi ở lượt tiếp theo.
+                # Chúng ta dùng lại timer của animation để giữ đúng tốc độ.
+                if current_ticks - last_animation_time > animation_interval:
+                    controller.update() # Gọi hàm update như của người chơi
+                    last_animation_time = current_ticks # Cập nhật lại mốc thời gian
 
         # --- Trạng thái 4: Đang hiển thị quá trình tìm kiếm ---
         if game_state == "VISUALIZING":
