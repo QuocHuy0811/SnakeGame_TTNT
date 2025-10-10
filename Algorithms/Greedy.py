@@ -15,7 +15,7 @@ def find_path_greedy(start_pos, food_pos_list, map_data, snake_body, heuristic_f
     :return: Danh sách các tọa độ tạo thành đường đi, hoặc None nếu không tìm thấy.
     """
     if not food_pos_list:
-        # THAY ĐỔI: Trả về đúng định dạng mới
+        # Trả về đúng định dạng mới
         return {'path': None, 'visited_nodes': [], 'generated_count': 0, 'visited_count': 0}
     
     # Greedy cần một mục tiêu cụ thể, ta sẽ chọn mục tiêu gần nhất theo heuristic ban đầu.
@@ -27,6 +27,7 @@ def find_path_greedy(start_pos, food_pos_list, map_data, snake_body, heuristic_f
     pq = [(h_score, start_pos, [start_pos])]
 
     visited_set = {start_pos}
+    visited_order = []
 
     generated_count = 1 # Bắt đầu với nút gốc
     visited_count = 0
@@ -35,11 +36,12 @@ def find_path_greedy(start_pos, food_pos_list, map_data, snake_body, heuristic_f
 
         _, current_pos, path = heapq.heappop(pq)
         visited_count += 1
+        visited_order.append(current_pos)
 
         if current_pos == target_pos:
             return {
                 'path': path, 
-                'visited_nodes': list(visited_set),
+                'visited_nodes': visited_order,
                 'visited_count': visited_count,
                 'generated_count': generated_count
             }
@@ -54,7 +56,7 @@ def find_path_greedy(start_pos, food_pos_list, map_data, snake_body, heuristic_f
 
     return {
         'path': None, 
-        'visited_nodes': list(visited_set),
+        'visited_nodes': visited_order,
         'visited_count': visited_count,
         'generated_count': generated_count
     }

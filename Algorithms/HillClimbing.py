@@ -1,5 +1,3 @@
-# Algorithms/HillClimbing.py
-
 from Algorithms.algorithm_helpers import get_valid_neighbors, manhattan_distance
 
 def find_path_hill_climbing(start_pos, food_pos_list, map_data, snake_body):
@@ -21,14 +19,21 @@ def find_path_hill_climbing(start_pos, food_pos_list, map_data, snake_body):
     # 2. Tìm tất cả các hàng xóm hợp lệ
     neighbors = get_valid_neighbors(start_pos, map_data, snake_body)
     
+    visited_order = [start_pos] + neighbors
+
     # Thống kê cho việc trực quan hóa
     generated_count = len(neighbors)
     visited_count = len(neighbors) # Coi như đã duyệt tất cả các hàng xóm
-    visited_nodes = neighbors + [start_pos]
+    
 
     if not neighbors:
         # Bị kẹt, không có đường đi
-        return {'path': None, 'visited_nodes': visited_nodes, 'generated_count': 1, 'visited_count': 1}
+        return {
+            'path': None, 
+            'visited_nodes': visited_order, 
+            'generated_count': 1, 
+            'visited_count': 1
+        }
 
     # 3. Đánh giá tất cả các hàng xóm và chọn ra hàng xóm tốt nhất
     # (hàng xóm có khoảng cách Manhattan đến mục tiêu nhỏ nhất)
@@ -39,7 +44,7 @@ def find_path_hill_climbing(start_pos, food_pos_list, map_data, snake_body):
 
     return {
         'path': path,
-        'visited_nodes': visited_nodes,
+        'visited_nodes': visited_order,
         'visited_count': visited_count,
         'generated_count': generated_count
     }

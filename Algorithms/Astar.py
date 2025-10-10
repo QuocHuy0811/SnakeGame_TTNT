@@ -15,7 +15,7 @@ def find_path_astar(start_pos, food_pos_list, map_data, snake_body, heuristic_fu
     """
     
     # A* cần tìm đường đến một mục tiêu cụ thể, nên ta sẽ chọn mục tiêu gần nhất
-    # dựa trên khoảng cách Manhattan ban đầu.
+    # dựa trên khoảng cách tính bằng hàm Heuristic ban đầu.
     if not food_pos_list:
         return {'path': None, 'visited_nodes': [], 'generated_count': 0, 'visited_count': 0}
     
@@ -29,7 +29,10 @@ def find_path_astar(start_pos, food_pos_list, map_data, snake_body, heuristic_fu
     
     pq = [(f_score, g_score, start_pos, [start_pos])]
 
-    visited_set = {start_pos}
+    # visited_set lưu trước khi vào hàng đợi (có cả điểm bắt đầu)
+    # visited_order lưu sau khi vào hàng đợi (không có điểm bắt đầu) - tương tự visited_count
+    visited_set = {start_pos}   # Danh sách các nút đã duyệt
+    visited_order = []          # Danh sách các nút đã duyệt theo thứ tự  
 
     generated_count = 1 # Bắt đầu với nút gốc
     visited_count = 0
@@ -38,12 +41,14 @@ def find_path_astar(start_pos, food_pos_list, map_data, snake_body, heuristic_fu
         # Tăng visited_count mỗi khi lấy 1 nút ra duyệt
         _, current_g, current_pos, path = heapq.heappop(pq)
         visited_count += 1
+        # Thêm vào danh sách thứ tự sau khi được lấy ra khỏi hàng đợi
+        visited_order.append(current_pos)
 
         if current_pos == target_pos:
             # Trả về dictionary với cấu trúc mới
             return {
                 'path': path, 
-                'visited_nodes': list(visited_set),
+                'visited_nodes': visited_order,
                 'visited_count': visited_count,
                 'generated_count': generated_count
             }
@@ -61,7 +66,7 @@ def find_path_astar(start_pos, food_pos_list, map_data, snake_body, heuristic_fu
     # Trả về dictionary với cấu trúc mới khi không tìm thấy đường
     return {
         'path': None, 
-        'visited_nodes': list(visited_set),
+        'visited_nodes': visited_order,
         'visited_count': visited_count,
         'generated_count': generated_count
     }
