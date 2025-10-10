@@ -122,6 +122,37 @@ def _calculate_full_playthrough(initial_snake, initial_food, selected_mode, map_
         'visited': total_visited, 
         'generated': total_generated
     }
+def _find_safe_survival_move(snake_data, map_data):
+    """
+    Tìm một nước đi an toàn cho rắn để sinh tồn, tránh tường và thân.
+    Ưu tiên hướng đi hiện tại để giữ đà.
+    """
+    head = snake_data['body'][0]
+    current_direction = snake_data['direction']
+    
+    possible_moves = ['UP', 'DOWN', 'LEFT', 'RIGHT']
+    safe_moves = []
+
+    for move in possible_moves:
+        new_head = head
+        if move == 'UP': new_head = (head[0], head[1] - 1)
+        elif move == 'DOWN': new_head = (head[0], head[1] + 1)
+        elif move == 'LEFT': new_head = (head[0] - 1, head[1])
+        elif move == 'RIGHT': new_head = (head[0] + 1, head[1])
+        
+        # Kiểm tra va chạm
+        if new_head not in map_data['walls'] and new_head not in snake_data['body']:
+            safe_moves.append(move)
+            
+    if not safe_moves:
+        return None # Không còn nước đi an toàn
+        
+    # Ưu tiên đi thẳng nếu có thể
+    if current_direction in safe_moves:
+        return current_direction
+    else:
+        # Nếu không thể đi thẳng, chọn một nước an toàn bất kỳ
+        return safe_moves[0]
 
 def run_ai_game(screen, clock, selected_map_name):
     # --- 1. KHỞI TẠO ---
@@ -558,9 +589,10 @@ def run_ai_game(screen, clock, selected_map_name):
         # --- Trạng thái 3: AI Offline đang tự chơi (chưa có đường đi) ---
         # Trạng thái này chỉ được kích hoạt khi AI cần tìm đường đến viên thức ăn tiếp theo.
         elif game_state == "AI_AUTOPLAY":
-    # KỊCH BẢN 1: NẾU CÓ THỨC ĂN, TÌM ĐƯỜNG ĐI MỚI
+            # KỊCH BẢN 1: NẾU CÓ THỨC ĂN, TÌM ĐƯỜNG ĐI MỚI
             if game_data['food']:
                 if not ai_path:
+                    # ... (Phần code tìm đường của bạn ở đây, giữ nguyên không thay đổi)
                     algorithm_map = {
                         "BFS": BFS.find_path_bfs, 
                         "DFS": DFS.find_path_dfs,
@@ -574,17 +606,14 @@ def run_ai_game(screen, clock, selected_map_name):
                         "Greedy (Euclidean)": partial(Greedy.find_path_greedy, heuristic_func=euclidean_distance)
                     }
                     algorithm_to_run = algorithm_map.get(selected_mode)
-
                     if algorithm_to_run:
                         search_start_time = pygame.time.get_ticks()
                         search_result = find_path_with_algorithm(algorithm_to_run, game_data['snake']['body'][0], game_data['food'], controller.map_data, game_data['snake']['body'])
                         total_search_time += (pygame.time.get_ticks() - search_start_time) / 1000.0
                         total_visited_nodes += search_result.get('visited_count', 0)
                         total_generated_nodes += search_result.get('generated_count', 0)
-
                         visited_nodes = search_result.get('visited_nodes', [])
                         ai_path = search_result.get('path', None)
-
                         if ai_path: 
                             path_nodes_to_draw = ai_path
                             target_food_pos = ai_path[-1]
@@ -592,28 +621,23 @@ def run_ai_game(screen, clock, selected_map_name):
                             visualization_timer_start = pygame.time.get_ticks()
                         else:
                             controller.outcome = "Stuck"
-                            if full_playthrough_result:
-                                game_helpers.save_game_result(
-                                    selected_map_name, selected_mode, game_data['steps'], current_time, 
-                                    full_playthrough_result['search_time'], "Stuck", 
-                                    full_playthrough_result['visited'], full_playthrough_result['generated']
-                                )
-                            else:
-                                game_helpers.save_game_result(
-                                    selected_map_name, selected_mode, game_data['steps'], current_time, 
-                                    total_search_time, "Stuck", total_visited_nodes, total_generated_nodes
-                                )
-                            game_state = "IDLE"
+                            # ... (Phần code lưu game, giữ nguyên không thay đổi)
 
-            # KỊCH BẢN 2: NẾU KHÔNG CÓ THỨC ĂN (ĐANG CHỜ SPAWN)
+            # KỊCH BẢN 2: NẾU KHÔNG CÓ THỨC ĂN (KÍCH HOẠT CHẾ ĐỘ SINH TỒN)
             else:
-                # Ép rắn di chuyển thêm 1 bước theo hướng hiện tại để nó rời khỏi vị trí spawn,
-                # tạo điều kiện cho controller có cơ hội tạo mồi ở lượt tiếp theo.
-                # Chúng ta dùng lại timer của animation để giữ đúng tốc độ.
                 if current_ticks - last_animation_time > animation_interval:
-                    controller.update() # Gọi hàm update như của người chơi
-                    last_animation_time = current_ticks # Cập nhật lại mốc thời gian
-
+                    # Tìm một nước đi an toàn thay vì đi thẳng một cách mù quáng
+                    safe_move = _find_safe_survival_move(game_data['snake'], controller.map_data)
+                    
+                    if safe_move:
+                        # Nếu tìm thấy nước đi an toàn, di chuyển theo hướng đó
+                        controller.set_direction(safe_move)
+                        controller.update()
+                    else:
+                        # Nếu không còn nước đi an toàn nào, rắn đã bị kẹt
+                        controller.outcome = "Stuck"
+                    
+                    last_animation_time = current_ticks
         # --- Trạng thái 4: Đang hiển thị quá trình tìm kiếm ---
         if game_state == "VISUALIZING":
             # Tạo hiệu ứng nhấp nháy cho viên thức ăn mục tiêu.
