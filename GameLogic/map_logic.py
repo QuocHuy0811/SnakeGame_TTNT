@@ -9,7 +9,6 @@ import config
 def load_map_data(map_filename):
     """
     Tải dữ liệu map từ file .txt.
-    Hàm này được tối ưu để chỉ hỗ trợ thức ăn tuần tự (1, 2, 3,...).
     """
     # Khởi tạo cấu trúc dữ liệu cho map
     map_data = {
