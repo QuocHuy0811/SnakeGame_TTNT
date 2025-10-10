@@ -1,6 +1,7 @@
 """
     Quản lý vị trí thức ăn, tạo vị trí mới, vẽ thức ăn
 """
+import random
 import config
 import pygame
 
@@ -47,3 +48,29 @@ def create_food_from_map(map_data):
 
     # Trả về danh sách thức ăn đã được định dạng lại
     return food_list
+
+def spawn_random_food(map_data, snake_data):
+    """
+    Tạo ra một viên thức ăn ở một vị trí ngẫu nhiên hợp lệ.
+    Vị trí hợp lệ là ô không phải tường và không bị thân rắn chiếm đóng.
+    """
+    # 1. Lấy tất cả các vị trí có thể có trên map
+    width = len(map_data['layout'][0])
+    height = len(map_data['layout'])
+    all_positions = set((x, y) for x in range(width) for y in range(height))
+    
+    # 2. Lấy tất cả các vị trí đã bị chiếm
+    wall_positions = set(map_data.get('walls', []))
+    snake_positions = set(tuple(segment) for segment in snake_data.get('body', []))
+    occupied_positions = wall_positions.union(snake_positions)
+    
+    # 3. Tìm các vị trí còn trống
+    available_positions = list(all_positions - occupied_positions)
+    
+    # 4. Chọn một vị trí ngẫu nhiên từ các ô còn trống
+    if available_positions:
+        chosen_pos = random.choice(available_positions)
+        return {'pos': chosen_pos, 'type': 'normal'}
+    
+    # Nếu không còn chỗ trống, trả về None (báo hiệu chiến thắng)
+    return None
