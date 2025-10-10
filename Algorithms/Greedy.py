@@ -37,7 +37,6 @@ def find_path_greedy(start_pos, food_pos_list, map_data, snake_body, heuristic_f
         visited_count += 1
 
         if current_pos == target_pos:
-
             return {
                 'path': path, 
                 'visited_nodes': list(visited_set),

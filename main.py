@@ -26,7 +26,7 @@ def main():
         #Tải file nhạc
         pygame.mixer.music.load("Assets/Sounds/NhacGame.mp3")
         # Đặt âm lượng (giá trị từ 0.0 đến 1.0)
-        pygame.mixer.music.set_volume(0.5) # 50% âm lượng
+        pygame.mixer.music.set_volume(1.0) # 50% âm lượng
         # Bật nhạc, lặp lại vô tận (loops=-1)
         pygame.mixer.music.play(loops=-1)
 
@@ -46,7 +46,7 @@ def main():
         
         # 2. Dựa vào lựa chọn của người dùng, gọi màn hình game tương ứng
         if selected_mode == "AI":
-            # Chạy màn hình AI. Sau khi màn hình này kết thúc (người dùng bấm "Back"),
+            # Chạy màn hình AI. Sau khi màn hình n ày kết thúc (người dùng bấm "Back"),
             # vòng lặp 'while True' sẽ lặp lại và hiển thị lại Main Menu.
             AI_screen.run_ai_game(screen, clock, selected_map)
         

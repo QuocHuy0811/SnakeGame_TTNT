@@ -13,7 +13,7 @@ def find_path_beam_search(start_pos, food_pos_list, map_data, snake_body):
     :return: Dictionary chứa đường đi và các thống kê.
     """
     # --- THAM SỐ CỦA BEAM SEARCH ---
-    BEAM_WIDTH = 5  # Giữ lại 3 nút tốt nhất ở mỗi cấp độ
+    BEAM_WIDTH = 5  # Giữ lại 5 nút tốt nhất ở mỗi cấp độ
 
     if not food_pos_list:
         return {'path': None, 'visited_nodes': [], 'generated_count': 0, 'visited_count': 0}

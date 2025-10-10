@@ -21,7 +21,15 @@ def _check_map_solvability(map_data):
     snake_body_obstacles = snake_start[1:]
 
     # Dữ liệu map tối giản chỉ cần tường để gửi cho hàm BFS
-    temp_map_for_check = {'walls': list(map_data['walls'])}
+    width = config.AI_MAP_WIDTH_TILES
+    height = config.AI_MAP_HEIGHT_TILES
+    temp_layout = ["." * width for _ in range(height)]
+    
+    # Tạo dữ liệu map tạm thời, lần này bao gồm cả 'layout'
+    temp_map_for_check = {
+        'walls': list(map_data['walls']),
+        'layout': temp_layout
+    }
 
     # Kiểm tra từng viên thức ăn
     for food_pos in food_start:

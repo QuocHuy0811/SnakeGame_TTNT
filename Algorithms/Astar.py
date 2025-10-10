@@ -17,15 +17,13 @@ def find_path_astar(start_pos, food_pos_list, map_data, snake_body, heuristic_fu
     # A* cần tìm đường đến một mục tiêu cụ thể, nên ta sẽ chọn mục tiêu gần nhất
     # dựa trên khoảng cách Manhattan ban đầu.
     if not food_pos_list:
-
-
         return {'path': None, 'visited_nodes': [], 'generated_count': 0, 'visited_count': 0}
     
     target_pos = min(food_pos_list, key=lambda food: heuristic_func(start_pos, food))
 
     # Hàng đợi ưu tiên chứa (f_score, g_score, vị trí, đường đi)
     # f_score = g_score + h_score
-    g_score = 0                                         # Chi phí đã đi
+    g_score = 0                                     # Chi phí đã đi
     h_score = heuristic_func(start_pos, target_pos) # Chi phí ước tính để đến đích
     f_score = g_score + h_score
     
