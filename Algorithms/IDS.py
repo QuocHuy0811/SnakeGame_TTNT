@@ -29,8 +29,8 @@ def find_path_dls(start_pos, food_pos_list, map_data, snake_body, limit):
                 'visited_nodes': visited_in_dls, 
                 'visited_count': visited_count,
                 'generated_count': generated_count
-            }
-
+            }   
+    
         # Dừng việc tìm kiếm nhánh này nếu đã vượt quá giới hạn độ sâu
         if len(path) > limit:
             continue
@@ -44,7 +44,6 @@ def find_path_dls(start_pos, food_pos_list, map_data, snake_body, limit):
                 generated_count += 1
 
     # Không tìm thấy đường đi trong giới hạn độ sâu này
- 
     return {
         'path': None, 
         'visited_nodes': visited_in_dls, 

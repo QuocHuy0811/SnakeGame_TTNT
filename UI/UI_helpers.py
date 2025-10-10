@@ -147,7 +147,7 @@ def draw_map(surface, map_data):
 
 def draw_search_visualization(surface, visited_nodes, path_nodes):
     """
-    Vẽ các ô đã duyệt (màu trắng) và đường đi cuối cùng (màu đỏ).
+        Vẽ các ô đã duyệt (màu trắng) và đường đi cuối cùng (màu đỏ).
     """
     # Vẽ các ô đã duyệt trước
     for pos in visited_nodes:
