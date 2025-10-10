@@ -145,21 +145,57 @@ def draw_map(surface, map_data):
             rect = pygame.Rect(x * config.TILE_SIZE, y * config.TILE_SIZE, config.TILE_SIZE, config.TILE_SIZE)
             pygame.draw.rect(surface, wall_color, rect)
 
+# def draw_search_visualization(surface, visited_nodes, path_nodes):
+#     """
+#         Vẽ các ô đã duyệt (màu trắng) và đường đi cuối cùng (màu đỏ).
+#     """
+#     # Vẽ các ô đã duyệt trước
+#     for pos in visited_nodes:
+#         center_x = pos[0] * config.TILE_SIZE + config.TILE_SIZE // 2
+#         center_y = pos[1] * config.TILE_SIZE + config.TILE_SIZE // 2
+#         pygame.draw.circle(surface, (255, 255, 255), (center_x, center_y), 3) # Chấm trắng
+
+#     # Vẽ đường đi cuối cùng đè lên trên
+#     for pos in path_nodes:
+#         center_x = pos[0] * config.TILE_SIZE + config.TILE_SIZE // 2
+#         center_y = pos[1] * config.TILE_SIZE + config.TILE_SIZE // 2
+#         pygame.draw.circle(surface, (255, 80, 80), (center_x, center_y), 4) # Chấm đỏ
+
 def draw_search_visualization(surface, visited_nodes, path_nodes):
     """
-        Vẽ các ô đã duyệt (màu trắng) và đường đi cuối cùng (màu đỏ).
+    Vẽ số thứ tự cho các ô đã duyệt và tô đỏ các số thuộc đường đi cuối cùng.
+    
+    :param surface: Bề mặt (Surface) để vẽ lên.
+    :param visited_nodes: Danh sách các nút đã duyệt (đã có thứ tự).
+    :param path_nodes: Danh sách các nút thuộc đường đi cuối cùng.
     """
-    # Vẽ các ô đã duyệt trước
-    for pos in visited_nodes:
-        center_x = pos[0] * config.TILE_SIZE + config.TILE_SIZE // 2
-        center_y = pos[1] * config.TILE_SIZE + config.TILE_SIZE // 2
-        pygame.draw.circle(surface, (255, 255, 255), (center_x, center_y), 3) # Chấm trắng
+    # 1. Khởi tạo một font chữ nhỏ để vẽ số.
+    # Bạn có thể thay đổi kích thước '12' để số to hoặc nhỏ hơn.
+    visualization_font = pygame.font.Font(config.FONT_PATH, 10)
+    
+    # 2. Chuyển danh sách đường đi thành một 'set' để kiểm tra nhanh hơn.
+    path_set = set(path_nodes)
 
-    # Vẽ đường đi cuối cùng đè lên trên
-    for pos in path_nodes:
+    # 3. Lặp qua danh sách các nút đã duyệt bằng 'enumerate'.
+    #    'enumerate' sẽ trả về cả chỉ số (i) và giá trị (pos) cho mỗi phần tử.
+    for i, pos in enumerate(visited_nodes):
+        # Số để vẽ là chỉ số (i) + 1 (để bắt đầu từ 1 thay vì 0).
+        number_text = str(i + 1)
+        
+        # 4. Mặc định màu số là màu trắng.
+        text_color = config.COLORS['white']
+        
+        # Nếu vị trí hiện tại (pos) cũng nằm trong đường đi cuối cùng (path_set).
+        if pos in path_set:
+            # Đổi màu số thành màu đỏ nổi bật.
+            text_color = (255, 80, 80)
+
+        # 5. Tính toán tọa độ tâm của ô để vẽ số vào chính giữa.
         center_x = pos[0] * config.TILE_SIZE + config.TILE_SIZE // 2
         center_y = pos[1] * config.TILE_SIZE + config.TILE_SIZE // 2
-        pygame.draw.circle(surface, (255, 80, 80), (center_x, center_y), 4) # Chấm đỏ
+        
+        # 6. Gọi hàm draw_text để vẽ số đã được định dạng lên màn hình.
+        draw_text(number_text, visualization_font, text_color, surface, center_x, center_y)
 
 def draw_snake(surface, snake_data, food_data):
     """

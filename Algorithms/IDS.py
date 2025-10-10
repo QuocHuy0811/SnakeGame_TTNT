@@ -3,55 +3,6 @@
 """
 from Algorithms.algorithm_helpers import get_valid_neighbors
 
-def find_path_dls(start_pos, food_pos_list, map_data, snake_body, limit):
-    """
-    Thực hiện Tìm kiếm theo chiều sâu có giới hạn (Depth-Limited Search - DLS).
-    Đây là một hàm trợ giúp cho IDS.
-    :param limit: Giới hạn độ sâu cho việc tìm kiếm.
-    """
-    # DLS là DFS có limit
-
-    stack = [(start_pos, [start_pos])]  # Ngăn xếp chứa (vị trí, đường đi)
-
-    visited_in_dls = {start_pos}  # Set chứa các vị trí đã ghé thăm trong lần lặp DLS này
-    
-    generated_count = 1 # Bắt đầu với nút gốc
-    visited_count = 0
-
-    while stack:
-        current_pos, path = stack.pop()
-        visited_count += 1
-
-        # Nếu tìm thấy thức ăn, trả về kết quả
-        if current_pos in food_pos_list:
-            return {
-                'path': path, 
-                'visited_nodes': visited_in_dls, 
-                'visited_count': visited_count,
-                'generated_count': generated_count
-            }   
-    
-        # Dừng việc tìm kiếm nhánh này nếu đã vượt quá giới hạn độ sâu
-        if len(path) > limit:
-            continue
-
-        neighbors = get_valid_neighbors(current_pos, map_data, snake_body)
-        for neighbor in reversed(neighbors): # Đảo ngược để có thứ tự duyệt giống đệ quy hơn (tùy chọn)
-            if neighbor not in visited_in_dls:
-                visited_in_dls.add(neighbor)
-                new_path = path + [neighbor]
-                stack.append((neighbor, new_path))
-                generated_count += 1
-
-    # Không tìm thấy đường đi trong giới hạn độ sâu này
-    return {
-        'path': None, 
-        'visited_nodes': visited_in_dls, 
-        'visited_count': visited_count,
-        'generated_count': generated_count
-    }
-
-
 def find_path_ids(start_pos, food_pos_list, map_data, snake_body):
     """
     Tìm đường đi ngắn nhất từ start_pos đến thức ăn gần nhất bằng IDS.
@@ -63,42 +14,58 @@ def find_path_ids(start_pos, food_pos_list, map_data, snake_body):
     :return: Danh sách các tọa độ tạo thành đường đi, hoặc None nếu không tìm thấy.
     """
     if not food_pos_list:
-
-        return {'path': None, 'visited_nodes': [], 'generated_count': 0, 'visited_count': 0}
+        return {
+            'path': None, 
+            'visited_nodes': [], 
+            'generated_count': 0, 
+            'visited_count': 0
+        }
 
     layout = map_data.get('layout', [])
     max_depth = len(layout) * len(layout[0]) if layout and layout[0] else 500 # Giới hạn an toàn
     
-    all_visited_nodes = set()
-    total_generated_nodes = 0
-    total_visited_count = 0
+    generated_count = 1
+    visited_count = 0
+    
+    visited_order = []
+    unique_in_visited = set()
 
     # Lặp qua từng giới hạn độ sâu, từ 0 đến max_depth
-    for depth in range(max_depth): 
-        result = find_path_dls(start_pos, food_pos_list, map_data, snake_body, depth)
+    for depth in range(1, max_depth): 
+        current_depth_visited_set = {start_pos}
+        stack = [(start_pos, [start_pos])]
+
+        # Mô phỏng lại DLS (tìm kiếm DFS có chiều sâu)
+        while stack:
+            current_pos, path = stack.pop()
+
+            if current_pos not in unique_in_visited:
+                visited_order.append(current_pos)
+                unique_in_visited.add(current_pos)
+
+            visited_count += 1
+
+            if current_pos in food_pos_list:
+                return {
+                    'path': path,
+                    'visited_nodes': visited_order,
+                    'visited_count': visited_count,
+                    'generated_count': generated_count
+                }
+            
+            if len(path) >= depth:
+                continue
+            
+            neighbors = get_valid_neighbors(current_pos, map_data, snake_body)
+            for neighbor in reversed(neighbors): # Đảo ngược để có thứ tự duyệt giống đệ quy hơn (tùy chọn)
+                if neighbor not in current_depth_visited_set:
+                    current_depth_visited_set.add(neighbor)
+                    stack.append((neighbor, path + [neighbor]))
+                    generated_count += 1
         
-        total_generated_nodes += result.get('generated_count', 0)
-        total_visited_count += result.get('visited_count', 0)
-        
-        # Gộp các nút đã duyệt từ mỗi lần lặp DLS để có cái nhìn tổng quan
-        if result['visited_nodes']:
-            all_visited_nodes.update(result['visited_nodes'])
-
-        # Nếu DLS tìm thấy một đường đi, đó là đường đi ngắn nhất. Trả về ngay lập tức.
-        if result['path'] is not None:
-  
-            return {
-                'path': result['path'], 
-                'visited_nodes': list(all_visited_nodes),
-                'visited_count': total_visited_count,
-                'generated_count': total_generated_nodes
-            }
-
-    # Nếu vòng lặp kết thúc mà không tìm thấy, tức là không có đường đi
-
     return {
-        'path': None, 
-        'visited_nodes': list(all_visited_nodes),
-        'visited_count': total_visited_count,
-        'generated_count': total_generated_nodes
+        'path': None,
+        'visited_nodes': visited_order,
+        'visited_count': visited_count,
+        'generated_count': generated_count
     }

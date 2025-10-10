@@ -1,5 +1,3 @@
-# Algorithms/BeamSearch.py
-
 import heapq
 from Algorithms.algorithm_helpers import get_valid_neighbors, manhattan_distance
 
@@ -25,6 +23,8 @@ def find_path_beam_search(start_pos, food_pos_list, map_data, snake_body):
     pq = [(manhattan_distance(start_pos, target_pos), start_pos, [start_pos])]
     
     visited_set = {start_pos}
+    visited_order = []
+
     generated_count = 1
     visited_count = 0
 
@@ -32,14 +32,17 @@ def find_path_beam_search(start_pos, food_pos_list, map_data, snake_body):
         # Lấy tất cả các nút hiện tại trong hàng đợi để xử lý cấp độ này
         current_level_nodes = [heapq.heappop(pq) for _ in range(len(pq))]
         visited_count += len(current_level_nodes)
-        
+        # Thêm các nút của cấp độ hiện tại vào danh sách thứ tự
+        for _, pos, _ in current_level_nodes:
+            visited_order.append(pos)
+
         next_level_candidates = []
 
         for h_score, current_pos, path in current_level_nodes:
             if current_pos == target_pos:
                 return {
                     'path': path,
-                    'visited_nodes': list(visited_set),
+                    'visited_nodes': visited_order,
                     'visited_count': visited_count,
                     'generated_count': generated_count
                 }
@@ -53,9 +56,7 @@ def find_path_beam_search(start_pos, food_pos_list, map_data, snake_body):
                     heapq.heappush(next_level_candidates, (new_h, neighbor, path + [neighbor]))
                     generated_count += 1
         
-        # --- BƯỚC CẮT TỈA (PRUNING) CỦA BEAM SEARCH ---
         # Chỉ giữ lại BEAM_WIDTH ứng viên tốt nhất cho cấp độ tiếp theo
-        
         # Tạo hàng đợi mới từ các ứng viên tốt nhất
         pq = []
         num_to_keep = min(BEAM_WIDTH, len(next_level_candidates))
@@ -66,7 +67,7 @@ def find_path_beam_search(start_pos, food_pos_list, map_data, snake_body):
     # Không tìm thấy đường đi
     return {
         'path': None,
-        'visited_nodes': list(visited_set),
+        'visited_nodes': visited_order,
         'visited_count': visited_count,
         'generated_count': generated_count
     }

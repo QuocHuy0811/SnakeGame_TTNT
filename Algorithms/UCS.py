@@ -21,7 +21,9 @@ def find_path_ucs(start_pos, food_pos_list, map_data, snake_body):
     # Chi phí ở đây chính là g_score (quãng đường đã đi)
     cost = 0
     pq = [(cost, start_pos, [start_pos])]
+
     visited_set = {start_pos}
+    visited_order = []
 
     generated_count = 1 # Bắt đầu với nút gốc
     visited_count = 0
@@ -31,12 +33,13 @@ def find_path_ucs(start_pos, food_pos_list, map_data, snake_body):
         current_cost, current_pos, path = heapq.heappop(pq)
         visited_count += 1
         #  pq được sx từ bé đén lớn -> lấy ra thì luôn là phần tử có chi phí nhỏ nhất
+        visited_order.append(current_pos)
 
         # Nếu vị trí hiện tại là một trong các mục tiêu, trả về đường đi
         if current_pos in food_pos_list:
             return {
                 'path': path, 
-                'visited_nodes': list(visited_set),
+                'visited_nodes': visited_order,
                 'visited_count': visited_count,
                 'generated_count': generated_count
             }
@@ -51,7 +54,7 @@ def find_path_ucs(start_pos, food_pos_list, map_data, snake_body):
 
     return {
         'path': None, 
-        'visited_nodes': list(visited_set),
+        'visited_nodes': visited_order,
         'visited_count': visited_count,
         'generated_count': generated_count
     }
