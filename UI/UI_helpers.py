@@ -145,22 +145,6 @@ def draw_map(surface, map_data):
             rect = pygame.Rect(x * config.TILE_SIZE, y * config.TILE_SIZE, config.TILE_SIZE, config.TILE_SIZE)
             pygame.draw.rect(surface, wall_color, rect)
 
-# def draw_search_visualization(surface, visited_nodes, path_nodes):
-#     """
-#         Vẽ các ô đã duyệt (màu trắng) và đường đi cuối cùng (màu đỏ).
-#     """
-#     # Vẽ các ô đã duyệt trước
-#     for pos in visited_nodes:
-#         center_x = pos[0] * config.TILE_SIZE + config.TILE_SIZE // 2
-#         center_y = pos[1] * config.TILE_SIZE + config.TILE_SIZE // 2
-#         pygame.draw.circle(surface, (255, 255, 255), (center_x, center_y), 3) # Chấm trắng
-
-#     # Vẽ đường đi cuối cùng đè lên trên
-#     for pos in path_nodes:
-#         center_x = pos[0] * config.TILE_SIZE + config.TILE_SIZE // 2
-#         center_y = pos[1] * config.TILE_SIZE + config.TILE_SIZE // 2
-#         pygame.draw.circle(surface, (255, 80, 80), (center_x, center_y), 4) # Chấm đỏ
-
 def draw_search_visualization(surface, visited_nodes, path_nodes):
     """
     Vẽ số thứ tự cho các ô đã duyệt và tô đỏ các số thuộc đường đi cuối cùng.
@@ -188,7 +172,9 @@ def draw_search_visualization(surface, visited_nodes, path_nodes):
         # Nếu vị trí hiện tại (pos) cũng nằm trong đường đi cuối cùng (path_set).
         if pos in path_set:
             # Đổi màu số thành màu đỏ nổi bật.
-            text_color = (255, 80, 80)
+            # text_color = (255, 80, 80)
+            text_color = (255, 255, 0)
+            
 
         # 5. Tính toán tọa độ tâm của ô để vẽ số vào chính giữa.
         center_x = pos[0] * config.TILE_SIZE + config.TILE_SIZE // 2
