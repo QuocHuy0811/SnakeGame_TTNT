@@ -4,55 +4,6 @@ import config
 from UI import UI_helpers
 from Algorithms import BFS
 
-# def _check_map_solvability(map_data):
-#     """
-#     Kiểm tra xem map có thể giải được không bằng cách xét đường đi
-#     từ vị trí ban đầu của rắn đến TẤT CẢ các viên thức ăn.
-#     """
-#     # Xử lý cả hai định dạng dữ liệu rắn
-#     snake_data = map_data.get('snake_start')
-#     snake_body = []
-    
-#     if isinstance(snake_data, dict):
-#         snake_body = snake_data.get('body', [])
-#     elif isinstance(snake_data, list):
-#         if snake_data:
-#              snake_body = list(reversed(snake_data))
-
-#     # --- SỬA LỖI: Lấy TẤT CẢ thức ăn ---
-#     food_targets = []
-#     if map_data.get('food_mode') == 'sequential':
-#         # Lấy toàn bộ chuỗi thức ăn
-#         food_targets = map_data.get('food_sequence', [])
-#     else:
-#         # Lấy toàn bộ thức ăn đã đặt
-#         food_targets = list(map_data.get('food_start', []))
-#     # --- KẾT THÚC SỬA LỖI ---
-
-#     if not snake_body or not food_targets:
-#         return False
-
-#     snake_head = snake_body[0]
-#     snake_body_obstacles = snake_body[1:]
-
-#     width = config.AI_MAP_WIDTH_TILES
-#     height = config.AI_MAP_HEIGHT_TILES
-#     temp_layout = ["." * width for _ in range(height)]
-    
-#     temp_map_for_check = {
-#         'walls': list(map_data.get('walls', set())),
-#         'layout': temp_layout
-#     }
-
-#     # Lặp qua TỪNG viên thức ăn để kiểm tra
-#     for food_pos in food_targets:
-#         result = BFS.find_path_bfs(snake_head, [food_pos], temp_map_for_check, snake_body_obstacles)
-#         # Nếu chỉ một viên không đến được, toàn bộ map không giải được
-#         if not result or not result.get('path'):
-#             return False
-
-#     # Nếu tất cả các viên đều có thể đến được
-#     return True
 def _check_map_solvability(map_data):
     """
     Kiểm tra xem map có thể giải được không bằng cách mô phỏng chính xác
@@ -154,7 +105,7 @@ def run_map_editor(screen, clock):
     map_data = {
         'walls': initial_walls,
         'snake_start': [],
-        'food_start': [] # ĐÃ SỬA: Dùng list thay cho set
+        'food_start': []
     }
 
     panel_center_x = panel_width / 2
@@ -211,7 +162,6 @@ def run_map_editor(screen, clock):
                     if not map_data['snake_start'] or target_food_count == 0:
                         print("Lỗi: Cần có rắn và số lượng thức ăn > 0!")
                     else:
-                        # ĐÃ SỬA: Không cần sorted() nữa
                         ordered_food = list(map_data['food_start'])
                         food_needed = target_food_count - len(ordered_food)
                         
@@ -283,13 +233,11 @@ def run_map_editor(screen, clock):
                 if mouse_buttons[0]:
                     if active_tool == 'wall' and hover_pos not in map_data['food_start'] and hover_pos not in map_data['snake_start']:
                         map_data['walls'].add(hover_pos)
-                    # ĐÃ SỬA: Dùng .append() và kiểm tra trùng lặp
                     elif active_tool == 'food' and len(map_data['food_start']) < target_food_count and hover_pos not in map_data['walls'] and hover_pos not in map_data['snake_start'] and hover_pos not in map_data['food_start']:
                         map_data['food_start'].append(hover_pos)
                 elif mouse_buttons[2]:
                     if active_tool == 'wall':
                         map_data['walls'].discard(hover_pos)
-                    # ĐÃ SỬA: Dùng .remove() và kiểm tra tồn tại
                     elif active_tool == 'food':
                         if hover_pos in map_data['food_start']:
                             map_data['food_start'].remove(hover_pos)

@@ -1,4 +1,4 @@
-import time # Thêm thư viện time để đo thời gian tìm kiếm
+import time
 from functools import partial
 import pygame
 from Algorithms.algorithm_helpers import manhattan_distance, euclidean_distance
@@ -36,6 +36,7 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
     title_font = pygame.font.Font(config.FONT_PATH, 32)
     info_font = pygame.font.Font(config.FONT_PATH, 22)
     end_font = pygame.font.Font(config.FONT_PATH, 60)
+    instruction_font = pygame.font.Font(config.FONT_PATH, 18)
     background_effects.init_background(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 1000)
 
     player1_controller = GameController(selected_map_name)
@@ -75,7 +76,7 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
     close_button = UI_helpers.create_button(0, 0, 40, 40, "X")
 
     # --- HÀM VẼ ---
-    def _draw_game_panel(surface, pos_x, title, title_color, controller, time, visited_nodes, path_nodes):
+    def _draw_game_panel(surface, pos_x, title, title_color, controller, time, visited_nodes, path_nodes, instruction_text=None):
         game_data = controller.get_state()
         UI_helpers.draw_text(title, title_font, title_color, screen, pos_x + map_width_px / 2, 40)
         surface.fill(config.COLORS['bg'])
@@ -94,6 +95,9 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
         stats_y = 80 + map_height_px + 40
         UI_helpers.draw_text(f"Score: {score}/{total_food}", info_font, config.COLORS['white'], screen, pos_x + map_width_px/2, stats_y)
         UI_helpers.draw_text(f"Time: {time:.2f}s | Steps: {game_data['steps']}", info_font, config.COLORS['white'], screen, pos_x + map_width_px/2, stats_y + 30)
+        if instruction_text: # Nếu có nội dung hướng dẫn thì mới vẽ
+            instruction_y = stats_y + 60
+            UI_helpers.draw_text(instruction_text, instruction_font, config.COLORS['white'], screen, pos_x + map_width_px/2, instruction_y)
 
     def _draw_comparison_panel(p1_res, p2_res):
         popup_width, popup_height = 600, 480 # Tăng kích thước
@@ -183,6 +187,17 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
             if current_ticks - last_move_time > move_interval:
                 if player1_controller.get_state()['outcome'] == "Playing" and player2_controller.get_state()['outcome'] == "Playing":
                     if player1_mode == "Player": player1_controller.update()
+                    elif player1_mode == "OnlineSearch":
+                        search_start = time.perf_counter()
+                        search_result = OnlineSearch.find_best_next_move(player1_controller.get_state()['snake'], player1_controller.get_state()['food'], player1_controller.map_data)
+                        p1_total_search += time.perf_counter() - search_start
+                        
+                        next_move = search_result.get('move')
+                        if next_move:
+                            player1_controller.set_direction(next_move)
+                            player1_controller.update() # Dùng hàm update() chuẩn
+                        else:
+                            player1_controller.outcome = "Stuck"
                     else:
                         if not p1_ai_path:
                             search_start = time.perf_counter(); search_result = find_path_for_ai(player1_controller, player1_mode); p1_total_search += time.perf_counter() - search_start
@@ -199,6 +214,17 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
                 
                 if player2_controller.get_state()['outcome'] == "Playing" and player1_controller.get_state()['outcome'] == "Playing":
                     if player2_mode == "Player": player2_controller.update()
+                    elif player2_mode == "OnlineSearch":
+                        search_start = time.perf_counter()
+                        search_result = OnlineSearch.find_best_next_move(player2_controller.get_state()['snake'], player2_controller.get_state()['food'], player2_controller.map_data)
+                        p2_total_search += time.perf_counter() - search_start
+                        
+                        next_move = search_result.get('move')
+                        if next_move:
+                            player2_controller.set_direction(next_move)
+                            player2_controller.update()
+                        else:
+                            player2_controller.outcome = "Stuck"
                     else:
                         if not p2_ai_path:
                             search_start = time.perf_counter(); search_result = find_path_for_ai(player2_controller, player2_mode); p2_total_search += time.perf_counter() - search_start
@@ -227,8 +253,12 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
 
         # --- VẼ LÊN MÀN HÌNH ---
         background_effects.draw_background(screen)
-        _draw_game_panel(game_surface_player, player_map_x, f"P1 ({player1_mode})", config.COLORS['highlight'], player1_controller, player1_time, p1_visited_nodes, p1_ai_path)
-        _draw_game_panel(game_surface_ai, ai_map_x, f"P2 ({player2_mode})", config.COLORS['combo'], player2_controller, player2_time, p2_visited_nodes, p2_ai_path)
+
+        p1_instruction = "Di chuyển bằng các phím WASD" if player1_mode == "Player" else None
+        p2_instruction = "Di chuyển bằng các phím mũi tên" if player2_mode == "Player" else None
+
+        _draw_game_panel(game_surface_player, player_map_x, f"P1 ({player1_mode})", config.COLORS['highlight'], player1_controller, player1_time, p1_visited_nodes, p1_ai_path, instruction_text=p1_instruction)
+        _draw_game_panel(game_surface_ai, ai_map_x, f"P2 ({player2_mode})", config.COLORS['combo'], player2_controller, player2_time, p2_visited_nodes, p2_ai_path, instruction_text=p2_instruction)
         for btn_data in buttons.values(): UI_helpers.draw_button(screen, btn_data)
         
         if show_comparison_panel:
