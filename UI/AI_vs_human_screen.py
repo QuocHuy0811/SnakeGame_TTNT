@@ -76,7 +76,6 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
 
     # --- HÀM VẼ ---
     def _draw_game_panel(surface, pos_x, title, title_color, controller, time, visited_nodes, path_nodes):
-        # ... (Nội dung hàm này giữ nguyên như cũ)
         game_data = controller.get_state()
         UI_helpers.draw_text(title, title_font, title_color, screen, pos_x + map_width_px / 2, 40)
         surface.fill(config.COLORS['bg'])
@@ -143,10 +142,10 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
             if event.type == pygame.QUIT: pygame.quit(); exit()
             if UI_helpers.handle_button_events(event, buttons['back']): running = False
 
-            if UI_helpers.handle_button_events(event, buttons['change_mode_p1']): #... (giữ nguyên)
+            if UI_helpers.handle_button_events(event, buttons['change_mode_p1']):
                 new_mode = AI_selection_screen.run_algorithm_selection(screen)
                 if new_mode is not None: player1_mode = new_mode; buttons['change_mode_p1']['text'] = f"P1: {player1_mode}"
-            if UI_helpers.handle_button_events(event, buttons['change_mode_p2']): #... (giữ nguyên)
+            if UI_helpers.handle_button_events(event, buttons['change_mode_p2']):
                 new_mode = AI_selection_screen.run_algorithm_selection(screen)
                 if new_mode is not None: player2_mode = new_mode; buttons['change_mode_p2']['text'] = f"P2: {player2_mode}"
 
@@ -164,7 +163,7 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
             if UI_helpers.handle_button_events(event, close_button) and show_comparison_panel:
                 show_comparison_panel = False # Đóng bảng so sánh
 
-            if event.type == pygame.KEYDOWN and game_status == "playing": #... (giữ nguyên)
+            if event.type == pygame.KEYDOWN and game_status == "playing": 
                 if player1_mode == "Player":
                     if event.key == pygame.K_w: player1_controller.set_direction('UP')
                     elif event.key == pygame.K_s: player1_controller.set_direction('DOWN')
@@ -182,25 +181,34 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
             if player2_controller.get_state()['outcome'] == "Playing": player2_time = (current_ticks - start_time) / 1000.0
 
             if current_ticks - last_move_time > move_interval:
-                if player1_controller.get_state()['outcome'] == "Playing":
+                if player1_controller.get_state()['outcome'] == "Playing" and player2_controller.get_state()['outcome'] == "Playing":
                     if player1_mode == "Player": player1_controller.update()
                     else:
                         if not p1_ai_path:
                             search_start = time.perf_counter(); search_result = find_path_for_ai(player1_controller, player1_mode); p1_total_search += time.perf_counter() - search_start
                             p1_ai_path, p1_visited_nodes = search_result.get('path'), search_result.get('visited_nodes', [])
                             p1_total_visited += search_result.get('visited_count', 0); p1_total_generated += search_result.get('generated_count', 0)
-                            p1_animation_step = 1
+                            # p1_animation_step = 1
+                            if p1_ai_path is None:
+                                player1_controller.outcome = "Stuck" # Gán trạng thái thua
+                            else:
+                                p1_animation_step = 1
+
                         if p1_ai_path and p1_animation_step < len(p1_ai_path): player1_controller.update_by_path_step(p1_ai_path[p1_animation_step]); p1_animation_step += 1
                         if p1_ai_path and p1_animation_step >= len(p1_ai_path): p1_ai_path, p1_visited_nodes = [], []
                 
-                if player2_controller.get_state()['outcome'] == "Playing":
+                if player2_controller.get_state()['outcome'] == "Playing" and player1_controller.get_state()['outcome'] == "Playing":
                     if player2_mode == "Player": player2_controller.update()
                     else:
                         if not p2_ai_path:
                             search_start = time.perf_counter(); search_result = find_path_for_ai(player2_controller, player2_mode); p2_total_search += time.perf_counter() - search_start
                             p2_ai_path, p2_visited_nodes = search_result.get('path'), search_result.get('visited_nodes', [])
                             p2_total_visited += search_result.get('visited_count', 0); p2_total_generated += search_result.get('generated_count', 0)
-                            p2_animation_step = 1
+                            # p2_animation_step = 1
+                            if p2_ai_path is None:
+                                player2_controller.outcome = "Stuck" # Gán trạng thái thua
+                            else:
+                                p2_animation_step = 1
                         if p2_ai_path and p2_animation_step < len(p2_ai_path): player2_controller.update_by_path_step(p2_ai_path[p2_animation_step]); p2_animation_step += 1
                         if p2_ai_path and p2_animation_step >= len(p2_ai_path): p2_ai_path, p2_visited_nodes = [], []
                 last_move_time = current_ticks

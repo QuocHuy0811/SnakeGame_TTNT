@@ -19,7 +19,7 @@ def find_path_dfs(start_pos, food_pos_list, map_data, snake_body):
     stack = [(start_pos, [start_pos])]  # Ngăn xếp chứa (vị trí, đường đi tới vị trí đó)
 
     visited_set = {start_pos} # Set chứa các vị trí đã ghé thăm
-    visited_order = []
+    visited_order = [start_pos]
 
     generated_count = 1 # Bắt đầu với nút gốc
     visited_count = 0
@@ -28,7 +28,7 @@ def find_path_dfs(start_pos, food_pos_list, map_data, snake_body):
         # Lấy phần tử cuối cùng ra (LIFO)
         current_pos, path = stack.pop() 
         visited_count += 1
-        visited_order.append(current_pos)
+        # visited_order.append(current_pos)
 
         # Nếu vị trí hiện tại là thức ăn, trả về đường đi
         if current_pos in food_pos_list:
@@ -44,6 +44,7 @@ def find_path_dfs(start_pos, food_pos_list, map_data, snake_body):
         for neighbor in neighbors:
             if neighbor not in visited_set:
                 visited_set.add(neighbor)
+                visited_order.append(neighbor)
                 new_path = path + [neighbor]
                 stack.append((neighbor, new_path))
                 generated_count += 1
