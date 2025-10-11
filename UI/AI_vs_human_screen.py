@@ -1,4 +1,4 @@
-import time # Thêm thư viện time để đo thời gian tìm kiếm
+import time 
 from functools import partial
 import pygame
 from Algorithms.algorithm_helpers import manhattan_distance, euclidean_distance
@@ -183,8 +183,21 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
 
             if current_ticks - last_move_time > move_interval:
                 if player1_controller.get_state()['outcome'] == "Playing":
-                    if player1_mode == "Player": player1_controller.update()
-                    else:
+                    if player1_mode == "Player": 
+                        player1_controller.update()
+                    # --- START CORRECTION FOR PLAYER 1 ---
+                    elif player1_mode == "OnlineSearch":
+                        search_start = time.perf_counter()
+                        search_result = find_path_for_ai(player1_controller, player1_mode)
+                        p1_total_search += time.perf_counter() - search_start
+                        
+                        next_move = search_result.get('move')
+                        if next_move:
+                            player1_controller.set_direction(next_move)
+                            player1_controller.update()
+                        else:
+                            player1_controller.outcome = "Stuck"
+                    else: # Logic for all other path-based algorithms
                         if not p1_ai_path:
                             search_start = time.perf_counter(); search_result = find_path_for_ai(player1_controller, player1_mode); p1_total_search += time.perf_counter() - search_start
                             p1_ai_path, p1_visited_nodes = search_result.get('path'), search_result.get('visited_nodes', [])
@@ -192,10 +205,24 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
                             p1_animation_step = 1
                         if p1_ai_path and p1_animation_step < len(p1_ai_path): player1_controller.update_by_path_step(p1_ai_path[p1_animation_step]); p1_animation_step += 1
                         if p1_ai_path and p1_animation_step >= len(p1_ai_path): p1_ai_path, p1_visited_nodes = [], []
+                    # --- END CORRECTION FOR PLAYER 1 ---
                 
                 if player2_controller.get_state()['outcome'] == "Playing":
-                    if player2_mode == "Player": player2_controller.update()
-                    else:
+                    if player2_mode == "Player": 
+                        player2_controller.update()
+                    # --- START CORRECTION FOR PLAYER 2 ---
+                    elif player2_mode == "OnlineSearch":
+                        search_start = time.perf_counter()
+                        search_result = find_path_for_ai(player2_controller, player2_mode)
+                        p2_total_search += time.perf_counter() - search_start
+                        
+                        next_move = search_result.get('move')
+                        if next_move:
+                            player2_controller.set_direction(next_move)
+                            player2_controller.update()
+                        else:
+                            player2_controller.outcome = "Stuck"
+                    else: # Logic for all other path-based algorithms
                         if not p2_ai_path:
                             search_start = time.perf_counter(); search_result = find_path_for_ai(player2_controller, player2_mode); p2_total_search += time.perf_counter() - search_start
                             p2_ai_path, p2_visited_nodes = search_result.get('path'), search_result.get('visited_nodes', [])
@@ -203,6 +230,7 @@ def run_ai_vs_human_screen(screen, clock, selected_map_name):
                             p2_animation_step = 1
                         if p2_ai_path and p2_animation_step < len(p2_ai_path): player2_controller.update_by_path_step(p2_ai_path[p2_animation_step]); p2_animation_step += 1
                         if p2_ai_path and p2_animation_step >= len(p2_ai_path): p2_ai_path, p2_visited_nodes = [], []
+                    # --- END CORRECTION FOR PLAYER 2 ---
                 last_move_time = current_ticks
 
             # --- LOGIC KẾT THÚC GAME ---
