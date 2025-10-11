@@ -4,43 +4,113 @@ import config
 from UI import UI_helpers
 from Algorithms import BFS
 
+# def _check_map_solvability(map_data):
+#     """
+#     Kiểm tra xem map có thể giải được không bằng cách xét đường đi
+#     từ vị trí ban đầu của rắn đến TẤT CẢ các viên thức ăn.
+#     """
+#     # Xử lý cả hai định dạng dữ liệu rắn
+#     snake_data = map_data.get('snake_start')
+#     snake_body = []
+    
+#     if isinstance(snake_data, dict):
+#         snake_body = snake_data.get('body', [])
+#     elif isinstance(snake_data, list):
+#         if snake_data:
+#              snake_body = list(reversed(snake_data))
+
+#     # --- SỬA LỖI: Lấy TẤT CẢ thức ăn ---
+#     food_targets = []
+#     if map_data.get('food_mode') == 'sequential':
+#         # Lấy toàn bộ chuỗi thức ăn
+#         food_targets = map_data.get('food_sequence', [])
+#     else:
+#         # Lấy toàn bộ thức ăn đã đặt
+#         food_targets = list(map_data.get('food_start', []))
+#     # --- KẾT THÚC SỬA LỖI ---
+
+#     if not snake_body or not food_targets:
+#         return False
+
+#     snake_head = snake_body[0]
+#     snake_body_obstacles = snake_body[1:]
+
+#     width = config.AI_MAP_WIDTH_TILES
+#     height = config.AI_MAP_HEIGHT_TILES
+#     temp_layout = ["." * width for _ in range(height)]
+    
+#     temp_map_for_check = {
+#         'walls': list(map_data.get('walls', set())),
+#         'layout': temp_layout
+#     }
+
+#     # Lặp qua TỪNG viên thức ăn để kiểm tra
+#     for food_pos in food_targets:
+#         result = BFS.find_path_bfs(snake_head, [food_pos], temp_map_for_check, snake_body_obstacles)
+#         # Nếu chỉ một viên không đến được, toàn bộ map không giải được
+#         if not result or not result.get('path'):
+#             return False
+
+#     # Nếu tất cả các viên đều có thể đến được
+#     return True
 def _check_map_solvability(map_data):
     """
-        Kiểm tra xem map có thể giải được không.
-        Điều kiện: Phải có đường đi từ đầu rắn đến TẤT CẢ thức ăn.
+    Kiểm tra xem map có thể giải được không bằng cách mô phỏng chính xác
+    trạng thái của rắn sau mỗi lần ăn mồi theo đúng thứ tự.
     """
-    snake_start_data = map_data.get('snake_start')
-    if not isinstance(snake_start_data, dict) or 'body' not in snake_start_data:
-        return False
-    snake_start_body = snake_start_data.get('body')
+    # Xử lý cả hai định dạng dữ liệu rắn
+    snake_data = map_data.get('snake_start')
+    initial_snake_body = []
     
+    if isinstance(snake_data, dict):
+        initial_snake_body = snake_data.get('body', [])
+    elif isinstance(snake_data, list):
+        if snake_data:
+             initial_snake_body = list(reversed(snake_data))
+
     food_targets = []
     if map_data.get('food_mode') == 'sequential':
-        if map_data.get('food_sequence'):
-            food_targets.append(map_data['food_sequence'][0])
+        food_targets = map_data.get('food_sequence', [])
     else:
         food_targets = list(map_data.get('food_start', []))
 
-    if not snake_start_body or not food_targets:
+    if not initial_snake_body or not food_targets:
         return False
-    
-    snake_head = snake_start_body[0]
-    snake_body_obstacles = snake_start_body[1:]
 
+    # --- BẮT ĐẦU MÔ PHỎNG NÂNG CAO ---
+    temp_snake_body = list(initial_snake_body)
+    
     width = config.AI_MAP_WIDTH_TILES
     height = config.AI_MAP_HEIGHT_TILES
     temp_layout = ["." * width for _ in range(height)]
-    
     temp_map_for_check = {
-        'walls': list(map_data['walls']),
+        'walls': list(map_data.get('walls', set())),
         'layout': temp_layout
     }
 
+    # Lặp qua từng viên thức ăn THEO THỨ TỰ
     for food_pos in food_targets:
-        result = BFS.find_path_bfs(snake_head, [food_pos], temp_map_for_check, snake_body_obstacles)
+        current_head = temp_snake_body[0]
+        current_obstacles = temp_snake_body[1:]
+
+        # Tìm đường từ vị trí hiện tại đến viên thức ăn tiếp theo
+        result = BFS.find_path_bfs(current_head, [food_pos], temp_map_for_check, current_obstacles)
+        
+        # Nếu không tìm thấy đường đi ở bất kỳ bước nào, map không giải được
         if not result or not result.get('path'):
             return False
 
+        # --- MÔ PHỎNG RẮN DI CHUYỂN VÀ DÀI RA CHÍNH XÁC ---
+        path = result['path']
+        current_length = len(temp_snake_body)
+        
+        # Thân rắn mới sẽ bao gồm đường đi (đảo ngược) nối với thân cũ,
+        # sau đó được cắt theo chiều dài mới (dài hơn 1).
+        # Logic này mô phỏng đúng việc thân rắn chiếm lấy các ô trên đường đi.
+        new_body_candidate = list(reversed(path)) + temp_snake_body
+        temp_snake_body = new_body_candidate[:current_length + 1]
+
+    # Nếu vòng lặp kết thúc (tất cả thức ăn đều được ăn thành công)
     return True
 
 def run_map_editor(screen, clock):
