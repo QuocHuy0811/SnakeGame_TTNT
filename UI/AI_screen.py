@@ -289,17 +289,11 @@ def run_ai_game(screen, clock, selected_map_name):
     map_end_x = game_area_x + game_area_width
     middle_area_center_x = map_end_x + (panel_x - map_end_x) / 2
     stop_button = UI_helpers.create_button(middle_area_center_x - 100, 480, 200, 50, "Stop")
-    fast_forward_button = UI_helpers.create_button(middle_area_center_x - 100, 550, 200, 50, "Tua nhanh (x10)")
+    fast_forward_button = UI_helpers.create_button(middle_area_center_x - 100, 550, 200, 50, "Fast/Normal")
     
     if selected_mode == "Player":
         buttons['solve']['is_enabled'] = False
         buttons['solve']['text'] = "Start Game"
-    
-    # --- Bật tắt nút Skip ---
-    if controller.map_data.get('food_mode') == 'sequential':
-        fast_forward_button['is_enabled'] = True
-    else:
-        fast_forward_button['is_enabled'] = True
 
     running = True
     while running:
@@ -361,8 +355,6 @@ def run_ai_game(screen, clock, selected_map_name):
                     target_food_pos = None
                     if selected_mode == "Player":
                         game_state = "PLAYER_READY"
-                    # Khóa Fast Forward
-                    fast_forward_button['is_enabled'] = True
 
             if UI_helpers.handle_button_events(event, buttons['back_to_menu']): 
                 running = False
@@ -391,14 +383,6 @@ def run_ai_game(screen, clock, selected_map_name):
                     game_state = "PLAYER_READY"
                 else: # Các chế độ AI
                     game_state = "IDLE"
-                
-                # Bật/Tắt Skip
-                if controller.map_data.get('food_mode') == 'sequential':
-                    # Nếu là map tự tạo, khóa nút Fast Forward
-                    fast_forward_button['is_enabled'] = True
-                else:
-                    # Nếu là map thường, bật lại nút Skip
-                    fast_forward_button['is_enabled'] = True
 
             if UI_helpers.handle_button_events(event, buttons['solve']):
                 if game_state == "IDLE" or game_state == "PLAYER_READY":
@@ -443,7 +427,7 @@ def run_ai_game(screen, clock, selected_map_name):
                 # Tạm dừng màn hình game này và gọi hàm để chạy màn hình Lịch sử.
                 history_screen.run_history_screen(screen, clock)
 
-            # Kiểm tra sự kiện click vào nút "Skip".
+            # Kiểm tra sự kiện click vào nút "Fast/Normal".
             # Chỉ hoạt động khi game đang trong các trạng thái của AI (AI_AUTOPLAY, ANIMATING_PATH).
             if UI_helpers.handle_button_events(event, fast_forward_button) and game_state in ["AI_AUTOPLAY", "ANIMATING_PATH", "VISUALIZING"]:
                 # Đảo ngược trạng thái tua nhanh (True -> False, False -> True)
