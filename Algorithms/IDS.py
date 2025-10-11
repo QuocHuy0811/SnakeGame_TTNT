@@ -30,7 +30,7 @@ def find_path_ids(start_pos, food_pos_list, map_data, snake_body):
     visited_order = []
     unique_in_visited = set()
 
-    # Lặp qua từng giới hạn độ sâu, từ 0 đến max_depth
+    # Lặp qua từng giới hạn độ sâu, từ 1 đến max_depth
     for depth in range(1, max_depth): 
         current_depth_visited_set = {start_pos}
         stack = [(start_pos, [start_pos])]
