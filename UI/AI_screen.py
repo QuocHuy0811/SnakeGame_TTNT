@@ -216,8 +216,9 @@ def run_ai_game(screen, clock, selected_map_name):
     # Lưu mốc thời gian (ms) của lần di chuyển gần nhất trong diễn hoạt.
     last_animation_time = 0 
     # Khoảng thời gian (ms) giữa mỗi bước di chuyển của rắn, quyết định tốc độ diễn hoạt.
-    animation_interval = 80
-
+    NORMAL_ANIMATION_INTERVAL = 80 # Tốc độ thường
+    FAST_ANIMATION_INTERVAL = 8    # Tốc độ nhanh gấp 10 lần
+    is_fast_forwarding = False
     # --- NHÓM BIẾN TRỰC QUAN HÓA (VISUALIZATION) ---
     # Mục đích: Hiển thị quá trình "suy nghĩ" của thuật toán trước khi rắn di chuyển.
 
@@ -288,7 +289,7 @@ def run_ai_game(screen, clock, selected_map_name):
     map_end_x = game_area_x + game_area_width
     middle_area_center_x = map_end_x + (panel_x - map_end_x) / 2
     stop_button = UI_helpers.create_button(middle_area_center_x - 100, 480, 200, 50, "Stop")
-    skip_button = UI_helpers.create_button(middle_area_center_x - 100, 550, 200, 50, "Skip")
+    fast_forward_button = UI_helpers.create_button(middle_area_center_x - 100, 550, 200, 50, "Tua nhanh (x10)")
     
     if selected_mode == "Player":
         buttons['solve']['is_enabled'] = False
@@ -296,9 +297,9 @@ def run_ai_game(screen, clock, selected_map_name):
     
     # --- Bật tắt nút Skip ---
     if controller.map_data.get('food_mode') == 'sequential':
-        skip_button['is_enabled'] = False
+        fast_forward_button['is_enabled'] = True
     else:
-        skip_button['is_enabled'] = True
+        fast_forward_button['is_enabled'] = True
 
     running = True
     while running:
@@ -310,12 +311,12 @@ def run_ai_game(screen, clock, selected_map_name):
         # Cập nhật hover
         for btn in buttons.values(): 
             UI_helpers.update_button_hover_state(btn, mouse_pos)
-        UI_helpers.update_button_hover_state(skip_button, mouse_pos)
+        UI_helpers.update_button_hover_state(fast_forward_button, mouse_pos)
         if game_state == "ANIMATING_PATH":
             UI_helpers.update_button_hover_state(stop_button, mouse_pos)
 
         if game_state in ["AI_AUTOPLAY", "VISUALIZING", "ANIMATING_PATH"]:
-            UI_helpers.update_button_hover_state(skip_button, mouse_pos)
+            UI_helpers.update_button_hover_state(fast_forward_button, mouse_pos)
 
         # ==================== A. XỬ LÝ SỰ KIỆN ====================
         for event in pygame.event.get():
@@ -360,8 +361,8 @@ def run_ai_game(screen, clock, selected_map_name):
                     target_food_pos = None
                     if selected_mode == "Player":
                         game_state = "PLAYER_READY"
-                    # Khóa Skip
-                    skip_button['is_enabled'] = False
+                    # Khóa Fast Forward
+                    fast_forward_button['is_enabled'] = True
 
             if UI_helpers.handle_button_events(event, buttons['back_to_menu']): 
                 running = False
@@ -372,6 +373,7 @@ def run_ai_game(screen, clock, selected_map_name):
                 # Đặt lại toàn bộ các biến trạng thái của màn hình game về giá trị mặc định.
                 game_state = "IDLE"
                 is_paused = False
+                is_fast_forwarding = False
                 stop_button['text'] = "Stop"
                 ai_path = []
                 animation_step = 0
@@ -392,11 +394,11 @@ def run_ai_game(screen, clock, selected_map_name):
                 
                 # Bật/Tắt Skip
                 if controller.map_data.get('food_mode') == 'sequential':
-                    # Nếu là map tự tạo, khóa nút Skip
-                    skip_button['is_enabled'] = False
+                    # Nếu là map tự tạo, khóa nút Fast Forward
+                    fast_forward_button['is_enabled'] = True
                 else:
                     # Nếu là map thường, bật lại nút Skip
-                    skip_button['is_enabled'] = True
+                    fast_forward_button['is_enabled'] = True
 
             if UI_helpers.handle_button_events(event, buttons['solve']):
                 if game_state == "IDLE" or game_state == "PLAYER_READY":
@@ -443,32 +445,9 @@ def run_ai_game(screen, clock, selected_map_name):
 
             # Kiểm tra sự kiện click vào nút "Skip".
             # Chỉ hoạt động khi game đang trong các trạng thái của AI (AI_AUTOPLAY, ANIMATING_PATH).
-            if UI_helpers.handle_button_events(event, skip_button) and game_state in ["AI_AUTOPLAY", "ANIMATING_PATH"]:
-                # Kiểm tra xem đã có kết quả được tính toán trước hay chưa.
-                if full_playthrough_result:
-                    # Cập nhật controller với trạng thái cuối cùng
-                    controller.snake = full_playthrough_result['snake']
-                    controller.steps = full_playthrough_result['steps']
-                    controller.food = [] 
-                    controller.outcome = full_playthrough_result['outcome']
-
-                    # Lưu kết quả CHÍNH XÁC từ full_playthrough_result đã tính toán trước đó
-                    game_helpers.save_game_result(
-                        selected_map_name, selected_mode, controller.steps, 
-                        0.0, # Animation time khi skip là 0
-                        full_playthrough_result['search_time'], 
-                        controller.outcome,
-                        full_playthrough_result['visited'], 
-                        full_playthrough_result['generated']
-                    )
-                    
-                    # Đưa game về trạng thái chờ ban đầu.
-                    game_state = "IDLE"
-                    # Xóa các biến tạm thời
-                    ai_path = [] 
-                    visited_nodes = [] 
-                    path_nodes_to_draw = []
-                    target_food_pos = None
+            if UI_helpers.handle_button_events(event, fast_forward_button) and game_state in ["AI_AUTOPLAY", "ANIMATING_PATH", "VISUALIZING"]:
+                # Đảo ngược trạng thái tua nhanh (True -> False, False -> True)
+                is_fast_forwarding = not is_fast_forwarding
             
             if UI_helpers.handle_button_events(event, buttons['change_mode']):
                 # Gọi màn hình chọn thuật toán.
@@ -625,7 +604,8 @@ def run_ai_game(screen, clock, selected_map_name):
 
             # KỊCH BẢN 2: NẾU KHÔNG CÓ THỨC ĂN (KÍCH HOẠT CHẾ ĐỘ SINH TỒN)
             else:
-                if current_ticks - last_animation_time > animation_interval:
+                current_interval = FAST_ANIMATION_INTERVAL if is_fast_forwarding else NORMAL_ANIMATION_INTERVAL
+                if current_ticks - last_animation_time > current_interval:
                     # Tìm một nước đi an toàn thay vì đi thẳng một cách mù quáng
                     safe_move = _find_safe_survival_move(game_data['snake'], controller.map_data)
                     
@@ -658,9 +638,10 @@ def run_ai_game(screen, clock, selected_map_name):
         elif game_state == "ANIMATING_PATH":
             # Chỉ di chuyển nếu game không bị tạm dừng.
             if not is_paused:
+                current_interval = FAST_ANIMATION_INTERVAL if is_fast_forwarding else NORMAL_ANIMATION_INTERVAL
                 current_render_time = pygame.time.get_ticks()
                 # Kiểm tra xem đã đến lúc di chuyển bước tiếp theo chưa.
-                if current_render_time - last_animation_time > animation_interval:
+                if current_render_time - last_animation_time > current_interval:
                     # Kiểm tra xem có còn bước đi trong path không
                     if animation_step < len(ai_path):
                         # Di chuyển rắn đến bước tiếp theo trong path.
@@ -681,7 +662,7 @@ def run_ai_game(screen, clock, selected_map_name):
                     game_state = "IDLE"
                     target_food_pos = None
                     # Tính toán tổng thời gian diễn hoạt.
-                    current_time = controller.get_state()['steps'] * (animation_interval / 1000.0)
+                    current_time = controller.get_state()['steps'] * (NORMAL_ANIMATION_INTERVAL / 1000.0)
 
                     # Sử dụng kết quả đã tính toán trước để lưu
                     if full_playthrough_result:
@@ -700,11 +681,15 @@ def run_ai_game(screen, clock, selected_map_name):
                     visited_nodes, path_nodes_to_draw = [], [] 
                 elif game_state == "AI_AUTOPLAY" and not game_data['food']:
                     # Kiểm tra xem đã đến lúc di chuyển chưa (để rắn không chạy quá nhanh)
-                    if current_ticks - last_animation_time > animation_interval:
+                    if current_render_time - last_animation_time > current_interval:
                         # Ra lệnh cho rắn đi thẳng một bước
                         controller.update()
                         # Cập nhật lại mốc thời gian
                         last_animation_time = current_ticks
+                        if is_fast_forwarding:
+                            fast_forward_button['text'] = "Tốc độ thường"
+                        else:
+                            fast_forward_button['text'] = "Tua nhanh (x10)"
 
         # ==================== C. VẼ LÊN MÀN HÌNH ====================
         background_effects.draw_background(screen)
@@ -742,7 +727,8 @@ def run_ai_game(screen, clock, selected_map_name):
                 instruction_y
             )
 
-        current_time = game_data['steps'] * (animation_interval / 1000.0)
+        if game_state == "ANIMATING_PATH":
+            current_time = game_data['steps'] * (NORMAL_ANIMATION_INTERVAL / 1000.0)
     
         
         UI_helpers.draw_text("ANIMATION TIME", info_font, config.COLORS['title'], screen, middle_area_center_x, 180) 
@@ -755,7 +741,7 @@ def run_ai_game(screen, clock, selected_map_name):
         UI_helpers.draw_text(f"{total_search_time:.4f} s", info_font_bold, config.COLORS['white'], screen, middle_area_center_x, 400)
         
         if game_state in ["AI_AUTOPLAY", "ANIMATING_PATH"]and selected_mode != "OnlineSearch":
-            UI_helpers.draw_button(screen, skip_button)
+            UI_helpers.draw_button(screen, fast_forward_button)
         if game_state == "ANIMATING_PATH" and selected_mode != "OnlineSearch":
             UI_helpers.draw_button(screen, stop_button)
         panel_rect = pygame.Rect(panel_x, 0, config.AI_PANEL_WIDTH, config.SCREEN_HEIGHT); 
