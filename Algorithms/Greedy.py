@@ -27,7 +27,7 @@ def find_path_greedy(start_pos, food_pos_list, map_data, snake_body, heuristic_f
     pq = [(h_score, start_pos, [start_pos])]
 
     visited_set = {start_pos}
-    visited_order = []
+    visited_order = [start_pos]
 
     generated_count = 1 # Bắt đầu với nút gốc
     visited_count = 0
@@ -36,7 +36,7 @@ def find_path_greedy(start_pos, food_pos_list, map_data, snake_body, heuristic_f
 
         _, current_pos, path = heapq.heappop(pq)
         visited_count += 1
-        visited_order.append(current_pos)
+        # visited_order.append(current_pos)
 
         if current_pos == target_pos:
             return {
@@ -50,6 +50,7 @@ def find_path_greedy(start_pos, food_pos_list, map_data, snake_body, heuristic_f
         for neighbor in neighbors:
             if neighbor not in visited_set:
                 visited_set.add(neighbor)
+                visited_order.append(neighbor)
                 new_h = heuristic_func(neighbor, target_pos)
                 heapq.heappush(pq, (new_h, neighbor, path + [neighbor]))
                 generated_count += 1

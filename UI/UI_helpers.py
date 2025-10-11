@@ -158,7 +158,8 @@ def draw_search_visualization(surface, visited_nodes, path_nodes):
     visualization_font = pygame.font.Font(config.FONT_PATH, 10)
     
     # 2. Chuyển danh sách đường đi thành một 'set' để kiểm tra nhanh hơn.
-    path_set = set(path_nodes)
+    # path_set = set(path_nodes)
+    path_set = set(path_nodes) if path_nodes is not None else set()
 
     # 3. Lặp qua danh sách các nút đã duyệt bằng 'enumerate'.
     #    'enumerate' sẽ trả về cả chỉ số (i) và giá trị (pos) cho mỗi phần tử.
